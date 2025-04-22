@@ -1,12 +1,13 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MainPage from "./pages/MainPage.jsx";
-import 'bootstrap/dist/css/bootstrap.min.css';
 
+import MainPage from "./pages/MainPage.jsx";
+import SearchResult from "./pages/SearchResult.jsx";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 export function App() {
   const router = createBrowserRouter([
-    /*{ path: "/", element: <HomePage /> }, 여기다가 메인페이지 컴포넌트 경로 설정하기.*/
+
     { path: "/MainPage", element: <MainPage />}
-    
+    { path: "/search", element: <SearchResult/>} //검색 결과 화면
   ]);
   return <RouterProvider router={router} />;
 }
