@@ -1,5 +1,5 @@
 import React from 'react';
-import SampleReviewData from '../../datas/SampleReviewData';
+import SampleReviewData from '../../datas/SearchSample/SampleReviewData';
 
 const ReviewList = () => {
   return (

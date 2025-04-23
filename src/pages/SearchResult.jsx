@@ -6,13 +6,15 @@ import Result from '../component/Search/Result';
 import ReviewList from '../component/Search/ReviewList';
 import Header from '../fragments/Header';
 import Footer from '../fragments/Footer';
+import MyList from '../fragments/MyList';
+
 
 const SearchResult = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* 상단 헤더 */}
       <Header />
-
+      
       {/* 메인 콘텐츠 */}
       <main style={{ 
         display: 'flex', 
@@ -22,6 +24,8 @@ const SearchResult = () => {
         padding: '40px', 
         backgroundColor: '#f0faff'
       }}>
+        <div style={{marginLeft:'20px',minWidth:'200px'}}><MyList/></div>
+        
         {/* 왼쪽: 누구랑 / 무엇을 */}
         <div style={{ display: 'flex', gap: '20px', flex: 1 }}>
           <PopWhoList />

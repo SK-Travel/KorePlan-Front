@@ -1,4 +1,3 @@
-
 import MainPage from "./pages/MainPage.jsx";
 import SearchResult from "./pages/SearchResult.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -8,7 +7,6 @@ export function App() {
 
     { path: "/mainPage", element: <MainPage />},
     { path: "/search", element: <SearchResult/>}, //검색 결과 화면
-
   ]);
   return <RouterProvider router={router} />;
 }
