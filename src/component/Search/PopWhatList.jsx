@@ -1,28 +1,43 @@
-import React from 'react';
-import SamplePopData from '../../datas/SamplePopData.js';// 샘플데이터임 나중에 DB 생성 후 수정 예정
-import { useState, } from 'react';
+import React, { useState } from 'react';
+import SamplePopData from '../../datas/SamplePopData.js';
 import { Button } from 'react-bootstrap';
 
-
-//인기 순위 Top5 리스트
 const PopWhatList = () => {
-    //현재 샘플데이터 5개로 초기값 설정  (추후 수정 예정)
-    const [posts, setposts] = useState(SamplePopData);
-    
-    //리스트 모두 li로 만들기.
-    const popList = posts.map((item) =>
-    <> 
-        <li>{item.label}</li>
-        <Button >찜하기</Button>
-    </>
-    );
-    return (
-        <>
-            <div style={{ display: 'flex', height: '700px', width:'500px' ,backgroundColor:'#E0F7FA'}}>
-              <ol className="list-group list-group-numbered">{popList}</ol>
-            </div>
-        </>
-    );
+  const [posts, setPosts] = useState(SamplePopData);
+
+  return (
+    <div
+      style={{
+        
+        width: '500px',
+        backgroundColor: '#E0F7FA',
+        padding: '20px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+        overflowY: 'auto',
+      }}
+    >
+      <h4 style={{ marginBottom: '20px' }}>무엇을 할까요?</h4>
+      {posts.map((item, index) => (
+        <div
+          key={index}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#ffffff',
+            padding: '10px 15px',
+            marginBottom: '10px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          }}
+        >
+          <span>{item.label}</span>
+          <Button variant="primary">찜하기</Button>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default PopWhatList;
