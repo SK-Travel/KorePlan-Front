@@ -6,7 +6,7 @@ const SearchBar = () => {
     return (
         <>
             {/* 검색 박스 */}
-        <div className="search-box d-flex">
+        <div className="search-box d-flex" >
             <div className="d-flex align-items-center ml-3">
                 {/* <!-- 돋보기 이미지 --> */}
                 <img alt="검색" width="35" src="https://cdn.pixabay.com/photo/2022/03/06/06/39/search-7050945_960_720.png" />
