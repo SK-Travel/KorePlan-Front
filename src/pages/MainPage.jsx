@@ -18,7 +18,7 @@ const MainPage = () => {
                 <MyList style={{ flex: 2 }}/>
 
                 <div className="container form-control" style={{ flex: 8, backgroundColor:'#f0faff'}}>
-                    <div style={ {width:'900px'} ,{backgroundColor:'#ffffff'}}>
+                    <div style={ {width:'900px', backgroundColor:'#ffffff'}}>
                         <SearchBar />
                         <RecommendChooseBar />
 
