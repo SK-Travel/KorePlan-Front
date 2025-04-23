@@ -8,6 +8,7 @@ export function App() {
 
     { path: "/MainPage", element: <MainPage />},
     { path: "/search", element: <SearchResult/>}, //검색 결과 화면
+
   ]);
   return <RouterProvider router={router} />;
 }
