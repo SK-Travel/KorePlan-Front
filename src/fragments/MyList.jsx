@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import MyListLogo from '../assets/MyList.png';
+
 class MyList extends Component {
     render() {
         return (
