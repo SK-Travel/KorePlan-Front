@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SamplePopData from '../../datas/SamplePopData.js';
+import SamplePopData from '../../datas/SearchSample/SamplePopData.js';
 import { Button } from 'react-bootstrap';
 
 const PopWhoList = () => {
