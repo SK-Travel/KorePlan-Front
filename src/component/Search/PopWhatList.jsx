@@ -8,7 +8,6 @@ const PopWhatList = () => {
   return (
     <div
       style={{
-        
         width: '500px',
         backgroundColor: '#E0F7FA',
         padding: '20px',
@@ -17,7 +16,6 @@ const PopWhatList = () => {
         overflowY: 'auto',
       }}
     >
-      <h4 style={{ marginBottom: '20px' }}>무엇을 할까요?</h4>
       {posts.map((item, index) => (
         <div
           key={index}

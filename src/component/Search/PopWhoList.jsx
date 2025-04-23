@@ -17,7 +17,7 @@ const PopWhoList = () => {
         overflowY: 'auto',
       }}
     >
-      <h4 style={{ marginBottom: '20px' }}>누구랑 가나요?</h4>
+    
       {posts.map((item, index) => (
         <div
           key={index}
