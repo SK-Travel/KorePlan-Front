@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SampleFesData from '../../datas/SampleFesData';
+import SampleFesData from '../../datas/SearchSample/SampleFesData';
 
 const Festival = () => {
   const [posts, setPosts] = useState(SampleFesData);
