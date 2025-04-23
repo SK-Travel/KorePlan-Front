@@ -13,7 +13,7 @@ const RecommendBar = () => {
                 <div className="text-center border-end col-6 py-2">
                     <span className="form-control text-center" style={{backgroundColor:'#FDEB65', width:'300px'}}>실시간 핫한 장소</span>
                     {/* 뿌려주는 박스 */}
-                    <div className="form-control" style={{backgroundColor:'#8CCB7E'}}>
+                    <div className="form-control" style={{backgroundColor:'#e0f7fa', height:'200px'}}>
 
                         <div className="d-flex justify-content-around align-items-center">
                             {/* 여기선 반복문으로 아이템 꺼내는 형식으로 해야 함. */}
@@ -29,9 +29,9 @@ const RecommendBar = () => {
                 <div className="text-center col-6 py-2">
                     <span className="form-control text-center" style={{backgroundColor:'#FF0B20', width:'300px'}}>실시간 핫한 숙소</span>
                     {/* 뿌려주는 박스 */}
-                    <div className="form-control" style={{backgroundColor:'#8CCB7E'}}>
+                    <div className="form-control" style={{backgroundColor:'#e0f7fa',  height:'200px'}}>
 
-                        <div className="d-flex justify-content-around align-items-center">
+                        <div className="d-flex justify-content-around align-items-center text-center">
                             {/* 여기선 반복문으로 아이템 꺼내는 형식으로 해야 함. */}
                             {/* 숙소 이름 */}
                             <h2>1. 시그니엘 부산</h2>
