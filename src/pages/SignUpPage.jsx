@@ -1,7 +1,7 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Header from '../fragments/Header.jsx';
-import Footer from '../fragments/Footer.jsx';
+import Header from '../component/fragments/Header.jsx';
+import Footer from '../component/fragments/Footer.jsx';
 import SignUp from '../component/SignUp/SignUpBox.jsx';
 
 const SignUpPage = () => {
