@@ -1,6 +1,6 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css'; // 부트스트랩 CSS 가져오기
-import KorePlanLogo from '../assets/KorePlan.png';
+import KorePlanLogo from '../../assets/KorePlan.png';
 
 const Header = () => {
     return (

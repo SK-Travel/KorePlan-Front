@@ -1,9 +1,9 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/KorePlan.css'
-import Footer from '../fragments/Footer';
-import Header from '../fragments/Header';
-import MyList from '../fragments/MyList'
+import Footer from '../component/fragments/Footer.jsx';
+import Header from '../component/fragments/Header.jsx';
+import MyList from '../component/fragments/MyList.jsx'
 import SearchBar from '../component/Main/SearchBar';
 import RecommendChooseBar from '../component/Main/RecommendChooseBar.jsx';
 import RecommendBar from '../component/Main/RecommendBar.jsx';

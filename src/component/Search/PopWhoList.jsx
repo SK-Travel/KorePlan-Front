@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SamplePopData from '../../datas/SamplePopData.js';
+import SamplePopData from '../../datas/SearchSample/SamplePopData.js';
 import { Button } from 'react-bootstrap';
 
 const PopWhoList = () => {
@@ -17,7 +17,7 @@ const PopWhoList = () => {
         overflowY: 'auto',
       }}
     >
-      <h4 style={{ marginBottom: '20px' }}>누구랑 가나요?</h4>
+    
       {posts.map((item, index) => (
         <div
           key={index}
