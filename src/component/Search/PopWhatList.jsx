@@ -8,7 +8,8 @@ const PopWhatList = () => {
   return (
     <div
       style={{
-        width: '500px',
+        width: '100%',         // ✅ 반드시 추가!
+        maxWidth: '500px',     // ✅ 반응형을 위한 제한
         backgroundColor: '#E0F7FA',
         padding: '20px',
         borderRadius: '12px',
@@ -31,7 +32,7 @@ const PopWhatList = () => {
           }}
         >
           <span>{item.label}</span>
-          <Button variant="primary">찜하기</Button>
+          <Button variant="primary">찜</Button>
         </div>
       ))}
     </div>
@@ -39,3 +40,4 @@ const PopWhatList = () => {
 };
 
 export default PopWhatList;
+
