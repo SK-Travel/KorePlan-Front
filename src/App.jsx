@@ -1,3 +1,4 @@
+
 import MainPage from "./pages/MainPage.jsx";
 import SearchResult from "./pages/SearchResult.jsx";
 import SearchFilterBar from "./component/Main/SearchFilterBar.jsx";
@@ -12,3 +13,4 @@ export function App() {
   ]);
   return <RouterProvider router={router} />;
 }
+
