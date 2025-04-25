@@ -5,10 +5,10 @@ import KorePlanLogo from '../../assets/KorePlan.png';
 const Header = () => {
     return (
         <header className="bg-success">
-            <div className="h-100 d-flex justify-content-between align-items-center mx-4">
+            <div className="h-100 d-flex justify-content-between align-items-center mx-4" width="100%">
                 <img src={KorePlanLogo} alt="KorePlan 로고" width="100" />
                 <h1>KorePlan</h1>
-                <h1>현우님 안녕하세요</h1>
+                <h5>윤현우</h5>
             </div>
         </header>
     );
