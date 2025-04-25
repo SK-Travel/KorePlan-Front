@@ -1,7 +1,6 @@
 
 import MainPage from "./pages/MainPage.jsx";
 import SearchResult from "./pages/SearchResult.jsx";
-import SearchFilterBar from "./component/Main/SearchFilterBar.jsx";
 import SignUpPage from './pages/SignUpPage.jsx';
 import TestPage from "./pages/TestPage.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
