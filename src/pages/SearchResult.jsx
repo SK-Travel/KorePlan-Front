@@ -2,7 +2,7 @@ import React from 'react';
 // 구조 컴포넌트
 //-------------------------------------------------------------//
 import PopWhoList from '../component/Search/PopWhoList';
-import PopWhatList from '../component/Search/PopWhatList';
+//import PopWhatList from '../component/Search/PopWhatList';
 import Festival from '../component/Search/Festival';
 import Result from '../component/Search/Result';
 import ReviewList from '../component/Search/ReviewList';
@@ -50,7 +50,7 @@ const SearchResult = () => {
             <SearchFilterBar />
             <Row>
               <PopWhoList />
-              <PopWhatList />
+              {/* <PopWhatList /> */}
             </Row>
             <Row>
               <Result />

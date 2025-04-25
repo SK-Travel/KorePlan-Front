@@ -8,7 +8,7 @@ const Festival = () => {
     <div
       style={{
         width: '100%',
-        maxWidth: '250px', // ✅ 너무 넓어지지 않도록 제한
+        maxWidth: '250px', // 
         backgroundColor: '#FFF8DC',
         padding: '20px',
         borderRadius: '12px',

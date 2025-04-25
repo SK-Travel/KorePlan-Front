@@ -16,23 +16,24 @@ export const BodyWrapper = styled.div`
   background-color: #ffffff;
 
   @media (max-width: 1024px) {
-    padding: 20px;
+    
   }
 `;
 
-/* ✅ 왼쪽 메뉴 영역 (좁게) */
+/*왼쪽 메뉴 영역 */
 export const LeftSide = styled.div`
   flex: 0.2;
   min-width: 120px;
   padding: 16px;
   font-size: 14px;
-
+  top: 10px;
+  position: sticky;
   @media (max-width: 768px) {
     min-width: 100px;
   }
 `;
 
-/* ✅ 가운데 콘텐츠 (넓게) */
+/*가운데 콘텐츠 (넓게) */
 export const Main = styled.main`
   flex: 2.5;
   display: flex;
@@ -45,14 +46,14 @@ export const Main = styled.main`
   }
 `;
 
-/* ✅ 오른쪽 (축제 정보 등) */
+/*오른쪽 컨텐츠 (축제 정보) */
 export const RightSide = styled.div`
-  flex: 0.8;
+  flex: 0.7;
   min-width: 140px;
   padding: 16px;
   font-size: 14px;
 
-  s@media (max-width: 768px) {
+  @media (max-width: 768px) {
   display: none;
   }
 `;

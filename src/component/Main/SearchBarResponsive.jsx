@@ -8,7 +8,7 @@ const SearchBarResponsive = () => {
         <Col xs={9} sm={10}>
           <Form.Control
             type="text"
-            placeholder="여행지를 검색해보세요"
+            placeholder="여행지"
             className="w-100"
             style={{ height: '50px', fontSize: '16px' }}
           />

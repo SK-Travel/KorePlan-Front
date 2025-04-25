@@ -24,7 +24,11 @@ const MyListSample = () => {
       </Button>
 
       {/* 토글 메뉴 (오프캔버스) */}
-      <Offcanvas show={show} onHide={toggleMenu} placement="start">
+      <Offcanvas show={show} onHide={toggleMenu} placement="start" 
+        style={{
+          width: '240px', 
+          maxWidth: '90vw', 
+        }}>
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>My Menu</Offcanvas.Title>
         </Offcanvas.Header>
