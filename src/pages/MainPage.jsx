@@ -9,28 +9,51 @@ import RecommendChooseBar from '../component/Main/RecommendChooseBar.jsx';
 import RecommendBar from '../component/Main/RecommendBar.jsx';
 import Calendar from '../component/Main/Calendar.jsx';
 
+///--형 거 복붙
+import MyListSample from '../component/fragments/MyListSample';
+import SearchFilterBar from '../component/Main/SearchFilterBar';
+import PopWhoList from '../component/Search/PopWhoList';
+import ReviewList from '../component/Search/ReviewList';
+/// ------------------------------------------------------/
+/// CSS 컴포넌트
+/// -----------------------------------------------------//
+import {
+    PageWrapper,
+    BodyWrapper,
+    LeftSide,
+    Main,
+    MainContent,
+    Row,
+} from '../styles/SearchResultStyles.js'
+
 
 const MainPage = () => {
     return (
-        <>
+        <PageWrapper>
             <Header />
-            <div className="d-flex">
-                <MyList style={{ flex: 2 }}/>
 
-                <div className="container form-control" style={{ flex: 8, backgroundColor:'#f0faff'}}>
-                    <div style={ {width:'900px', backgroundColor:'#ffffff'}}>
-                        <SearchBar />
-                        <RecommendChooseBar />
+            <BodyWrapper>
 
-                    </div>
+                <LeftSide>
+                    <MyListSample />
+                </LeftSide>
 
-                    <RecommendBar />
-                    <Calendar />
-                </div>
-            </div>
+                <Main>
+                    <MainContent>
+                        <SearchFilterBar />
+                        <Row>
+                            <RecommendBar />
+                        </Row>
+                        <Row>
+                            <Calendar />
+                        </Row>
+                    </MainContent>
+                </Main>
+
+            </BodyWrapper>
 
             <Footer />
-        </>
+        </PageWrapper>
     );
 };
 
