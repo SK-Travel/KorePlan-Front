@@ -1,16 +1,11 @@
-class ApiClient extends Component {
-    // static SERVER_URL = "http://localhost:8000"
-    // static GET_LEADERBOARD = "/leaders"
-    // static GET_USERS_BY_IDS = "/stats"
+import axios from "axios";
 
-    // static leaderBoard() {
-    //     return fetch(GameApiClient.SERVER_URL + GameApiClient.GET_LEADERBOARD);
-    // }
-    
-    // static getStats(userId) {
-    //     return fetch(GameApiClient.SERVER_URL + GameApiClient.GET_USERS_BY_IDS + "?userId=" + userId);
-    // }
-
-}
+const ApiClient = axios.create({
+  baseURL: "http://localhost:8080", // 백엔드 주소
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true, // 필요 시 쿠키 인증 등 포함
+});
 
 export default ApiClient;
