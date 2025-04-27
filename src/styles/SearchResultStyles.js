@@ -64,7 +64,7 @@ export const MainContent = styled.div`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 40px;
   padding: 0 16px;
 
   @media (max-width: 768px) {

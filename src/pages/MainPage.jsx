@@ -12,7 +12,7 @@ import Calendar from '../component/Main/Calendar.jsx';
 ///--형 거 복붙
 import MyListSample from '../component/fragments/MyListSample';
 import SearchFilterBar from '../component/Main/SearchFilterBar';
-import PopWhoList from '../component/Search/PopWhoList';
+import PopularList from '../component/Search/PopularList';
 import ReviewList from '../component/Search/ReviewList';
 /// ------------------------------------------------------/
 /// CSS 컴포넌트
