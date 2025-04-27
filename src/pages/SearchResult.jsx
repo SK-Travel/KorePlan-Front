@@ -41,29 +41,40 @@ const SearchResult = () => {
     <PageWrapper>
       <Header />
       <BodyWrapper>
+
         <LeftSide>
+
           <MyListSample />
+
         </LeftSide>
 
         <Main>
           <MainContent>
+
             <SearchFilterBar />
+        
+            <PopularList />
+            
             <Row>
-              <PopularList />
-              {/* <PopWhatList /> */}
-            </Row>
-            <Row>
+
               <Result />
               <ReviewList />
+
             </Row>
+
           </MainContent>
         </Main>
 
         <RightSide>
+
           <Festival />
+
         </RightSide>
+
       </BodyWrapper>
+
       <Footer />
+      
     </PageWrapper>
   );
 };
