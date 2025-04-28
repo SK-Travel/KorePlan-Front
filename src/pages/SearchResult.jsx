@@ -8,7 +8,7 @@ import Result from '../component/Search/Result';
 import ReviewList from '../component/Search/ReviewList';
 import Header from '../component/fragments/Header';
 import Footer from '../component/fragments/Footer';
-import MyListSample from '../component/fragments/MyListSample';
+//import MyListSample from '../component/fragments/MyListSample';
 import SearchFilterBar from '../component/Main/SearchFilterBar';
 //--------------------------------------------------------------//
 // CSS 컴포넌트
@@ -17,7 +17,7 @@ import {
   PageWrapper,
   BodyWrapper,
   LeftSide,
-  RightSide,
+  //RightSide,
   Main,
   MainContent,
   Row,
@@ -44,7 +44,7 @@ const SearchResult = () => {
 
         <LeftSide>
 
-          <MyListSample />
+          <Festival/>
 
         </LeftSide>
 
@@ -65,11 +65,7 @@ const SearchResult = () => {
           </MainContent>
         </Main>
 
-        <RightSide>
-
-          <Festival />
-
-        </RightSide>
+       
 
       </BodyWrapper>
 

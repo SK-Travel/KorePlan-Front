@@ -1,8 +1,15 @@
 import React from 'react';
-import { PageWrapper, BodyWrapper,LeftSide, Main,MainContent} from '../styles/SearchResultStyles';
+
+import { 
+    PageWrapper, 
+    BodyWrapper,
+    LeftSide,
+    Main,
+    MainContent,
+    } from '../styles/SpotDetailStyle';
+
 import Footer from '../component/fragments/Footer';
 import Header from '../component/fragments/Header';
-import MyListSample from '../component/fragments/MyListSample';
 import SpotInfo from '../component/SpotDetail/SpotInfo'
 import ReviewList from '../component/Search/ReviewList';
 import SpotMap from '../component/SpotDetail/SpotMap';
@@ -11,10 +18,7 @@ const SpotDetail = () => {
         <PageWrapper>
             <Header />
             <BodyWrapper>
-                <LeftSide>
-
-                    <MyListSample />
-                </LeftSide>
+                
                 <Main>
                     
                     <MainContent>

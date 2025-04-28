@@ -9,7 +9,7 @@ const MyListSample = () => {
 
   return (
     <>
-      <h2>MyList</h2>
+      {/* <h2>MyList</h2> */}
       {/* 햄버거 버튼 */}
       <Button
         variant="light"
