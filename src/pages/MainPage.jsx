@@ -6,7 +6,9 @@ import Footer from '../component/fragments/Footer.jsx';
 //import MyList from '../component/fragments/MyList.jsx';
 //import SearchBar from '../component/Main/SearchBar';
 //import RecommendChooseBar from '../component/Main/RecommendChooseBar.jsx';
-import RecommendBar from '../component/Main/RecommendBar.jsx';
+import Top10HP from '../component/Main/Top10HP.jsx';
+import Top10HH from '../component/Main/Top10HH.jsx';
+import Top10HF from '../component/Main/Top10HF.jsx';
 import Calendar from '../component/Main/Calendar.jsx';
 
 ///--형 거 복붙
@@ -24,7 +26,9 @@ import {
     Main,
     MainContent,
     Row,
+    RightSide,
 } from '../styles/MainPageStyle.js'
+
 
 
 const MainPage = () => {
@@ -34,21 +38,25 @@ const MainPage = () => {
 
             <BodyWrapper>
 
-                {/* <LeftSide>
-                    <MyListSample />
-                </LeftSide> */}
+                <LeftSide>
+
+                </LeftSide>
 
                 <Main>
                     <MainContent>
                         <SearchFilterBar />
                         <Row>
-                            <RecommendBar />
+                            <Top10HP />
+                            <Top10HH />
+                            <Top10HF />
                         </Row>
                         <Row>
                             <Calendar />
                         </Row>
                     </MainContent>
                 </Main>
+
+                <RightSide />
 
             </BodyWrapper>
 
