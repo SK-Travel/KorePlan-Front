@@ -11,7 +11,7 @@ const ZzimButton = ({ isLiked, onClick }) => {
         fontSize: '1.5rem',
         color: isLiked ? 'red' : 'gray',
         border: 'none',
-        transition: 'transform 0.2s',  // ✅ 부드럽게
+        transition: 'transform 0.2s',  
         cursor: 'pointer',
       }}
       onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.2)'}

@@ -9,6 +9,7 @@ export const HeaderWrapper = styled.header`
   display: flex;
   align-items: center;
   padding: 0 20px;
+  text: b
 `;
 
 export const LogoWrapper = styled.div`
@@ -29,7 +30,7 @@ export const Title = styled.h1`
   transform: translateX(-50%);
   margin: 0;
   font-size: 24px;
-  color: white;
+  color: black;
 `;
 
 export const UserSection = styled.div`
@@ -43,7 +44,7 @@ export const UserSection = styled.div`
 
 export const UserName = styled.h5`
   margin: 0;
-  color: white;
+  color: black;
 `;
 
 

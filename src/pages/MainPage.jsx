@@ -24,6 +24,7 @@ import {
     Main,
     MainContent,
     Row,
+    RightSide,
 } from '../styles/MainPageStyle.js'
 
 
@@ -34,21 +35,24 @@ const MainPage = () => {
 
             <BodyWrapper>
 
-                {/* <LeftSide>
-                    <MyListSample />
-                </LeftSide> */}
+                <LeftSide>
+                    
+                </LeftSide>
 
                 <Main>
                     <MainContent>
                         <SearchFilterBar />
                         <Row>
                             <RecommendBar />
+                            
                         </Row>
                         <Row>
                             <Calendar />
+                            <></>
                         </Row>
                     </MainContent>
                 </Main>
+                <RightSide/>
 
             </BodyWrapper>
 

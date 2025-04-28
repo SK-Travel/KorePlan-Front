@@ -6,7 +6,7 @@ import TestPage from "./pages/TestPage.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import SpotDetail from "./pages/SpotDetail.jsx";
-
+import FestivalPage from "./pages/FestivalPage.jsx";
 
 export function App() {
   const router = createBrowserRouter([
@@ -14,7 +14,9 @@ export function App() {
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
     { path: "/search", element: <SearchResult /> }, // 검색 결과
     { path: "/signUp", element: <SignUpPage /> }, // 회원가입
-    { path: "/spot/:id", element: <SpotDetail /> }, // ✅ 여기 수정! (id 받아야 함)
+    { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
+    { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
+    
   ]);
   return <RouterProvider router={router} />;
 }
