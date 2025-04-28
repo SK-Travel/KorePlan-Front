@@ -76,7 +76,7 @@ export const MainContent = styled.div`
 export const Row = styled.div`
   display: flex;
   gap: 20px;
-
+  
   @media (max-width: 768px) {
     flex-direction: column;
   }

@@ -22,7 +22,7 @@ export const BodyWrapper = styled.div`
 
 /*왼쪽 메뉴 영역 */
 export const LeftSide = styled.div`
-  flex: 0.6;
+  flex: 0.5;
   min-width: 120px;
   padding: 16px;
   font-size: 14px;
@@ -47,9 +47,9 @@ export const Main = styled.main`
   }
 `;
 
-/*오른쪽 컨텐츠 (축제 정보) */
+/*오른쪽 컨텐츠  */
 export const RightSide = styled.div`
-  flex: 0.7;
+  flex: 0.5;
   min-width: 140px;
   padding: 16px;
   font-size: 14px;
