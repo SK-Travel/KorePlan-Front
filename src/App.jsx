@@ -11,9 +11,10 @@ import FestivalPage from "./pages/FestivalPage.jsx";
 export function App() {
   const router = createBrowserRouter([
     { path: "/", element: <TestPage /> }, // 연동용 TEST페이지
+    // { path: "/", element: <SignInPage /> }, // 로그인 페이지
+    { path: "/signUp", element: <SignUpPage /> }, // 회원가입
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
     { path: "/search", element: <SearchResult /> }, // 검색 결과
-    { path: "/signUp", element: <SignUpPage /> }, // 회원가입
     { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
     
