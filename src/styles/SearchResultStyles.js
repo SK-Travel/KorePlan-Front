@@ -4,6 +4,7 @@ export const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+ 
 `;
 
 export const BodyWrapper = styled.div`
@@ -11,10 +12,9 @@ export const BodyWrapper = styled.div`
   flex-direction: row;
   flex-grow: 1;
   width: 100%;
-  padding: 40px;
   gap: 20px;
   background-color: #ffffff;
-
+  padding: 0px;
   @media (max-width: 1024px) {
     
   }
@@ -22,14 +22,15 @@ export const BodyWrapper = styled.div`
 
 /*왼쪽 메뉴 영역 */
 export const LeftSide = styled.div`
-  flex: 0.2;
+  flex: 0.6;
   min-width: 120px;
   padding: 16px;
   font-size: 14px;
   top: 10px;
   position: sticky;
   @media (max-width: 768px) {
-    min-width: 100px;
+    
+    display: none;
   }
 `;
 
