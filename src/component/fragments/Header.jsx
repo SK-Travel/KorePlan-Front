@@ -29,7 +29,7 @@ import {
     UserName,
   } from '../../styles/HeaderStyle'
 import KorePlanLogo from '../../assets/KorePlan.png';
-import MyListSample from './MyListSample';
+import MyList from './MyList';
 
 const Header = () => {
     return (
@@ -48,7 +48,7 @@ const Header = () => {
         {/* 오른쪽 사용자이름 + 햄버거버튼 */}
         <UserSection>
           <UserName>윤현우</UserName>
-          <MyListSample />
+          <MyList/>
         </UserSection>
   
       </HeaderWrapper>
