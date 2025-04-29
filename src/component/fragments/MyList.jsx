@@ -1,56 +1,3 @@
-// import React, { useState } from 'react';
-// import { Button, Offcanvas } from 'react-bootstrap';
-// import { List } from 'react-bootstrap-icons'; // 햄버거 아이콘
-// import { Link } from 'react-router-dom';
-// import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-// const MyListSample = () => {
-//   const [show, setShow] = useState(false);
-
-//   const toggleMenu = () => setShow((prev) => !prev);
-
-//   return (
-//     <>
-//       {/* <h2>MyList</h2> */}
-//       {/* 햄버거 버튼 */}
-//       <Button
-//         variant="light"
-//         onClick={toggleMenu}
-//         style={{
-//           border: 'none',
-//           background: 'none',
-//           fontSize: '32px',
-//         }}
-//       >
-//         <MenuOpenIcon sx={{ fontSize: 50 }} />
-//       </Button>
-
-//       {/* 토글 메뉴 (오프캔버스) */}
-//       <Offcanvas show={show} onHide={toggleMenu} placement="end" 
-//         style={{
-//           width: '240px', 
-//           maxWidth: '90vw', 
-//         }}>
-//         <Offcanvas.Header closeButton>
-//           <Offcanvas.Title>My Menu</Offcanvas.Title>
-//         </Offcanvas.Header>
-//         <Offcanvas.Body>
-//           <ul className="list-unstyled">
-//             <li><a href="#">내 정보</a></li>
-//             <li><a href="#">My 찜 & 리스트</a></li>
-//             <li><a href="#">인기차트</a></li>
-//             <Link to = "/festival"><li>이번달 축제/행사</li></Link>
-//             <li><a href="#">AI 챗봇</a></li>
-//           </ul>
-//         </Offcanvas.Body>
-//       </Offcanvas>
-//     </>
-//   );
-// };
-
-// export default MyListSample;
-
-
-
 import * as React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -85,10 +32,9 @@ export default function MyList() {
       width: {
         xs: '50vw !important', // 모바일
         sm: '250px !important', // 태블릿
-        md: '400px !important', // 데스크탑
+        md: '350px !important', // 데스크탑
       },
       height: '100%',
-      bgcolor: '#f5f5f5',
     }}
       role="presentation"
       onClick={toggleMenu}
@@ -145,10 +91,10 @@ export default function MyList() {
         onOpen={toggleMenu}
         PaperProps={{
           sx: {
-            height: '50%',   // Drawer 자체 높이를 50%로
+            height: '60%',   // Drawer 자체 높이를 50%로
             borderTopLeftRadius: 16, //둥글게
             borderBottomLeftRadius: 16,
-            backgroundColor: '#228B22 !important',
+            
           }
         }}
       >

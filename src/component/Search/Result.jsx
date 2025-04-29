@@ -19,6 +19,7 @@ const Result = () => {
         style={{ width: '100%', borderRadius: '8px' }}
       />
       <div style={{ marginTop: '10px', fontSize: '14px', color: '#333' }}>
+        {/* 나중에 각각의 요소들로 바꾸기 */}
         <strong>부산 해운대</strong> (관광 명소)<br />
         부산 해운대구 우동<br />
         📞 051-749-7612
