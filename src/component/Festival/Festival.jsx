@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SampleFesData from '../../datas/SearchSample/SampleFesData';
 import ZzimButton from '../Button/ZzimButton';
+import { Link } from 'react-router-dom';
 const Festival = () => {
   const [posts, setPosts] = useState(SampleFesData);
 
@@ -45,7 +46,10 @@ const Festival = () => {
             </div>
 
             <div style={{ flex: '1', minWidth: '200px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '24px' }}>{item.label}</span><ZzimButton/>
+              <Link to={`/festival/${item.id}`} style={{textDecoration:'none'}}>
+                <span style={{ fontWeight: 'bold', fontSize: '24px' }}>{item.label}</span>
+              </Link>
+              <ZzimButton/>
               <p style={{ color: '#888', fontSize: '16px', lineHeight: '1.6', marginTop: '10px' }}>
               {item.comment || "장소 설명이 없습니다."}
               </p>
@@ -58,5 +62,6 @@ const Festival = () => {
 };
 
 export default Festival;
+
 
 

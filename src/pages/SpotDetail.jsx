@@ -7,7 +7,8 @@ import {
     RightSide,
     Main,
     MainContent,
-    } from '../styles/SpotDetailStyle';
+    Row,
+    } from '../styles/DetailPageStyle';
 //------------------------------------------
 // 구조 컴포넌트
 import Footer from '../component/fragments/Footer';
@@ -27,9 +28,9 @@ const SpotDetail = () => {
                 <Main>
                     
                     <MainContent>
-
-                        <SpotInfo/>
-                        <ReviewList/>
+                        <Row><SpotInfo/>
+                        <ReviewList/></Row>
+                        
                         <SpotMap/>
 
                     </MainContent>
