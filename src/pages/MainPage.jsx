@@ -46,15 +46,19 @@ const MainPage = () => {
                     <MainContent>
                         <SearchFilterBar />
                         <Row>
+
                             <Top10HP />
                             <Top10HH />
                             <Top10HF />
+
                         </Row>
                         <Row>
                             <Calendar />
+                            <></>
                         </Row>
                     </MainContent>
                 </Main>
+                <RightSide/>
 
                 <RightSide />
 

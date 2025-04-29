@@ -47,7 +47,7 @@ export const Main = styled.main`
   }
 `;
 
-/*오른쪽 컨텐츠 (축제 정보) */
+/*오른쪽 컨텐츠 */
 export const RightSide = styled.div`
   flex: 0.7;
   min-width: 140px;

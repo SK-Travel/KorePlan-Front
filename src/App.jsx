@@ -7,7 +7,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import SpotDetail from "./pages/SpotDetail.jsx";
 import InfoModifiedPage from './pages/InfoModifiedPage.jsx';
-
+import FestivalPage from "./pages/FestivalPage.jsx";
+import DetailFestival from "./pages/FestivalDetail.jsx";
 
 export function App() {
   const router = createBrowserRouter([
@@ -17,7 +18,10 @@ export function App() {
     { path:"/infoModified", element: <InfoModifiedPage /> }, // 정보 수정 페이진
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
     { path: "/search", element: <SearchResult /> }, // 검색 결과
-    { path: "/spot/:id", element: <SpotDetail /> }, // ✅ 여기 수정! (id 받아야 함)
+    { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
+    { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
+    { path: "/festival/:id",element:<DetailFestival/>}//축제 상세 정보 페이지
+
   ]);
   return <RouterProvider router={router} />;
 }

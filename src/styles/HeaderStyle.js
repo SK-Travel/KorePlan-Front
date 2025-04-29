@@ -9,6 +9,7 @@ export const HeaderWrapper = styled.header`
   display: flex;
   align-items: center;
   padding: 0 20px;
+  text: b
 `;
 
 export const LogoWrapper = styled.div`

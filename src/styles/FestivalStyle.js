@@ -22,7 +22,7 @@ export const BodyWrapper = styled.div`
 
 /*왼쪽 메뉴 영역 */
 export const LeftSide = styled.div`
-  flex: 0.5;
+  flex: 0.6;
   min-width: 120px;
   padding: 16px;
   font-size: 14px;
@@ -47,9 +47,9 @@ export const Main = styled.main`
   }
 `;
 
-/*오른쪽 컨텐츠 (축제 정보) */
+/*오른쪽 컨텐츠 */
 export const RightSide = styled.div`
-  flex: 0.5;
+  flex: 0.7;
   min-width: 140px;
   padding: 16px;
   font-size: 14px;
@@ -76,7 +76,7 @@ export const MainContent = styled.div`
 export const Row = styled.div`
   display: flex;
   gap: 20px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
