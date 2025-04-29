@@ -3,12 +3,12 @@ import React from 'react';
 //-------------------------------------------------------------//
 import PopularList from '../component/Search/PopularList';
 //import PopWhatList from '../component/Search/PopWhatList';
-import Festival from '../component/Search/Festival';
+import Festival from '../component/Festival/Festival';
 import Result from '../component/Search/Result';
 import ReviewList from '../component/Search/ReviewList';
 import Header from '../component/fragments/Header';
 import Footer from '../component/fragments/Footer';
-import MyListSample from '../component/fragments/MyListSample';
+//import MyListSample from '../component/fragments/MyListSample';
 import SearchFilterBar from '../component/Main/SearchFilterBar';
 //--------------------------------------------------------------//
 // CSS 컴포넌트
@@ -17,19 +17,20 @@ import {
   PageWrapper,
   BodyWrapper,
   LeftSide,
-  RightSide,
+  //RightSide,
   Main,
   MainContent,
   Row,
 } from '../styles/SearchResultStyles';
+import { RightSide } from '../styles/MainPageStyle';
 //--------------------------------------------------------------//
 //            구조              
-// |         header         |    <= 헤더(로고 및 회원 정보)
+// |         header        |    <= 헤더(로고 및 회원 정보,메뉴박스)
 // --------------------------
-// |menu |   검색바   |축제  |
-// |box  |    테마    |      |  <= 바디
-// |     |    결과    |      |
-// |     |  정보/후기 |      |
+// |  |      검색바    |   |
+// |  |       테마     |   |  <= 바디
+// |  |       결과     |   |
+// |  |     정보/후기  |    |
 // --------------------------
 // |        footer          |   <= 푸터
 // 총 3개의 큰 덩어리는 수직으로 나열해야함  하나의 div로 묶기 |              body의 [div]                        |
@@ -43,8 +44,6 @@ const SearchResult = () => {
       <BodyWrapper>
 
         <LeftSide>
-
-          <MyListSample />
 
         </LeftSide>
 
@@ -64,12 +63,9 @@ const SearchResult = () => {
 
           </MainContent>
         </Main>
+        <RightSide/>
 
-        <RightSide>
-
-          <Festival />
-
-        </RightSide>
+       
 
       </BodyWrapper>
 

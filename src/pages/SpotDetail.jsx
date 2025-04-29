@@ -1,30 +1,44 @@
 import React from 'react';
-import { PageWrapper, BodyWrapper,LeftSide, Main,MainContent} from '../styles/SearchResultStyles';
+//CSS
+import { 
+    PageWrapper, 
+    BodyWrapper,
+    LeftSide,
+    RightSide,
+    Main,
+    MainContent,
+    Row,
+    } from '../styles/DetailPageStyle';
+//------------------------------------------
+// 구조 컴포넌트
 import Footer from '../component/fragments/Footer';
 import Header from '../component/fragments/Header';
-import MyListSample from '../component/fragments/MyListSample';
 import SpotInfo from '../component/SpotDetail/SpotInfo'
 import ReviewList from '../component/Search/ReviewList';
 import SpotMap from '../component/SpotDetail/SpotMap';
+//-------------------------------------------
+
 const SpotDetail = () => {
     return (
         <PageWrapper>
             <Header />
+            
             <BodyWrapper>
-                <LeftSide>
-
-                    <MyListSample />
-                </LeftSide>
+                <LeftSide/>
                 <Main>
                     
                     <MainContent>
-                        <SpotInfo/>
-                        <ReviewList/>
+                        <Row><SpotInfo/>
+                        <ReviewList/></Row>
+                        
                         <SpotMap/>
+
                     </MainContent>
                     
                 </Main>
+                <RightSide/>
             </BodyWrapper>
+            
             <Footer />
         </PageWrapper>
     );

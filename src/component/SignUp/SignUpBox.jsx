@@ -1,9 +1,11 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+
 const SignUpBox = () => {
     return (
         <>
+
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
@@ -11,8 +13,8 @@ const SignUpBox = () => {
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="loginId" name="loginId" className="form-control" placeholder="ID를 입력해주세요" />
-                                    <button type="button" id="loginIdCheckBtn" className="btn btn-success col-2">중복확인</button>
                                 </div>
+                                <button type="button" id="loginIdCheckBtn" className="btn btn-success col-4">중복확인</button>
                                 
                                 <div className="ml-3 mb-3">
                                     <div id="idCheckLength" className="small text-danger d-none">ID를 4자 이상 입력해주세요.</div>
@@ -41,8 +43,8 @@ const SignUpBox = () => {
                                 <span className="sign-up-subject">이메일</span>
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="email" name="email" className="form-control" placeholder="이메일을 입력하세요" />
-                                    <button type="button" id="certifyEmail" name="certifyEmail" className="btn col-2 text-white" style={{backgroundColor:'#AE00FF'}}>인증</button>
                                 </div>
+                                <button type="button" id="certifyEmail" name="certifyEmail" className="btn col-3 text-white" style={{backgroundColor:'#AE00FF'}}>인증</button>
 
                                 <br />
                                 <div className="d-none">
@@ -69,7 +71,9 @@ const SignUpBox = () => {
                                 </div>
                             </form>
                 </div>
-	        </div>
+            </div>
+
+
         </>
     );
 };

@@ -47,7 +47,7 @@ export const Main = styled.main`
   }
 `;
 
-/*오른쪽 컨텐츠  */
+/*오른쪽 컨텐츠 (축제 정보) */
 export const RightSide = styled.div`
   flex: 0.5;
   min-width: 140px;
@@ -62,7 +62,7 @@ export const RightSide = styled.div`
 export const MainContent = styled.div`
   width: 100%;
   max-width: 900px;
-  margin: 20px auto;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 40px;

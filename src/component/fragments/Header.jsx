@@ -1,17 +1,37 @@
-import React from 'react';
-//import 'bootstrap/dist/css/bootstrap.min.css'; // 부트스트랩 CSS 가져오기
-import KorePlanLogo from '../../assets/KorePlan.png';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  HeaderWrapper,
+  LogoWrapper,
+  LogoImage,
+  CenterContent,
+  UserSection,
+} from "../../styles/HeaderStyle";
+import sam from "../../assets/sam.png";
+import MyList from "./MyList";
+import RealTimeRankingBar from "./RealtimeRanking";
+import { Avatar } from "@mui/material";
+import userAvatar from "../../assets/DefaultUserAvatar.png";
 
 const Header = () => {
-    return (
-        <header className="bg-success">
-            <div className="h-100 d-flex justify-content-between align-items-center mx-4" width="100%">
-                <img src={KorePlanLogo} alt="KorePlan 로고" width="100" />
-                <h1>KorePlan</h1>
-                <h5>윤현우</h5>
-            </div>
-        </header>
-    );
+  return (
+    <HeaderWrapper>
+      <LogoWrapper>
+        <Link to="/mainPage">
+          <LogoImage src={sam} alt="KorePlan 로고" />
+        </Link>
+      </LogoWrapper>
+
+      <CenterContent>
+        <RealTimeRankingBar />
+      </CenterContent>
+
+      <UserSection>
+        <Avatar src={userAvatar} />
+        <MyList />
+      </UserSection>
+    </HeaderWrapper>
+  );
 };
 
 export default Header;
