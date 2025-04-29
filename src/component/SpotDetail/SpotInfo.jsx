@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import SamplePopData from "../../datas/SearchSample/SamplePopData";
+import SamplePopData from "../../datas/Sample/SamplePopData";
 import ZzimButton from "../Button/ZzimButton";
 
 const SpotInfo = () => {

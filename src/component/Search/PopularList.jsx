@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ZzimButton from '../Button/ZzimButton';
 import { Link } from 'react-router-dom';
-import SamplePopData from '../../datas/SearchSample/SamplePopData';
+import SamplePopData from '../../datas/Sample/SamplePopData';
 
 const Popular = () => {
   const [likedList, setLikedList] = useState([]);

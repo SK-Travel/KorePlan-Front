@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from "react";
 import StarIcon from "@mui/icons-material/Star";
 import { CustomSelect } from "../../styles/HeaderStyle";
+import SamplePopData from "../../datas/Sample/SamplePopData";
+import SampleFesData from "../../datas/Sample/SampleFesData";
+import SampleHotelData from "../../datas/Sample/SampleHotelData";
+
+//나중에 백엔드 API 연동할 때 똑같은 구조로 realTimeData만 교체하기!!
 const realTimeData = {
-  spot: [
-    "부산 해운대",
-    "서울 남산타워",
-    "제주 성산일출봉",
-    "강릉 경포대",
-    "여수 오동도",
-  ],
-  hotel: [
-    "롯데호텔 서울",
-    "신라호텔",
-    "파라다이스시티",
-    "그랜드하얏트 제주",
-    "해비치 호텔",
-  ],
-  festival: [
-    "진해 군항제",
-    "함평 나비축제",
-    "안동 탈춤축제",
-    "화천 산천어축제",
-    "보령 머드축제",
-  ],
+  spot: SamplePopData.map((item) => item.label),
+  hotel: SampleHotelData.map((item) => item.label),
+  festival: SampleFesData.map((item) => item.label),
 };
 
 const RealTimeRankingBar = () => {
+  console.log("▶ realTimeData:", realTimeData);
   const [selected, setSelected] = useState("spot");
   const [index, setIndex] = useState(0);
 
@@ -40,12 +28,14 @@ const RealTimeRankingBar = () => {
   }, [selected]);
 
   return (
+    
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        fontSize: "14px",
-        padding: "8px 16px",
+        height: "60px",                
+        fontSize: "16px",              
+        padding: "12px 20px", 
         backgroundColor: "#228B22",
         color: "#fff",
         width: "100%",
@@ -59,6 +49,11 @@ const RealTimeRankingBar = () => {
         onChange={(e) => {
           setSelected(e.target.value);
           setIndex(0);
+        }}
+        style={{
+          fontSize: "15px",            
+          padding: "6px 30px 6px 12px", 
+          marginRight: "10px",         
         }}
       >
         <option value="spot">여행지</option>
