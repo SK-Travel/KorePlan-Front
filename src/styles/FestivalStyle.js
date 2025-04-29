@@ -27,7 +27,6 @@ export const LeftSide = styled.div`
   padding: 16px;
   font-size: 14px;
   top: 10px;
-  position: sticky;
   @media (max-width: 768px) {
     
     display: none;

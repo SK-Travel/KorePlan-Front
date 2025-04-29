@@ -65,7 +65,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { FaUser, FaHeart, FaChartBar, FaCalendarAlt, FaRobot } from 'react-icons/fa'
-
+import LogoutIcon from '@mui/icons-material/Logout';
 export default function MyList() {
   //메뉴에 들어갈 리스트들.
   const menuItems = [
@@ -74,6 +74,7 @@ export default function MyList() {
     { label: '인기차트', icon: <FaChartBar />, link: '#' },
     { label: '이번달 축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
     { label: 'AI 챗봇', icon: <FaRobot />, link: '#' },
+    { label: '로그아웃', icon: <LogoutIcon/>, link: '#'},
   ];
   const [show, setShow] = useState(false);
   const toggleMenu = () => setShow((prev) => !prev);
@@ -144,10 +145,10 @@ export default function MyList() {
         onOpen={toggleMenu}
         PaperProps={{
           sx: {
-            height: '34%',   // Drawer 자체 높이를 50%로
+            height: '50%',   // Drawer 자체 높이를 50%로
             borderTopLeftRadius: 16, //둥글게
             borderBottomLeftRadius: 16,
-            backgroundColor: '#f5f5f5 !important',
+            backgroundColor: '#228B22 !important',
           }
         }}
       >

@@ -62,7 +62,7 @@ export const RightSide = styled.div`
 export const MainContent = styled.div`
   width: 100%;
   max-width: 900px;
-  margin: 0 auto;
+  margin: 20px auto;
   display: flex;
   flex-direction: column;
   gap: 40px;
