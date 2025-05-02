@@ -3,20 +3,29 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const SignUpBox = () => {
     const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
+    const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 확인
     
+
+    // 중복 loginId체크하는 코드
     const handleIdChecked = async() => {
         //중복 loginId있는지 확인
         const loginId = document.getElementById('loginId').value.trim();
         console.log(loginId);
 
-        // 우선 모든 메시지 숨기기
+        // 우선 모든 메시지 정의하기
         const idCheckLength = document.getElementById("idCheckLength") // ID 4자 이하
         const idCheckDuplicated = document.getElementById("idCheckDuplicated") // ID 중복일 때 내미는
         const idCheckOk = document.getElementById("idCheckOk") // ID 중복 아닐 때 내미는
+
+        //모든 메시지 초기화(그래야 메시지가 없어짐)
+        idCheckLength.classList.add("d-none");
+        idCheckDuplicated.classList.add("d-none");
+        idCheckOk.classList.add("d-none");
         
         if (loginId.length < 4) {
             idCheckLength.classList.remove("d-none");
             setIdChecked(false);
+            return;
         }
 
         const formData = new URLSearchParams();
@@ -33,14 +42,18 @@ const SignUpBox = () => {
             console.log(response);
             
             if(response.ok) {
-                const is_duplicated_id = await response.json();
+                const data = await response.json();
+                console.log(data);
 
-                if (is_duplicated_id.true) {
+
+                if (data.is_duplicated_id === true) {
                     idCheckDuplicated.classList.remove("d-none");
                     setIdChecked(false);
+                    return;
                 } else {
                     idCheckOk.classList.remove("d-none");
                     setIdChecked(true);
+                    return;
                 }
             } else {
                 console.error("응답 오류: ", response.status);
@@ -52,7 +65,25 @@ const SignUpBox = () => {
 
     }
     
+    //이메일 인증하는 코드
 
+
+    //form코드 submit막는 코드
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // ID체크
+        if(!idChecked) {
+            alert("ID중복을 확인해주세요.");
+            return;
+        }
+
+        //이메일 인증 체크
+
+        
+        // 모두 통과하면 백엔드로 실제 폼 제출
+        document.getElementById("signUpForm").submit();
+    }
 
     return (
         <>
@@ -60,7 +91,7 @@ const SignUpBox = () => {
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
-                            <form id="signUpForm" method="post" action="/user/sign-up">
+                            <form id="signUpForm" method="post" action="/user/sign-up" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="loginId" name="loginId" className="form-control" placeholder="ID를 입력해주세요" />
