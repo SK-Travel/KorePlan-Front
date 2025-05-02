@@ -1,8 +1,59 @@
-import React from 'react';
+import React, {useState} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
 const SignUpBox = () => {
+    const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
+    
+    const handleIdChecked = async() => {
+        //중복 loginId있는지 확인
+        const loginId = document.getElementById('loginId').value.trim();
+        console.log(loginId);
+
+        // 우선 모든 메시지 숨기기
+        const idCheckLength = document.getElementById("idCheckLength") // ID 4자 이하
+        const idCheckDuplicated = document.getElementById("idCheckDuplicated") // ID 중복일 때 내미는
+        const idCheckOk = document.getElementById("idCheckOk") // ID 중복 아닐 때 내미는
+        
+        if (loginId.length < 4) {
+            idCheckLength.classList.remove("d-none");
+            setIdChecked(false);
+        }
+
+        const formData = new URLSearchParams();
+        formData.append("loginId", loginId);
+
+        try {
+            const response = await fetch('/api/user/is-duplicated-id', {
+                method: 'POST',
+                headers: {
+                    'Content-Type' : 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+            console.log(response);
+            
+            if(response.ok) {
+                const is_duplicated_id = await response.json();
+
+                if (is_duplicated_id.true) {
+                    idCheckDuplicated.classList.remove("d-none");
+                    setIdChecked(false);
+                } else {
+                    idCheckOk.classList.remove("d-none");
+                    setIdChecked(true);
+                }
+            } else {
+                console.error("응답 오류: ", response.status);
+            }
+
+        } catch (error) {
+            console.error("서버 통신 오류:", error);
+        }
+
+    }
+    
+
+
     return (
         <>
 
@@ -14,7 +65,7 @@ const SignUpBox = () => {
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="loginId" name="loginId" className="form-control" placeholder="ID를 입력해주세요" />
                                 </div>
-                                <button type="button" id="loginIdCheckBtn" className="btn btn-success col-4">중복확인</button>
+                                <button type="button" id="loginIdCheckBtn" className="btn btn-success col-4" onClick={handleIdChecked}>중복확인</button>
                                 
                                 <div className="ml-3 mb-3">
                                     <div id="idCheckLength" className="small text-danger d-none">ID를 4자 이상 입력해주세요.</div>
