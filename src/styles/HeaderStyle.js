@@ -2,7 +2,8 @@ import styled from 'styled-components';
 
 // 헤더 전체 래퍼
 export const HeaderWrapper = styled.header`
-  background-color: #228B22;
+  background-color:rgb(255, 255, 255);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   height: 100px;
   width: 100%;
   display: flex;
@@ -62,10 +63,10 @@ export const UserSection = styled.div`
 export const CustomSelect = styled.select`
 
   padding: 6px 25px 6px 12px; /* 오른쪽 패딩을 충분히 확보  -> 화살표 V 먹힘 방지*/
-  border: 2px solid #228B22;
+  border: 2px solid rgb(54, 116, 54);
   border-radius: 6px;
   background-color: white;
-  color: #228B22;
+  color:rgb(0, 0, 0);
   font-weight: 600;
   font-size: 14px;
   appearance: none; /* 기본 화살표 제거 */

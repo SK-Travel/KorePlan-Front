@@ -14,6 +14,7 @@ export const BodyWrapper = styled.div`
   width: 100%;
   gap: 20px;
   background-color: #ffffff;
+  margin-top: 20px;
   padding: 0px;
   @media (max-width: 1024px) {
     
@@ -63,11 +64,12 @@ export const MainContent = styled.div`
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 40px;
   padding: 0 16px;
-
+  align-items: center;
   @media (max-width: 768px) {
     padding: 0 8px;
   }

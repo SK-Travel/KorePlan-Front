@@ -52,15 +52,12 @@ const MainPage = () => {
                             <Top10HF />
 
                         </Row>
-                        <Row>
+                       
                             <Calendar />
-                            <></>
-                        </Row>
+                        
                     </MainContent>
                 </Main>
                 <RightSide/>
-
-                <RightSide />
 
             </BodyWrapper>
 

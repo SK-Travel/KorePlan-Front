@@ -13,7 +13,6 @@ const realTimeData = {
 };
 
 const RealTimeRankingBar = () => {
-  console.log("▶ realTimeData:", realTimeData);
   const [selected, setSelected] = useState("spot");
   const [index, setIndex] = useState(0);
 
@@ -36,8 +35,8 @@ const RealTimeRankingBar = () => {
         height: "60px",                
         fontSize: "16px",              
         padding: "12px 20px", 
-        backgroundColor: "#228B22",
-        color: "#fff",
+        backgroundColor: "rgb(255,255,255,0.5)",
+        color: "#000",
         width: "100%",
         maxWidth: "100vw",
         boxSizing: "border-box",
@@ -76,7 +75,7 @@ const RealTimeRankingBar = () => {
           ? "숙소"
           : "축제"}{" "}
         ▸&nbsp;
-        <strong style={{ color: "#fff" }}>{currentList[index]}</strong>
+        <strong style={{ color: "#000" }}>{currentList[index]}</strong>
       </div>
     </div>
   );
