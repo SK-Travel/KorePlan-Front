@@ -23,11 +23,10 @@ const Header = () => {
       </LogoWrapper>
 
       <CenterContent>
-        <RealTimeRankingBar />
+        {/* <RealTimeRankingBar /> */}
       </CenterContent>
 
       <UserSection>
-        <Avatar src={userAvatar} />
         <MyList />
       </UserSection>
     </HeaderWrapper>
