@@ -3,7 +3,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const SignUpBox = () => {
     const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
-    const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 확인
+    const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 여부 상태
+    const [emailCodeTimer, setEmailCodeTimer] = useState(0); // 타이머설정
+    const [emailFailCount, setEmailFailCount] = useState(0); // 이메일 인증 코드 횟수 제한
     
 
     // 중복 loginId체크하는 코드
@@ -63,9 +65,124 @@ const SignUpBox = () => {
             console.error("서버 통신 오류:", error);
         }
 
-    }
+    };
+
+    //이메일 인증 요청 함수
+    const sendEmailVerification = async() => {
+        const email = document.getElementById('email').value.trim();
+        
+        if (!email.includes("@")) {
+            alert("올바른 이메일 형식이 아닙니다.");
+            return;
+        }
+
+        const type = email.includes("gmail") ? "gmail" : "naver"; // 이메일 주소 기준 type 추출
+
+        const smtpInfo = {
+            email: email,
+            type: type
+        };
+
+        try {
+            const response = await fetch("/api/email/send-code", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(smtpInfo)
+            });
+            if(response.ok) {
+                alert("이메일로 인증번호를 보냈습니다.");
+                document.querySelector("#emailCodeBox").classList.remove("d-none"); // 인증번호 입력창보이기
+                startEmailCodeTimer();
+            } else {
+                alert("이메일 인증 요청에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("이메일 인증 요청 중 오류: ", error);
+        }
+    };
+
+
+    // 이메일 인증 확인 요청 함수
+    const handleEmailCodeCheck = async () => {
+        const code = document.getElementById('emailCode').value.trim();
+        const email = document.getElementById('email').value.trim();
+
+        // 인증코드 타이머 제한
+        if (emailCodeTimer <= 0) {
+            alert("인증코드가 만료됐습니다. 다시 요청하세요.");
+            return;
+        }
+        // 인증코드 횟수 제한
+        if (emailFailCount >= 5) {
+            alert("인증 실패 횟수가 초과되었습니다. 다시 요청하세요.");
+            document.getElementById("emailCodeBox").classList.add("d-none"); // 인증 입력창 숨김
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/email/verify-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    code : code
+                })
+            });
+
+            const errorDiv = document.getElementById('emailCodeError');
+            const correctDiv = document.getElementById('emailCodeCorrect');
+
+            //이메일 d-none 초기화
+            errorDiv.classList.add('d-none');
+            correctDiv.classList.add('d-none');
+            
+
+            const text = await response.text();
+
+            if (response.ok) {
+                //200처리
+                    correctDiv.classList.remove('d-none'); // 인증완료로 나오게 하기
+                    setEmailVerified(true);
+                    setEmailFailCount(0);
+
+                    document.getElementById("emailCodeTimer").classList.add("d-none");
+                    document.getElementById("emailFailCount").classList.add("d-none");
+                    return; //실패처리 안되게 로직 추가
+                } else {
+                console.error("인증 실패:", text); // 400처리
+                errorDiv.classList.remove("d-none");
+                setEmailVerified(false);
+                setEmailFailCount(prev => prev + 1);
+            }   
+        } catch (error) {
+            console.log("인증코드 확인 중 오류: ", error);
+            setEmailVerified(false);
+            setEmailFailCount(prev => prev + 1);
+        }
+    };
     
-    //이메일 인증하는 코드
+    const startEmailCodeTimer = () => {
+        let time = 300;
+        setEmailCodeTimer(time);
+
+        const timerId = setInterval(() => {
+            time -= 1;
+            setEmailCodeTimer(time);
+
+            if (time <= 0) {
+                clearInterval(timerId);
+                alert("인증번호가 만료됐습니다. 다시 인증해주세요");
+                setEmailCodeTimer(false); // 타이머 초기화
+                setEmailFailCount(0); // 실패 횟수도 초기화
+                document.getElementById('emailCodeBox').classList.add("d-none"); // 인증 코드 박스 숨기기: 초기화
+            }
+        }, 1000);
+    };
+
 
 
     //form코드 submit막는 코드
@@ -76,14 +193,17 @@ const SignUpBox = () => {
         if(!idChecked) {
             alert("ID중복을 확인해주세요.");
             return;
-        }
+        };
 
         //이메일 인증 체크
+        if (!emailVerified) {
+            alert("이메일 인증을 해주세요.");
+            return;
+        }
 
-        
         // 모두 통과하면 백엔드로 실제 폼 제출
         document.getElementById("signUpForm").submit();
-    }
+    };
 
     return (
         <>
@@ -126,20 +246,27 @@ const SignUpBox = () => {
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="email" name="email" className="form-control" placeholder="이메일을 입력하세요" />
                                 </div>
-                                <button type="button" id="certifyEmail" name="certifyEmail" className="btn col-3 text-white" style={{backgroundColor:'#AE00FF'}}>인증</button>
+                                <button type="button" id="certifyEmail" name="certifyEmail" className="btn col-3 text-white" style={{backgroundColor:'#AE00FF'}} onClick={sendEmailVerification}>인증</button>
 
                                 <br />
-                                <div className="d-none">
+                                <div id="emailCodeBox" className="d-none">
                                     <span className="sign-up-subject">이메일 인증번호</span>
                                     <div className="d-flex">
-                                        <input type="text" id="email" name="email" className="form-control" placeholder="인증번호를 입력하세요" />
-                                        <button type="button" id="confirmCertifyEmail" name="confirmCertifyEmail" className="btn col-2 text-white" style={{backgroundColor:'#0022FF'}}>확인</button>
+                                        <input type="text" id="emailCode" name="emailCode" className="form-control" placeholder="인증번호를 입력하세요" />
+                                        <button type="button" id="checkEmailCodeBtn" name="checkEmailCodeBtn" className="btn col-2 text-white" style={{backgroundColor:'#0022FF'}} onClick={handleEmailCodeCheck} disabled={emailFailCount >= 5}>확인</button>
                                     </div>
 
                                     <div className="ml-3 mb-3">
-                                        <div id="idCheckLength" className="small text-danger d-none">ID를 4자 이상 입력해주세요.</div>
-                                        <div id="idCheckDuplicated" className="small text-danger d-none">이미 사용중인 ID입니다.</div>
-                                        <div id="idCheckOk" className="small text-success d-none">사용 가능한 ID 입니다.</div>
+                                        <div id="emailCodeError" className="small text-danger d-none">일치하지 않습니다.</div>
+                                        <div id="emailCodeCorrect" className="small text-success d-none">인증완료</div>
+                                    </div>
+                                    <div id="emailCodeTimer" className="ml-3 small text-muted">
+                                        {emailCodeTimer > 0 
+                                            ? `⏱ 남은 시간: ${Math.floor(emailCodeTimer / 60)}:${(emailCodeTimer % 60).toString().padStart(2, '0')}`
+                                            : "⏱ 인증번호 만료됨"}
+                                    </div>
+                                    <div id="emailFailCount" className="ml-3 small text-muted">
+                                        ❌ 인증 실패: {emailFailCount} / 5
                                     </div>
                                 </div>
                                 
