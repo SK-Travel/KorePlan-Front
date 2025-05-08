@@ -10,8 +10,8 @@ import { ko } from 'date-fns/locale';
 
 // 모의 여행 계획 데이터
 const travelPlans = [
-    { id: 1, name: '가족여행', start: new Date(2025, 4, 5), end: new Date(2025, 4, 8) },
-    { id: 2, name: '제주 힐링여행', start: new Date(2025, 5, 4), end: new Date(2025, 5, 8) },
+    { id: 1, name: '가족여행', start: new Date(2025, 5, 7), end: new Date(2025, 5, 8) },
+    { id: 2, name: '제주 힐링여행', start: new Date(2025, 5, 9), end: new Date(2025, 5, 12) },
     { id: 3, name: '가평 빠지여행', start: new Date(2025, 7, 4), end: new Date(2025, 7, 8) },
     { id: 4, name: '2주년 여행', start: new Date(2025, 8, 28), end: new Date(2025, 9, 3) },
 ];

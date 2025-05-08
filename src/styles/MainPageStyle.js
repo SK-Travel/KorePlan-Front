@@ -4,7 +4,6 @@ export const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
- 
 `;
 
 export const BodyWrapper = styled.div`
@@ -14,30 +13,24 @@ export const BodyWrapper = styled.div`
   width: 100%;
   gap: 20px;
   background-color: #ffffff;
-  margin-top: 20px;
-  padding: 0px;
-  @media (max-width: 1024px) {
-    
-  }
+  margin-top: 10px;
+  padding: 0;
 `;
 
-/*왼쪽 메뉴 영역 */
 export const LeftSide = styled.div`
   flex: 0.5;
   min-width: 120px;
   padding: 16px;
   font-size: 14px;
   top: 10px;
-  position: sticky;
+
   @media (max-width: 768px) {
-    
     display: none;
   }
 `;
 
-/*가운데 콘텐츠 (넓게) */
 export const Main = styled.main`
-  flex: 2.5;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -48,7 +41,6 @@ export const Main = styled.main`
   }
 `;
 
-/*오른쪽 컨텐츠 (축제 정보) */
 export const RightSide = styled.div`
   flex: 0.5;
   min-width: 140px;
@@ -56,29 +48,31 @@ export const RightSide = styled.div`
   font-size: 14px;
 
   @media (max-width: 768px) {
-  display: none;
+    display: none;
   }
 `;
 
+
 export const MainContent = styled.div`
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  margin-top: 10px;
+  max-width: 900px;           /* 최대 너비 유지 */
+  margin: 30px 0 0 0;         /* 상단만 30px, 좌우 모두 0으로 왼쪽 정렬 */
   display: flex;
   flex-direction: column;
   gap: 40px;
-  padding: 0 16px;
-  align-items: center;
+  padding: 0 16px;            /* 좌우 여백은 그대로 유지 */
+  align-items: flex-start;    /* 내부 컴포넌트도 왼쪽 정렬 */
+
   @media (max-width: 768px) {
     padding: 0 8px;
   }
 `;
 
+
 export const Row = styled.div`
   display: flex;
   gap: 20px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }

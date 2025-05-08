@@ -56,7 +56,14 @@ export const UserSection = styled.div`
   color: white;
   font-size: 16px;
 `;
+export const Row = styled.div`
+  display: flex;
+  gap: 20px;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
 
 //Select 커스텀 
 //추후 헤더 색상이 바뀌거나 하면 색상 변경 및 구조 변경
