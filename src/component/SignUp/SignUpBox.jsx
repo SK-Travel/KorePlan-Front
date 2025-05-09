@@ -191,14 +191,19 @@ const SignUpBox = () => {
 
 
     // submit관련 코드
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         //form코드 submit막는 코드
         e.preventDefault();
+        //alert("회원가입");
 
+        // validation
+        const loginId = document.getElementById("loginId").value.trim();
         const password = document.getElementById("password").value.trim();
         const confirmPassword = document.getElementById("confirmPassword").value.trim();
         const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
+
 
         // ID체크
         if (!idChecked) {
@@ -233,9 +238,37 @@ const SignUpBox = () => {
             alert("전화번호를 입력해주세요.");
             return;
         }
-        
-        // 모두 통과하면 백엔드로 실제 폼 제출
-        document.getElementById("signUpForm").submit();
+
+        const userData = {
+            loginId: loginId,
+            password: password,
+            name: name,
+            email: email,
+            phoneNumber: phoneNumber
+        }
+
+        // await 요청
+        try {
+            const response = await fetch('api/user/sign-up', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.code === 200) {
+                    alert("회원가입 성공! 로그인 페이지로 이동합니다.");
+                    window.location.href = "/signIn"; // signIn으로 이동
+                } else {
+                    alert("회원가입 실패: " + data.error_message);
+                }
+            }
+        } catch (error) {
+            console.log("회원가입 중 실행 오류: ", error);
+        }
     };
 
     return (
@@ -244,7 +277,7 @@ const SignUpBox = () => {
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
-                            <form id="signUpForm" method="post" action="/user/sign-up" onSubmit={handleSubmit}>
+                            <form id="signUpForm" method="post" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">
                                     <input type="text" id="loginId" name="loginId" className="form-control" placeholder="ID를 입력해주세요" />
