@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { DatabaseAdd } from 'react-bootstrap-icons';
 
 const SignUpBox = () => {
     const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
@@ -93,7 +94,7 @@ const SignUpBox = () => {
             });
             if(response.ok) {
                 alert("이메일로 인증번호를 보냈습니다.");
-                document.querySelector("#emailCodeBox").classList.remove("d-none"); // 인증번호 입력창보이기
+                document.getElementById("emailCodeBox").classList.remove("d-none"); // 인증번호 입력창보이기
                 startEmailCodeTimer();
             } else {
                 alert("이메일 인증 요청에 실패했습니다.");
@@ -109,6 +110,13 @@ const SignUpBox = () => {
         const code = document.getElementById('emailCode').value.trim();
         const email = document.getElementById('email').value.trim();
 
+        // 이메일 인증박스(EmailCodeBox)에 있는 것들.
+        const codeBoxDiv = document.getElementById("emailCodeBox");
+        const errorDiv = document.getElementById('emailCodeError');
+        const correctDiv = document.getElementById('emailCodeCorrect');
+        const timerDiv = document.getElementById("emailCodeTimer");
+        const failCountDiv = document.getElementById("emailFailCount");
+
         // 인증코드 타이머 제한
         if (emailCodeTimer <= 0) {
             alert("인증코드가 만료됐습니다. 다시 요청하세요.");
@@ -117,7 +125,7 @@ const SignUpBox = () => {
         // 인증코드 횟수 제한
         if (emailFailCount >= 5) {
             alert("인증 실패 횟수가 초과되었습니다. 다시 요청하세요.");
-            document.getElementById("emailCodeBox").classList.add("d-none"); // 인증 입력창 숨김
+            codeBoxDiv.classList.add("d-none");
             return;
         }
 
@@ -132,34 +140,32 @@ const SignUpBox = () => {
                     code : code
                 })
             });
-
-            const errorDiv = document.getElementById('emailCodeError');
-            const correctDiv = document.getElementById('emailCodeCorrect');
-
-            //이메일 d-none 초기화
-            errorDiv.classList.add('d-none');
-            correctDiv.classList.add('d-none');
             
-
-            const text = await response.text();
-
             if (response.ok) {
-                //200처리
-                    correctDiv.classList.remove('d-none'); // 인증완료로 나오게 하기
-                    setEmailVerified(true);
-                    setEmailFailCount(0);
+                // 성공 처리
+                correctDiv.classList.remove('d-none'); // 인증완료로 나오게 하기
+                errorDiv.classList.add("d-none");
+                setEmailVerified(true);
+                setEmailFailCount(0);
 
-                    document.getElementById("emailCodeTimer").classList.add("d-none");
-                    document.getElementById("emailFailCount").classList.add("d-none");
-                    return; //실패처리 안되게 로직 추가
-                } else {
-                console.error("인증 실패:", text); // 400처리
+                //안 숨기고 있다가 인증성공 하면 d-none(타이머, 실패횟수)
+                timerDiv.classList.add("d-none");
+                failCountDiv.classList.add("d-none");
+
+            } else {
+                // 실패 처리
+                correctDiv.classList.add("d-none");
                 errorDiv.classList.remove("d-none");
+
                 setEmailVerified(false);
                 setEmailFailCount(prev => prev + 1);
             }   
         } catch (error) {
+            // 안 넘어간 거 아예
             console.log("인증코드 확인 중 오류: ", error);
+            correctDiv.classList.add("d-none");
+            errorDiv.classList.remove("d-none");
+
             setEmailVerified(false);
             setEmailFailCount(prev => prev + 1);
         }
@@ -184,16 +190,37 @@ const SignUpBox = () => {
     };
 
 
-
-    //form코드 submit막는 코드
+    // submit관련 코드
     const handleSubmit = (e) => {
+        //form코드 submit막는 코드
         e.preventDefault();
 
+        const password = document.getElementById("password").value.trim();
+        const confirmPassword = document.getElementById("confirmPassword").value.trim();
+        const name = document.getElementById("name").value.trim();
+        const phoneNumber = document.getElementById("phoneNumber").value.trim();
+
         // ID체크
-        if(!idChecked) {
+        if (!idChecked) {
             alert("ID중복을 확인해주세요.");
             return;
         };
+
+        // 비밀번호, 비밀번호 확인했는지 체크
+        if (!password || !confirmPassword) {
+            alert("비밀번호를 입력하세요.");
+            return;
+        }
+        if (password !== confirmPassword) {
+            alert("비밀번호가 일치하지 않습니다.");
+            return;
+        }
+
+        // 이름 체크
+        if (!name) {
+            alert("이름을 입력해주세요");
+            return;
+        }
 
         //이메일 인증 체크
         if (!emailVerified) {
@@ -201,6 +228,12 @@ const SignUpBox = () => {
             return;
         }
 
+        // 전화번호 체크
+        if (!phoneNumber) {
+            alert("전화번호를 입력해주세요.");
+            return;
+        }
+        
         // 모두 통과하면 백엔드로 실제 폼 제출
         document.getElementById("signUpForm").submit();
     };
