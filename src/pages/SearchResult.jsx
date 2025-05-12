@@ -1,76 +1,47 @@
-import React from 'react';
-// 구조 컴포넌트
-//-------------------------------------------------------------//
-import PopularList from '../component/Search/PopularList';
-//import PopWhatList from '../component/Search/PopWhatList';
-import Festival from '../component/Festival/Festival';
-import Result from '../component/Search/Result';
-import ReviewList from '../component/Search/ReviewList';
+import React, { useEffect } from 'react';
+import styled from 'styled-components';
 import Header from '../component/fragments/Header';
 import Footer from '../component/fragments/Footer';
-//import MyListSample from '../component/fragments/MyListSample';
-import SearchFilterBar from '../component/Main/SearchFilterBar';
-//--------------------------------------------------------------//
-// CSS 컴포넌트
-//--------------------------------------------------------------//
 import {
   PageWrapper,
   BodyWrapper,
-  LeftSide,
-  //RightSide,
   Main,
   MainContent,
-  Row,
 } from '../styles/SearchResultStyles';
-import { RightSide } from '../styles/MainPageStyle';
-//--------------------------------------------------------------//
-//            구조              
-// |         header        |    <= 헤더(로고 및 회원 정보,메뉴박스)
-// --------------------------
-// |  |      검색바    |   |
-// |  |       테마     |   |  <= 바디
-// |  |       결과     |   |
-// |  |     정보/후기  |    |
-// --------------------------
-// |        footer          |   <= 푸터
-// 총 3개의 큰 덩어리는 수직으로 나열해야함  하나의 div로 묶기 |              body의 [div]                        |
-// 바디의 3가지의 작은 덩어리들은 수평으로 나열해야함. =>         (div) menu  /  (div) main  / (div) fest
-
 
 const SearchResult = () => {
+  useEffect(() => {
+    const mapOptions = {
+      center: new naver.maps.LatLng(37.3595704, 127.105399),
+      zoom: 10,
+    };
+
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+      new naver.maps.Map('map', mapOptions);
+    }
+  }, []);
+
   return (
     <PageWrapper>
       <Header />
       <BodyWrapper>
-
-        <LeftSide>
-
-        </LeftSide>
-
         <Main>
           <MainContent>
-
-            <SearchFilterBar />
-        
-            <PopularList />
-            
-            <Row>
-
-              <Result />
-              <ReviewList />
-
-            </Row>
-
+            {/* ✅ 지도만 출력 */}
+            <div
+              id="map"
+              style={{
+                width: '100%',
+                height: '500px',
+                marginTop: '30px',
+                borderRadius: '8px',
+              }}
+            />
           </MainContent>
         </Main>
-        <RightSide/>
-
-       
-
       </BodyWrapper>
-
       <Footer />
-      
     </PageWrapper>
   );
 };
