@@ -277,6 +277,9 @@ const SignUpBox = () => {
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
+                            <button type="button" className="btn btn-light mt-3" onClick={() => window.location.href = "/oauth2/authorization/google"}>
+                                <i className="bi bi-google"></i> 구글 계정으로 회원가입
+                            </button>
                             <form id="signUpForm" method="post" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">
