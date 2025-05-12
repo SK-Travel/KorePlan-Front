@@ -10,6 +10,7 @@ import Footer from '../component/fragments/Footer.jsx';
 import Calendar from '../component/Main/Calendar.jsx';
 import Top5Place from '../component/Main/Top5Place.jsx';
 import Top5Hotel from '../component/Main/Top5Hotel.jsx';
+import Top5Festival from '../component/Main/Top5Festival.jsx';
 ///--형 거 복붙
 //import MyListSample from '../component/fragments/MyListSample';
 import SearchFilterBar from '../component/Main/SearchFilterBar';
@@ -36,19 +37,19 @@ const MainPage = () => {
             <Header />
 
             
-
-
+            <BodyWrapper>
+            <LeftSide></LeftSide>
                 <Main>
                     <MainContent>
                         <Top5Place />
-                        <Top5Place />
-                        {/* <Top5Hotel /> */}
+                        <Top5Hotel />
+                        <Top5Festival/>
                         <Calendar />
                     </MainContent>
                 </Main>
+            <RightSide></RightSide>
 
-
-            
+            </BodyWrapper>
 
             <Footer />
         </PageWrapper>

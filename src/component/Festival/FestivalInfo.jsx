@@ -24,7 +24,7 @@ const FestivalInfo = () => {
             <img src={spot.imgUrl} alt={spot.label} style={{
                 width: '50%',
                 height: '300px',
-                objectFit: 'contain',
+                objectFit: 'full',
                 borderRadius: '12px',
                 marginBottom: '24px',
                 boxShadow: '0 4px 10px rgba(255, 255, 255, 1)',

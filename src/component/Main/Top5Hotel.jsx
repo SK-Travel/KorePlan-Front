@@ -1,66 +1,100 @@
-// src/components/Top10Place.jsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import SampleHotelData from "../../datas/Sample/SampleHotelData";
+import Slider from "react-slick";
+import { MdArrowCircleRight, MdArrowCircleLeft } from "react-icons/md";
+import { Wrapper,TitleBox,SliderContainer,SlideItem,SlideImage,Overlay,
+ } from "../../styles/RolingSlideStyle";
 
-// React용 컴포넌트
-import { Swiper, SwiperSlide } from 'swiper/react';
-// 모듈은 modules 폴더에서!
-import { EffectCoverflow, Pagination } from 'swiper/modules';
 
-// 스타일
-import 'swiper/css';
-import 'swiper/css/effect-coverflow';
-import 'swiper/css/pagination';
+// 화살표 컴포넌트 (함수형으로 onClick 받음)
+const PrevArrow = (props) => {
+  const { onClick, style } = props;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...style,
+        position: "absolute",
+        top: "50%",
+        left: "10px",
+        transform: "translateY(-50%)",
+        zIndex: 2,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+      }}
+    >
+      <MdArrowCircleLeft size={36} color="#333" />
+    </button>
+  );
+};
 
-import styled from 'styled-components';
-import SampleHotelData from '../../datas/Sample/SampleHotelData';
+const NextArrow = (props) => {
+  const { onClick, style } = props;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...style,
+        position: "absolute",
+        top: "50%",
+        right: "10px",
+        transform: "translateY(-50%)",
+        zIndex: 2,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+      }}
+    >
+      <MdArrowCircleRight size={36} color="#333" />
+    </button>
+  );
+};
 
-const SlideContainer = styled.div`
-  width: 100%;
-  padding: 2rem 0;
-`;
 
-const SlideImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-`;
-
-export default function Top5Hotel() {
+function Top5Hotel() {
   const navigate = useNavigate();
 
+  const settings = {
+    className: "center",
+    centerMode: true,
+    infinite: true,
+    centerPadding: "100px",
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    speed: 500,
+    arrows: true,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
+
   return (
-    
-    <SlideContainer>
-      <Swiper
-        modules={[EffectCoverflow, Pagination]}
-        effect="coverflow"
-        grabCursor={true}
-        centeredSlides={true}
-        slidesPerView="auto"
-        coverflowEffect={{
-          rotate: 50,
-          stretch: 0,
-          depth: 100,
-          modifier: 1,
-          slideShadows: true,
-        }}
-        pagination={{ clickable: true }}
-        loop={true}
-      >
-        {SampleHotelData.map(item => (
-          <SwiperSlide
-            key={item.id}
-            style={{ width: '300px', height: '300px' }}
-            onClick={() => navigate(`/myTravel/detail/${item.id}`)}
-          >
-            <SlideImage src={item.imgUrl} alt={item.name} />
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </SlideContainer>
-  
+    <Wrapper>
+      <TitleBox>인기 숙소</TitleBox>
+      <SliderContainer>
+        <Slider {...settings}>
+          {SampleHotelData.map((item) => (
+            <SlideItem key={item.id} onClick={() => navigate(`/hotel/${item.id}`)}>
+              <SlideImage src={item.imgUrl} alt={item.label} />
+              <Overlay>
+                {item.label}
+              </Overlay>
+            </SlideItem>
+          ))}
+        </Slider>
+      </SliderContainer>
+    </Wrapper>
   );
 }
+
+export default Top5Hotel;
