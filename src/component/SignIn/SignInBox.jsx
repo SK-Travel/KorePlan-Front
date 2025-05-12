@@ -40,24 +40,17 @@ const SignInBox = () => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.code === 200) {
-                    alert("로그인 성공");
+                    alert(data.result);
                     window.location.href='/mainPage';
-                } else{
-                    alert("로그인 실패: ", data.error_message);
+                } else if (data.code === 400) { // 존재하지 않을 때(둘 중 하나라도 틀렸을 때)
+                    alert("로그인 실패: " + data.error_message);
+                } else {
+                    alert("로그인 실패: " + data.error_message);
                 }
-
-
             }
-
-
-            
         } catch (error) {
-            console.log("로그인 실행 중 오류: ", error);
+            console.log("로그인 실행 중 오류: " + error);
         }
-
-
-
-
     }
 
 
@@ -69,7 +62,7 @@ const SignInBox = () => {
                         <h1>로그인</h1>
                     </div>
                     {/* <!-- 엔터로 submit이 될 수 있게 form 태그를 만들어줌--> */}
-                    <form id="loginForm" method="post"  onSubmit={handleSubmit} >
+                    <form id="loginForm" method="post" onSubmit={handleSubmit} >
                         {/* <!-- id --> */}
                         <div className="input-group mb-3">
                             <div className="input-group-prepend">
@@ -89,6 +82,9 @@ const SignInBox = () => {
                         <input type="submit" className="btn btn-block btn-warning col-9 mt-3" value="로그인" />
                     </form>
                     <a className="btn btn-block btn-info col-9 mt-3" href="/signUp">회원가입</a>
+                    <a className="btn btn-light btn-block col-10 mt-3" href="/oauth2/authorization/google">
+                        <i className="bi bi-google"></i> 구글 계정으로 로그인
+                    </a>
             </div>
 	    </div>
     );
