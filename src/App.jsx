@@ -1,7 +1,7 @@
 import SignInPage from './pages/SignInPage.jsx';
 import SignUpPage from './pages/SignUpPage.jsx';
 import MainPage from "./pages/MainPage.jsx";
-import SearchResult from "./pages/SearchResult.jsx";
+import Search from "./pages/SearchPage.jsx";
 import TestPage from "./pages/TestPage.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -18,9 +18,9 @@ export function App() {
     { path: "/intro", element: <Intro/>}, //인트로 페이지(로그인 전)
     { path: "/signIn", element: <SignInPage /> }, // 로그인 페이지
     { path: "/signUp", element: <SignUpPage /> }, // 회원가입
-    { path:"/infoModified", element: <InfoModifiedPage /> }, // 정보 수정 페이진
+    { path:"/infoModified", element: <InfoModifiedPage /> }, // 정보 수정 페이지
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
-    { path: "/search", element: <SearchResult /> }, // 검색 결과
+    { path: "/search", element: <Search /> }, // 검색 페이지
     { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
     { path: "/festival/:id",element:<DetailFestival/>},//축제 상세 정보 페이지
