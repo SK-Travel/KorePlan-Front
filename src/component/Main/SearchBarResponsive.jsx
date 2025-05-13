@@ -4,12 +4,13 @@ import { Form, Button, Row, Col } from 'react-bootstrap';
 const SearchBarResponsive = () => {
   return (
     <Form className="w-100">
-      <Row className="g-2 align-items-center">
+      <Row className="g-2 align-items-center" style={{alignContent:'center'}}>
         <Col xs={9} sm={10}>
           <Form.Control
             type="text"
             placeholder="여행지"
             className="w-100"
+            
             style={{ height: '50px', fontSize: '16px' }}
           />
         </Col>

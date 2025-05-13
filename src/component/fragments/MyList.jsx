@@ -91,7 +91,7 @@ export default function MyList() {
         onOpen={toggleMenu}
         PaperProps={{
           sx: {
-            height: '100%',   // Drawer 자체 높이를 50%로
+            height: '100%',   
             borderTopLeftRadius: 16, //둥글게
             borderBottomLeftRadius: 16,
             
