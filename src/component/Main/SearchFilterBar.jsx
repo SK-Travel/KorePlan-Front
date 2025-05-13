@@ -2,7 +2,15 @@ import React from 'react';
 import SearchBarResponsive from './SearchBarResponsive';
 import ChooseBarResponsive from './ChooseBarResponsive';
 
-const SearchFilterBar = () => {
+const SearchFilterBar = ({
+  searchTerm,
+  onSearchChange,
+  onSearchSubmit,
+  selectedWho,
+  selectedWhat,
+  onSelectWho,
+  onSelectWhat,
+}) => {
   return (
     <div
       style={{
@@ -15,15 +23,22 @@ const SearchFilterBar = () => {
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px', 
+        gap: '16px',
       }}
     >
-      <SearchBarResponsive />
-      <ChooseBarResponsive />
+      <SearchBarResponsive
+        value={searchTerm}
+        onChange={onSearchChange}
+        onSubmit={onSearchSubmit}
+      />
+      <ChooseBarResponsive
+        selectedWho={selectedWho}
+        selectedWhat={selectedWhat}
+        onSelectWho={onSelectWho}
+        onSelectWhat={onSelectWhat}
+      />
     </div>
   );
 };
 
 export default SearchFilterBar;
-
-

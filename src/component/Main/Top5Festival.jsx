@@ -84,7 +84,7 @@ function Top5Hotel() {
       <SliderContainer>
         <Slider {...settings}>
           {SampleFesData.map((item) => (
-            <SlideItem key={item.id} onClick={() => navigate(`/hotel/${item.id}`)}>
+            <SlideItem key={item.id} onClick={() => navigate(`/festival/${item.id}`)}>
               <SlideImage src={item.imgUrl} alt={item.label} />
               <Overlay>
                 {item.label}
