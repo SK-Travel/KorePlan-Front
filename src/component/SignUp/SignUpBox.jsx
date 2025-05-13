@@ -1,13 +1,32 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatabaseAdd } from 'react-bootstrap-icons';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 
 const SignUpBox = () => {
     const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
     const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 여부 상태
     const [emailCodeTimer, setEmailCodeTimer] = useState(0); // 타이머설정
     const [emailFailCount, setEmailFailCount] = useState(0); // 이메일 인증 코드 횟수 제한
+
+    const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
+    const [searchParams] = useSearchParams();
+
     
+    useEffect(() => {
+        // LocalStorage에서 이메일과 이름 가져오기
+        const savedEmail = localStorage.getItem('email');
+        const savedName = localStorage.getItem('name');
+        
+        if (savedEmail) {
+        setEmail(savedEmail); // 자동으로 이메일 채우기
+        }
+        if (savedName) {
+        setName(savedName); // 자동으로 이름 채우기
+        }
+    }, []);
 
     // 중복 loginId체크하는 코드
     const handleIdChecked = async() => {
@@ -190,7 +209,7 @@ const SignUpBox = () => {
     };
 
 
-    // submit관련 코드
+    // 회원가입 관련 코드(일반일 때)
     const handleSubmit = async (e) => {
         //form코드 submit막는 코드
         e.preventDefault();
@@ -249,7 +268,7 @@ const SignUpBox = () => {
 
         // await 요청
         try {
-            const response = await fetch('api/user/sign-up', {
+            const response = await fetch('/api/user/sign-up', {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -271,15 +290,20 @@ const SignUpBox = () => {
         }
     };
 
+
+    const handleGoogleLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    };
+
     return (
         <>
 
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
-                            <button type="button" className="btn btn-light mt-3" onClick={() => window.location.href = "/oauth2/authorization/google"}>
+                            <a type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin}>
                                 <i className="bi bi-google"></i> 구글 계정으로 회원가입
-                            </button>
+                            </a>
                             <form id="signUpForm" method="post" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">

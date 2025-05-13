@@ -10,6 +10,7 @@ import InfoModifiedPage from './pages/InfoModifiedPage.jsx';
 import FestivalPage from "./pages/FestivalPage.jsx";
 import DetailFestival from "./pages/FestivalDetail.jsx";
 import Intro from './pages/Intro.jsx';
+import GoogleRedirectPage from './component/SignUp/GoogleRedirectPage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -22,7 +23,8 @@ export function App() {
     { path: "/search", element: <SearchResult /> }, // 검색 결과
     { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
-    { path: "/festival/:id",element:<DetailFestival/>}//축제 상세 정보 페이지
+    { path: "/festival/:id",element:<DetailFestival/>}, //축제 상세 정보 페이지
+    { path: "/oauth2/redirection", element: <GoogleRedirectPage />}, // 구글리다이렉트패이지지
 
 
   ]);
