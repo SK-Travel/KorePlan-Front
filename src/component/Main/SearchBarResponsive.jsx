@@ -1,15 +1,17 @@
 import React from 'react';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 
-const SearchBarResponsive = () => {
+const SearchBarResponsive = ({ value, onChange, onSubmit }) => {
   return (
-    <Form className="w-100">
+    <Form className="w-100" onSubmit={onSubmit}>
       <Row className="g-2 align-items-center">
         <Col xs={9} sm={10}>
           <Form.Control
             type="text"
             placeholder="여행지"
             className="w-100"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
             style={{ height: '50px', fontSize: '16px' }}
           />
         </Col>

@@ -6,11 +6,11 @@ import Footer from '../component/fragments/Footer.jsx';
 //import MyList from '../component/fragments/MyList.jsx';
 //import SearchBar from '../component/Main/SearchBar';
 //import RecommendChooseBar from '../component/Main/RecommendChooseBar.jsx';
-import Top10HP from '../component/Main/Top10HP.jsx';
-import Top10HH from '../component/Main/Top10HH.jsx';
-import Top10HF from '../component/Main/Top10HF.jsx';
-import Calendar from '../component/Main/Calendar.jsx';
 
+import Calendar from '../component/Main/Calendar.jsx';
+import Top5Place from '../component/Main/Top5Place.jsx';
+import Top5Hotel from '../component/Main/Top5Hotel.jsx';
+import Top5Festival from '../component/Main/Top5Festival.jsx';
 ///--형 거 복붙
 //import MyListSample from '../component/fragments/MyListSample';
 import SearchFilterBar from '../component/Main/SearchFilterBar';
@@ -36,28 +36,18 @@ const MainPage = () => {
         <PageWrapper>
             <Header />
 
+            
             <BodyWrapper>
-
-                <LeftSide>
-
-                </LeftSide>
-
+            <LeftSide></LeftSide>
                 <Main>
                     <MainContent>
-                        <SearchFilterBar />
-                        <Row>
-
-                            <Top10HP />
-                            <Top10HH />
-                            <Top10HF />
-
-                        </Row>
-                       
-                            <Calendar />
-                        
+                        <Top5Place />
+                        <Top5Hotel />
+                        <Top5Festival/>
+                        <Calendar />
                     </MainContent>
                 </Main>
-                <RightSide/>
+            <RightSide></RightSide>
 
             </BodyWrapper>
 
