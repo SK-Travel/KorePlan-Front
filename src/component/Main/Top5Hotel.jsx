@@ -79,7 +79,7 @@ function Top5Hotel() {
   };
 
   return (
-    <Wrapper>
+    <Wrapper style={{backgroundColor:'rgba(254, 165, 0, 0.4)',}}>
       <TitleBox>인기 숙소</TitleBox>
       <SliderContainer>
         <Slider {...settings}>
