@@ -308,11 +308,11 @@ const SignUpBox = () => {
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
-                            <a type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin}>
-                                <i className="bi bi-google"></i> 구글 계정으로 로그인하기
-                            </a>
+                            <button type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin} style={{ fontSize:'16px', width: '70%'  }}>
+                                <i className="bi bi-google"></i> 구글 계정으로 회원가입
+                            </button>
                             {/* <img src={kakaoLoginLogo} alt="카카오 로그인" onClick={handleKakaoLogin}style={{ cursor: 'pointer', width: '200px' }} /> */}
-                            <button type="button" className="btn btn-success" onClick={handleNaverLogin}>네이버 계정으로 로그인하기</button>
+                            <button type="button" className="btn btn-success" onClick={handleNaverLogin} style={{ fontSize:'16px', width: '70%'  }}>네이버 계정으로 회원가입</button>
                             <form id="signUpForm" method="post" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">

@@ -16,7 +16,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 export default function MyList() {
   //메뉴에 들어갈 리스트들.
   const menuItems = [
-    { label: '내 정보', icon: <FaUser />, link: '#' },
+    { label: '내 정보', icon: <FaUser />, link: '/infomodified' },
     { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '#' },
     { label: '인기차트', icon: <FaChartBar />, link: '#' },
     { label: '이번달 축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
@@ -25,6 +25,13 @@ export default function MyList() {
   ];
   const [show, setShow] = useState(false);
   const toggleMenu = () => setShow((prev) => !prev);
+  
+  // 로그아웃 처리
+  const handleLogOut = () => {
+    localStorage.clear(); // 제거
+    alert("로그아웃 완료");
+    window.location.href="/signIn";
+  }
   
   const list = () => (
     <Box
@@ -48,6 +55,9 @@ export default function MyList() {
               component={item.link.startsWith('/') ? Link : 'a'}
               to={item.link.startsWith('/') ? item.link : undefined}
               href={!item.link.startsWith('/') ? item.link : undefined}
+
+              // 로그아웃 누를 시
+              onClick={item.label === '로그아웃' ? handleLogOut : undefined}
               sx={{
                 paddingY: 2,
               }}

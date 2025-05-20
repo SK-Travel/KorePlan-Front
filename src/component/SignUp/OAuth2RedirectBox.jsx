@@ -9,17 +9,19 @@ const OAuth2RedirectBox = () => {
     const token = params.get('token');
     
     if (email && name && type && token) {
-      // 토큰 저장 (필요 시)
-      localStorage.setItem('jwtToken', token);
-
       if (type === 'login') {
         alert("로그인 완료! 메인 페이지로 이동합니다.");
-        window.location.href = '/mainPage';
-      } else if (type === 'signup') {
-        // 회원가입 폼에 이메일/이름 저장
+        // 로그인폼에 이메일/이름 저장
+        localStorage.setItem('jwtToken', token);
         localStorage.setItem('email', email);
         localStorage.setItem('name', name);
+        window.location.href = '/mainPage';
+      } else if (type === 'signup') {
         alert("회원가입 완료! 메인 페이지로 이동합니다.");
+        // 회원가입 폼에 이메일/이름 저장
+        localStorage.setItem('jwtToken', token);
+        localStorage.setItem('email', email);
+        localStorage.setItem('name', name);
         window.location.href = '/mainPage';
       }
     } else {
