@@ -79,18 +79,22 @@ function Top5Place() {
   };
 
   return (
-    <Wrapper>
-      <TitleBox>인기 명소</TitleBox>
+    <Wrapper style={{backgroundColor:'rgba(254, 165, 0, 0.4)',}}>
+      <TitleBox>인기 장소</TitleBox>
       <SliderContainer>
         <Slider {...settings}>
-          {SamplePopData.map((item) => (
-            <SlideItem key={item.id} onClick={() => navigate(`/spot/${item.id}`)}>
+        {SamplePopData.map(item => (
+            <SlideItem
+              key={item.id}
+              onClick={() => navigate(`/spot/${item.id}`)}
+            >
               <SlideImage src={item.imgUrl} alt={item.name} />
               <Overlay>
                 {item.region} {item.spot}
               </Overlay>
             </SlideItem>
           ))}
+
         </Slider>
       </SliderContainer>
     </Wrapper>

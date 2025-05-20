@@ -1,5 +1,3 @@
-//검색 결과에 대한 정보 및 결과 주변 추천 장소 보여주는 컴포넌트
-
 import React, { useState } from "react";
 import SearchFilterBar from "../Main/SearchFilterBar";
 
@@ -8,6 +6,7 @@ const SearchList = ({ onSelectPlace }) => {
   const [selectedWho, setSelectedWho] = useState(null);
   const [selectedWhat, setSelectedWhat] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchTerm) return;
@@ -18,24 +17,17 @@ const SearchList = ({ onSelectPlace }) => {
       );
 
       if (!res.ok) {
-        const errorText = await res.text(); // 404거나 오류 응답인 경우 텍스트로 읽기
+        const errorText = await res.text();
         console.error("에러 응답:", errorText);
-        alert("장소를 찾을 수 없습니다.");
+        alert("결과를 찾을 수 없습니다.");
         return;
       }
 
-      const data = await res.json(); // ✅ OK일 경우에만 json 파싱
+      const data = await res.json();
 
-      if (data && data.lat && data.lng) {
-        const place = {
-          name: data.name,
-          address: data.address,
-          lat: data.lat,
-          lng: data.lng,
-        };
-
-        setSearchResults([place]);
-        onSelectPlace(place);
+      if (Array.isArray(data) && data.length > 0) {
+        setSearchResults(data);
+        onSelectPlace(data[0]); // 첫 번째 장소를 기본으로 선택
       } else {
         alert("검색 결과가 없습니다.");
       }
@@ -71,8 +63,9 @@ const SearchList = ({ onSelectPlace }) => {
                 cursor: "pointer",
               }}
             >
-              <strong>{place.name}</strong>
-              <div>{place.address}</div>
+              <strong>{place.title}</strong>
+              <div>{place.roadAddress}</div>
+              <small style={{ color: "#888" }}>{place.category}</small>
             </div>
           ))
         ) : (

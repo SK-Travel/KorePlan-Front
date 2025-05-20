@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-
+import { Link } from 'react-router-dom';
 // 헤더 전체 래퍼
 export const HeaderWrapper = styled.header`
   background-color:rgb(255, 255, 255);
@@ -18,14 +18,28 @@ export const HeaderWrapper = styled.header`
 export const LogoWrapper = styled.div`
   width: 120px;                 // 고정 너비
   display: flex;
+  flex-direction: row;
   align-items: center;
+`;
+
+export const LogoLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* 로고랑 텍스트 사이 간격 */
+  text-decoration: none; /* 링크 밑줄 제거 */
 `;
 
 // 로고 이미지
 export const LogoImage = styled.img`
-  max-height: 100px;
+  height: 40px;          /* 적당한 높이로 조정 */
   width: auto;
-  object-fit: contain;
+`;
+
+// 로고 텍스트
+export const LogoText = styled.h2`
+  margin: 0;
+  font-size: 1.25rem;
+  color: #000;
 `;
 
 // 가운데 콘텐츠 (정중앙 정렬)

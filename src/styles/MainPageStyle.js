@@ -34,7 +34,7 @@ export const Main = styled.main`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background-color: #f0faff;
+  background-color:rgb(255, 255, 255);
 
   @media (max-width: 768px) {
     width: 100%;

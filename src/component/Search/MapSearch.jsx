@@ -19,8 +19,8 @@ const MapSearch = ({ selectedPlace }) => {
     if (!selectedPlace || !mapInstance.current) return;
 
     const { lat, lng, name } = selectedPlace;
-
-    const latLng = new window.naver.maps.LatLng(lat, lng);
+    //지도 좌표
+    const latLng = new window.naver.maps.LatLng(lat, lng); 
     new window.naver.maps.Marker({
       position: latLng,
       map: mapInstance.current,

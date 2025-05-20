@@ -14,7 +14,7 @@
       spot: '한옥마을',
       label: '실시간 2',
       comment: '이 1.5km 길이의 해변에서는 낚시, 수영, 다양한 축제, 스카이라인 전망을 즐길 수 있습니다.',
-      imgUrl: 'https://lh3.googleusercontent.com/gps-cs-s/AB5caB9c9JP9e5CJWJwMafa4PsssKLNwI8T1buzMBLZOQwbTEugEHZGYVSY_ufAbToxFeZ0M2QJ0lK6buJ5zQ-yESINzfeDtCMS3yTc7Gi2y2zDGXDgT2TKBLZvEBOhh4EpxfDRseBJl=w270-h312-n-k-no',
+      imgUrl: 'https://lh3.googleusercontent.com/gps-cs-s/AC9h4npDtTnYDVWBZqZ6YlITX9YcwWQ4QhTN_Voi8asXYWnNgca7732-ZLon34sK1vN3CEvo1Okv671nwpcV1f_pV7NagparmBc7ZKF-Dc4XDwWtLDwSh9ISCGRkuSWNY7og3j519qDk=w270-h312-n-k-no',
     },
     {
       id: 3,
@@ -30,7 +30,7 @@
       spot: '경포대',
       label: '실시간 4',
       comment: '이 1.5km 길이의 해변에서는 낚시, 수영, 다양한 축제, 스카이라인 전망을 즐길 수 있습니다.',
-      imgUrl: 'https://lh3.googleusercontent.com/gps-cs-s/AB5caB9iBBJt_s9BZTRrMkieTMJmPqJTxPggiZP0ONmCnHYp8immE3eTrhaGhXZvWPCdTjweP7UN90cNp2FAjke_cts-2uLa3_H13BjsWdwJBeZQI21u0RVFpRK9QF6k6iufb5Nx5RIL=w243-h304-n-k-no-nu',
+      imgUrl: 'https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcSBmDSP5W4HXhLtiuQJHBwhRPvay36Gb57OHWoXPil4RdLHP8dUAt48rfiCxN8EWz7zGwSA8WcO9xiRscxihvbvRUy-G5mWX7lLr_g5kA',
     },
     {
       id: 5,
