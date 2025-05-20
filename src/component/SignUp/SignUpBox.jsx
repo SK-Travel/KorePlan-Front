@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatabaseAdd } from 'react-bootstrap-icons';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import kakaoLoginLogo from '../../assets/kakao_login_medium_narrow.png';
 
 const SignUpBox = () => {
     const [idChecked, setIdChecked] = useState(false); // 아이디 중복 확인
@@ -21,10 +22,10 @@ const SignUpBox = () => {
         const savedName = localStorage.getItem('name');
         
         if (savedEmail) {
-        setEmail(savedEmail); // 자동으로 이메일 채우기
+            setEmail(savedEmail); // 자동으로 이메일 채우기
         }
         if (savedName) {
-        setName(savedName); // 자동으로 이름 채우기
+            setName(savedName); // 자동으로 이름 채우기
         }
     }, []);
 
@@ -294,6 +295,12 @@ const SignUpBox = () => {
     const handleGoogleLogin = () => {
         window.location.href = "http://localhost:8080/oauth2/authorization/google";
     };
+    const handleKakaoLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/kakao"
+    }
+    const handleNaverLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/naver"
+    }
 
     return (
         <>
@@ -301,9 +308,11 @@ const SignUpBox = () => {
             <div className="shadow-box">
                     <div className="sign-up-box">
                         <h1 className="m-4 text-center">회원가입</h1>
-                            <a type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin}>
+                            <button type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin} style={{ fontSize:'16px', width: '70%'  }}>
                                 <i className="bi bi-google"></i> 구글 계정으로 회원가입
-                            </a>
+                            </button>
+                            {/* <img src={kakaoLoginLogo} alt="카카오 로그인" onClick={handleKakaoLogin}style={{ cursor: 'pointer', width: '200px' }} /> */}
+                            <button type="button" className="btn btn-success" onClick={handleNaverLogin} style={{ fontSize:'16px', width: '70%'  }}>네이버 계정으로 회원가입</button>
                             <form id="signUpForm" method="post" onSubmit={handleSubmit}>
                                 <span className="sign-up-subject">ID</span>
                                 <div className="d-flex ml-3 mt-3">
