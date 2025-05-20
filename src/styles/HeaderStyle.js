@@ -48,7 +48,7 @@ export const CenterContent = styled.div`
 
 // 우측 유저영역
 export const UserSection = styled.div`
-  width: 120px;               // 고정 너비
+  min-width: 200px;               // 유동 너비
   display: flex;
   align-items: center;
   justify-content: flex-end;

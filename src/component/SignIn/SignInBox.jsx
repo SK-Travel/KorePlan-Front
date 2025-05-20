@@ -52,8 +52,15 @@ const SignInBox = () => {
             console.log("로그인 실행 중 오류: " + error);
         }
     }
-
-
+    const handleGoogleLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    };
+    const handleKakaoLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/kakao"
+    }
+    const handleNaverLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/naver"
+    }
 
     return (
         <div className="shadow-box">
@@ -82,9 +89,11 @@ const SignInBox = () => {
                         <input type="submit" className="btn btn-block btn-warning col-9 mt-3" value="로그인" />
                     </form>
                     <a className="btn btn-block btn-info col-9 mt-3" href="/signUp">회원가입</a>
-                    <a className="btn btn-light btn-block col-10 mt-3" href="/oauth2/authorization/google">
+                    <button type="button" className="btn btn-light mt-3" onClick={handleGoogleLogin} style={{ fontSize:'12px', width: '90%' }}>
                         <i className="bi bi-google"></i> 구글 계정으로 로그인
-                    </a>
+                    </button>
+                    {/* <img src={kakaoLoginLogo} alt="카카오 로그인" onClick={handleKakaoLogin}style={{ cursor: 'pointer', width: '200px' }} /> */}
+                    <button type="button" className="btn btn-success" onClick={handleNaverLogin} style={{ fontSize:'12px', width: '90%'  }}>네이버 계정으로 로그인</button>
             </div>
 	    </div>
     );

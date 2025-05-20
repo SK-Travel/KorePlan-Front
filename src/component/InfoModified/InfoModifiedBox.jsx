@@ -1,7 +1,18 @@
+import { dateTimePickerTabsClasses } from '@mui/x-date-pickers';
+import { set } from 'date-fns';
 import React, {useState} from 'react';
+import { data } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const InfoModifiedBox = () => {
     const [passwordChecked, setPasswordChecked] = useState(false); // 비밀번호 일치 여부
+
+    // 로그인정보 가져오기
+    const [loginId, setLoginId] = useState('');
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
 
     //비동기 async & await
     const handlePasswordCheck = async() => {
@@ -14,8 +25,6 @@ const InfoModifiedBox = () => {
             document.getElementById('newPwConfirm').classList.remove('d-none');
             return;
         }
-
-
         const formData = new URLSearchParams();
         formData.append("loginId", loginId);
         formData.append("password", password);
@@ -65,6 +74,55 @@ const InfoModifiedBox = () => {
     };
 
 
+    // 사용자 정보 가져오기
+    const userInfo = async () => {
+        try {
+            //로컬 스토리지에 저장한 이메일, 이름으로 조회
+            const email = localStorage.getItem('email');
+            const name = localStorage.getItem('name');
+
+            if (!email || !name) {
+                console.log('이메일 또는 이름 정보가 없습니다.');
+                return;
+            }
+
+            const userInfoData = {
+                email: email,
+                name: name
+            }
+
+            const response = await fetch('/api/user/info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type' : 'application/json'
+                },
+                body:JSON.stringify(userInfoData)
+            })
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.code === 200) {
+                    console.log(data.result);
+                    // 사용자 정보 넣기
+                    setLoginId(data.loginId);
+                    setPassword(data.password);
+                    console.log(data.password);
+                    setEmail(data.email);
+                    setName(data.name);
+                    setPhoneNumber(data.phoneNumber);
+                } else {
+                    console.log(data.error_message);
+                }
+            }
+        } catch (error) {
+            console.log("사용자 정보 불러오기 실패: " + error)
+        }
+    }
+
+    // 사용자 정보 넣기
+    useEffect(() => {
+        userInfo();
+    }, []);
 
 
     return (
@@ -74,12 +132,12 @@ const InfoModifiedBox = () => {
                     <form id="signUpForm" method="post" action="/user/modified" onSubmit={handleSubmit}>
                         <span className="sign-up-subject">ID</span>
                         <div className="d-flex ml-3 mt-3">
-                            <input type="text" id="loginId" name="loginId" className="form-control" value="hw0005" readOnly style={{ backgroundColor: '#e9ecef' }}/>
+                            <input type="text" id="loginId" name="loginId" className="form-control" value={loginId} readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
 
                         <span className="sign-up-subject">현재 비밀번호</span>
                         <div className="ml-3 mt-3">
-                            <input type="password" id="password" name="password" className="form-control col-6" placeholder="현재 비밀번호를 입력하세요" />
+                            <input type="password" id="password" name="password" className="form-control col-6" value={password} readOnly style={{ backgroundColor: '#e9ecef' }} />
                         </div>
                         <input type="button" id="modifiedBtn" className="btn text-white"  value="비밀번호 확인" onClick={handlePasswordCheck} style={{ backgroundColor:'#00eeff'}} />
                         
@@ -93,31 +151,31 @@ const InfoModifiedBox = () => {
                         <br />
                         <span className="sign-up-subject">새로운 비밀번호</span>
                         <div className="ml-3 mt-3">
-                            <input type="password" id="newPassword" name="newPassword" className="form-control col-6" placeholder="새로운 비밀번호를 입력하세요" />
+                            <input type="password" id="newPassword" name="newPassword" className="form-control col-6" placeholder="새로운 비밀번호를 입력하세요" readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
 
                         <br />
                         <span className="sign-up-subject">새로운 비밀번호 확인</span>
                         <div className="ml-3 mt-3">
-                            <input type="password" id="newConfirmPassword" name="newConfirmPassword" className="form-control col-6" placeholder="새로운 비밀번호를 입력하세요" />
+                            <input type="password" id="newConfirmPassword" name="newConfirmPassword" className="form-control col-6" placeholder="새로운 비밀번호를 입력하세요" readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
                         
                         <br />
                         <span className="sign-up-subject">이름</span>
                         <div className="ml-3 mt-3">
-                            <input type="text" id="name" name="name" className="form-control col-6" placeholder="이름을 입력하세요"  value="윤현우" readOnly style={{ backgroundColor: '#e9ecef' }}/>
+                            <input type="text" id="name" name="name" className="form-control col-6" placeholder="이름을 입력하세요"  value={name} readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
 
                         <br />
                         <span className="sign-up-subject">이메일</span>
                         <div className="d-flex ml-3 mt-3">
-                            <input type="text" id="email" name="email" className="form-control" placeholder="이메일을 입력하세요"  value="aaa@abc.com" readOnly style={{ backgroundColor: '#e9ecef' }}/>
+                            <input type="text" id="email" name="email" className="form-control" placeholder="이메일을 입력하세요"  value={email} readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
 
                         <br />
                         <span className="sign-up-subject">전화번호</span>
                         <div className="ml-3 mt-3">
-                            <input type="text" id="phoneNumber" name="phoneNumber" className="form-control col-6" placeholder="전화번호를 입력하세요" value="010-1234-1234"  readOnly style={{ backgroundColor: '#e9ecef' }}/>
+                            <input type="text" id="phoneNumber" name="phoneNumber" className="form-control col-6" placeholder="전화번호" value={phoneNumber}  readOnly style={{ backgroundColor: '#e9ecef' }}/>
                         </div>
                         
                         <div className="d-flex justify-content-space m-3">
