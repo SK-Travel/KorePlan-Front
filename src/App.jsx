@@ -12,6 +12,7 @@ import DetailFestival from "./pages/FestivalDetail.jsx";
 import Intro from './pages/Intro.jsx';
 import OAuth2RedirectBox from './component/SignUp/OAuth2RedirectBox.jsx';
 import Top5Place from './component/Main/Top5Place.jsx';
+import AIChatPage from './pages/AIChatPage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -28,6 +29,7 @@ export function App() {
     { path: "/oauth2/redirection", element: <OAuth2RedirectBox />}, // Oauth2User redirect페이지
     { path: "/festival/:id",element:<DetailFestival/>},//축제 상세 정보 페이지
     { path: "/tt",element:<Top5Place/>},
+    { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
 
 
   ]);

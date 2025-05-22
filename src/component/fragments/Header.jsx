@@ -41,12 +41,22 @@ const Header = () => {
   return (
     <HeaderWrapper>
       {/* Logo + 텍스트 */}
-      <LogoLink to="/mainPage">
-        <LogoImage src={Logo} alt="KorePlan 로고" />
-        <LogoText>KorePlan</LogoText>
-      </LogoLink>
-
-
+      {userName ? (
+        <>
+          {/* 로그인 시 */}
+          <LogoLink to="/mainPage">
+            <LogoImage src={Logo} alt="KorePlan 로고" />
+            <LogoText>KorePlan</LogoText>
+          </LogoLink>
+        </>) : (
+        <>
+          {/* 비로그인 시 */}
+          <LogoLink to="/signIn">
+            <LogoImage src={Logo} alt="KorePlan 로고" />
+            <LogoText>KorePlan</LogoText>
+          </LogoLink>
+        </>
+      )}
       {/* 중앙 비워두거나 나중에 컴포넌트 삽입 */}
       <CenterContent />
 
