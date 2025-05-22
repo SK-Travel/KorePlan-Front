@@ -20,7 +20,7 @@ export default function MyList() {
     { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '#' },
     { label: '인기차트', icon: <FaChartBar />, link: '#' },
     { label: '이번달 축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
-    { label: 'AI 챗봇', icon: <FaRobot />, link: '#' },
+    { label: 'AI 챗봇', icon: <FaRobot />, link: '/AIChat' },
     { label: '로그아웃', icon: <LogoutIcon/>, link: '#'},
   ];
   const [show, setShow] = useState(false);
