@@ -13,6 +13,7 @@ import Intro from './pages/Intro.jsx';
 import OAuth2RedirectBox from './component/SignUp/OAuth2RedirectBox.jsx';
 import Top5Place from './component/Main/Top5Place.jsx';
 import AIChatPage from './pages/AIChatPage.jsx';
+import RegionSearchPage from './pages/RegionSearchPage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -28,8 +29,10 @@ export function App() {
     { path: "/festival/:id",element:<DetailFestival/>}, //축제 상세 정보 페이지
     { path: "/oauth2/redirection", element: <OAuth2RedirectBox />}, // Oauth2User redirect페이지
     { path: "/festival/:id",element:<DetailFestival/>},//축제 상세 정보 페이지
-    { path: "/tt",element:<Top5Place/>},
+    { path: "/tt",element:<Top5Place/>},//슬라이드 배너 확인용 페이지지
     { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
+    { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
+    //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지
 
 
   ]);
