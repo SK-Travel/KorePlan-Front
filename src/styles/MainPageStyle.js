@@ -14,6 +14,7 @@ export const BodyWrapper = styled.div`
   gap: 20px;
   background-color: #ffffff;
   margin-top: 10px;
+  margin-bottom: 50px;
   padding: 0;
 `;
 
