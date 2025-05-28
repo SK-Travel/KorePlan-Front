@@ -14,7 +14,8 @@ import OAuth2RedirectBox from './component/SignUp/OAuth2RedirectBox.jsx';
 import Top5Place from './component/Main/Top5Place.jsx';
 import AIChatPage from './pages/AIChatPage.jsx';
 import RegionSearchPage from './pages/RegionSearchPage.jsx';
-
+import RegionSelector from './component/RegionList/RegionSelector.jsx';
+import DataCardList from './component/RegionList/DataCardList.jsx';
 export function App() {
   const router = createBrowserRouter([
     { path: "/", element: <TestPage /> }, // 연동용 TEST페이지
@@ -24,7 +25,7 @@ export function App() {
     { path:"/infoModified", element: <InfoModifiedPage /> }, // 정보 수정 페이지
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
     { path: "/search", element: <Search /> }, // 검색 페이지
-    { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
+    { path: "/region/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
     { path: "/festival/:id",element:<DetailFestival/>}, //축제 상세 정보 페이지
     { path: "/oauth2/redirection", element: <OAuth2RedirectBox />}, // Oauth2User redirect페이지
@@ -33,7 +34,8 @@ export function App() {
     { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지
-
+    { path: "/abc",element:<RegionSelector/>},
+    { path: "/fff",element:<DataCardList/>},
 
   ]);
   return <RouterProvider router={router} />;
