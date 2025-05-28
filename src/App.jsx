@@ -14,6 +14,7 @@ import OAuth2RedirectBox from './component/SignUp/OAuth2RedirectBox.jsx';
 import Top5Place from './component/Main/Top5Place.jsx';
 import AIChatPage from './pages/AIChatPage.jsx';
 import RegionSearchPage from './pages/RegionSearchPage.jsx';
+import MyListPage from './pages/MyListPage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -33,6 +34,7 @@ export function App() {
     { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지
+    { path: "/MyList", element: <MyListPage />}, // MyList & 찜 페이지
 
 
   ]);

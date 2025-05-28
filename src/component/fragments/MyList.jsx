@@ -17,7 +17,7 @@ export default function MyList() {
   //메뉴에 들어갈 리스트들.
   const menuItems = [
     { label: '내 정보', icon: <FaUser />, link: '/infomodified' },
-    { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '#' },
+    { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '/MyList' },
     { label: '지역기반 여행지 리스트', icon: <FaChartBar />, link: '/region' },
     { label: '테마기반 여행지 리스트', icon: <FaChartBar />, link: '#' },
     { label: '축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
