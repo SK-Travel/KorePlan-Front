@@ -11,7 +11,19 @@ export const HeaderWrapper = styled.header`
   justify-content: space-between;
   padding: 0 16px;
   box-sizing: border-box;
-  position: relative; // 중앙 absolute 포지셔닝 위해 필요
+  //position: relative; // 중앙 absolute 포지셔닝 위해 필요
+  position: sticky;  // ← relative에서 sticky로 변경
+  top: 0;           // ← 추가
+  z-index: 1000;    // ← 추가
+
+  top: env(safe-area-inset-top, 0);
+  
+  @media (max-width: 768px) {
+    position: fixed; /* sticky 대신 fixed 사용 */
+    top: 0;
+    left: 0;
+    right: 0;
+  }
 `;
 
 // 좌측 로고 영역

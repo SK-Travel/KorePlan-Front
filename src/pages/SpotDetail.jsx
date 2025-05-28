@@ -28,10 +28,10 @@ const SpotDetail = () => {
                 <Main>
                     
                     <MainContent>
-                        <Row><SpotInfo/>
-                        <ReviewList/></Row>
+                        <SpotInfo/>
                         
-                        <SpotMap/>
+                        
+                        
 
                     </MainContent>
                     

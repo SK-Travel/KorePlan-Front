@@ -39,7 +39,7 @@ const Header = () => {
     window.location.href="/signIn";
   }
   return (
-    <HeaderWrapper>
+    <HeaderWrapper >
       {/* Logo + 텍스트 */}
       {userName ? (
         <>
