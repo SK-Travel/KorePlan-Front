@@ -5,13 +5,12 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
     const themes = [
         { key: '관광지', label: '🏛️ 관광지', color: '#e74c3c' },
         { key: '문화시설', label: '🎭 문화시설', color: '#9b59b6' },
-        { key: '축제공연행사', label: '🎪 축제공연행사', color: '#f39c12' },
         { key: '레포츠', label: '🏃 레포츠', color: '#3498db' },
         { key: '숙박', label: '🏨 숙박', color: '#34495e' },
         { key: '쇼핑', label: '🛍️ 쇼핑', color: '#e67e22' },
         { key: '음식점', label: '🍽️ 음식점', color: '#f1c40f' }
     ];
-
+    
     // 테마 버튼 클릭 핸들러
     const handleThemeClick = (themeKey) => {
         console.log('🎯 테마 선택:', themeKey);

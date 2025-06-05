@@ -44,7 +44,7 @@ export const SliderContainer = styled.div`
 
   /* 중앙(active) 슬라이드만 강조 */
   .slick-center {
-    opacity: 1 !important;
+    opacity: 1 ;
     transform: scale(1) !important;
   }
 `;

@@ -27,7 +27,7 @@ export function App() {
     { path:"/infoModified", element: <InfoModifiedPage /> }, // 정보 수정 페이지
     { path: "/mainPage", element: <MainPage /> }, // 메인 페이지
     { path: "/search", element: <Search /> }, // 검색 페이지
-    { path: "/region/:id", element: <SpotDetail /> }, // 상세보기 페이지
+    { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
     { path: "/festival/:id",element:<DetailFestival/>}, //축제 상세 정보 페이지
     { path: "/oauth2/redirection", element: <OAuth2RedirectBox />}, // Oauth2User redirect페이지

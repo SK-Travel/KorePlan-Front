@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [dataList, setDataList] = useState([]);
@@ -9,7 +10,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [loadingMore, setLoadingMore] = useState(false); // 추가 로딩 상태
     const [error, setError] = useState(null);
     const [hasMore, setHasMore] = useState(true); // 더 불러올 데이터가 있는지
-    
+    const navigate = useNavigate();//상세보기 페이지로 이동시키기 위한 네이게이트 선언언
     const observerRef = useRef(); // 무한 스크롤용 Observer
     const ITEMS_PER_PAGE = 12; // 한 번에 보여줄 아이템 개수 
 
@@ -116,20 +117,54 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                 setTotalCount(data.totalCount || 0);
                 setMessage(data.message || '데이터를 불러왔습니다.');
                 setHasMore(newDataList.length > ITEMS_PER_PAGE); // 12개보다 많으면 더 있음
-                                console.log('✅ 데이터 로드 성공:', {
+                
+                console.log('✅ 데이터 로드 성공:', {
                     total: data.totalCount,
                     loaded: newDataList.length,
                     displaying: Math.min(newDataList.length, ITEMS_PER_PAGE),
                     message: data.message
                 });
                 
-                // 샘플 데이터 로그 (상세보기 연결 확인용)
+                // ⭐️ item 구조 분석을 위한 상세 로그
                 if (newDataList.length > 0) {
-                    console.log('🔍 첫 번째 아이템 ID 확인:', {
-                        contentId: newDataList[0].contentId,
-                        id: newDataList[0].id,
-                        title: newDataList[0].title
+                    const firstItem = newDataList[0];
+                    console.log('📋 첫 번째 item의 전체 구조:', firstItem);
+                    console.log('🔍 item이 가진 모든 키들:', Object.keys(firstItem));
+                    console.log('🔍 각 필드의 값들:', {
+                        id: firstItem.id,
+                        contentId: firstItem.contentId,
+                        title: firstItem.title,
+                        regionName: firstItem.regionName,
+                        wardName: firstItem.wardName,
+                        firstImage: firstItem.firstImage,
+                        firstimage: firstItem.firstimage,
+                        image: firstItem.image,
+                        imageUrl: firstItem.imageUrl,
+                        themeCodeEntity: firstItem.themeCodeEntity,
+                        addr1: firstItem.addr1,
+                        addr2: firstItem.addr2,
+                        tel: firstItem.tel,
+                        zipcode: firstItem.zipcode,
+                        mapx: firstItem.mapx,
+                        mapy: firstItem.mapy,
+                        mlevel: firstItem.mlevel,
+                        overview: firstItem.overview,
+                        homepage: firstItem.homepage,
+                        readcount: firstItem.readcount,
+                        areacode: firstItem.areacode,
+                        sigungucode: firstItem.sigungucode,
+                        cat1: firstItem.cat1,
+                        cat2: firstItem.cat2,
+                        cat3: firstItem.cat3,
+                        createdtime: firstItem.createdtime,
+                        modifiedtime: firstItem.modifiedtime
                     });
+                    
+                    // themeCodeEntity 구조도 확인
+                    if (firstItem.themeCodeEntity) {
+                        console.log('🎯 themeCodeEntity 구조:', firstItem.themeCodeEntity);
+                        console.log('🎯 themeCodeEntity 키들:', Object.keys(firstItem.themeCodeEntity));
+                    }
                 }
             } else {
                 throw new Error(data.message || '데이터 조회에 실패했습니다.');
@@ -147,12 +182,102 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
     };
 
+    //테마에 해당하는 contentTypeID를 넘겨주기 위한 맵핑 함수
+    const getContentTypeId = (themeName) => {
+        console.log('🎯 getContentTypeId 호출됨 - 입력값:', themeName, '타입:', typeof themeName);
+        
+        const mapping = {
+            '관광지': 12,
+            '문화시설': 14,
+            '레포츠': 28,
+            '숙박': 32,
+            '쇼핑': 38,
+            '음식점': 39
+        };
+        
+        const result = mapping[themeName];
+        console.log('🎯 맵핑 결과:', result);
+        console.log('🎯 전체 맵핑 테이블:', mapping);
+        
+        return result;
+    };
+
     // 카드 클릭 핸들러 (상세보기 페이지로 이동)
     const handleCardClick = (item) => {
-        console.log('📄 카드 클릭:', item.title);
-        // 상세보기 페이지로 이동
-        // 방법 1: React Router 사용
-        navigate(`/detail/${item.contentId || item.id}`);
+        console.log('🖱️ 카드 클릭됨!');
+        console.log('📋 클릭된 item 전체:', item);
+        
+        // 🔍 themeCodeEntity 구조 상세 분석
+        console.log('🎯 themeCodeEntity 분석:');
+        console.log('🎯 themeCodeEntity:', item.themeCodeEntity);
+        if (item.themeCodeEntity) {
+            console.log('🎯 themeCodeEntity의 모든 키:', Object.keys(item.themeCodeEntity));
+            console.log('🎯 themeCodeEntity.id:', item.themeCodeEntity.id);
+            console.log('🎯 themeCodeEntity.name:', item.themeCodeEntity.name);
+            console.log('🎯 themeCodeEntity.themeName:', item.themeCodeEntity.themeName);
+            console.log('🎯 themeCodeEntity.code:', item.themeCodeEntity.code);
+            console.log('🎯 themeCodeEntity 전체 값들:', Object.entries(item.themeCodeEntity));
+        } else {
+            console.log('❌ themeCodeEntity가 없습니다!');
+        }
+        
+        // 🔍 selectedTheme도 확인
+        console.log('🎯 selectedTheme:', selectedTheme, '타입:', typeof selectedTheme);
+        
+        // 🔍 현재 맵핑 결과 확인
+        const contentTypeId1 = getContentTypeId(item.themeCodeEntity?.id);
+        const contentTypeId2 = getContentTypeId(item.themeCodeEntity?.name);
+        const contentTypeId3 = getContentTypeId(item.themeCodeEntity?.themeName);
+        const contentTypeId4 = getContentTypeId(selectedTheme);
+        
+        console.log('🎯 맵핑 테스트 결과들:');
+        console.log('  - item.themeCodeEntity?.id로 맵핑:', contentTypeId1);
+        console.log('  - item.themeCodeEntity?.name로 맵핑:', contentTypeId2);
+        console.log('  - item.themeCodeEntity?.themeName로 맵핑:', contentTypeId3);
+        console.log('  - selectedTheme로 맵핑:', contentTypeId4);
+        
+        // 🎯 최종 사용할 contentTypeId 결정 (우선순위: 실제 값이 있는 것 우선)
+        let finalContentTypeId = contentTypeId4; // 기본적으로 selectedTheme 사용
+        
+        if (contentTypeId1) {
+            finalContentTypeId = contentTypeId1;
+            console.log('✅ item.themeCodeEntity.id 사용:', finalContentTypeId);
+        } else if (contentTypeId2) {
+            finalContentTypeId = contentTypeId2;
+            console.log('✅ item.themeCodeEntity.name 사용:', finalContentTypeId);
+        } else if (contentTypeId3) {
+            finalContentTypeId = contentTypeId3;
+            console.log('✅ item.themeCodeEntity.themeName 사용:', finalContentTypeId);
+        } else {
+            console.log('✅ selectedTheme 사용 (fallback):', finalContentTypeId);
+        }
+        
+        console.log('🔍 SpotDetail로 전달할 데이터들:', {
+            contentId: item.contentId,
+            contentTypeId: finalContentTypeId,
+            title: item.title,
+            regionName: item.regionName,
+            wardName: item.wardName,
+            firstImage: item.firstImage || item.firstimage || item.image || item.imageUrl,
+            addr1: item.addr1,
+            addr2: item.addr2,
+            tel: item.tel,
+            mapx: item.mapx,
+            mapy: item.mapy,
+            overview: item.overview,
+            homepage: item.homepage,
+            themeCodeEntity: item.themeCodeEntity,
+            selectedTheme: selectedTheme
+        });
+        
+        navigate(`/spot/${item.contentId}`, {
+            state: {
+                contentId: item.contentId,
+                contentTypeId: finalContentTypeId,
+                selectedTheme: selectedTheme,  
+                spotData: item,
+            }
+        });
     };
 
     // 이미지 URL 처리 함수
@@ -186,7 +311,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                 <circle cx="160" cy="80" r="20" fill="#6c757d"/>
                 <rect x="100" y="110" width="120" height="8" fill="#6c757d" rx="4"/>
                 <rect x="120" y="125" width="80" height="6" fill="#adb5bd" rx="3"/>
-                <text x="160" y="155" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="12">이미지 없음</text>
+                <text x="160" y="155" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="12">대표 이미지 없음</text>
             </svg>
         `;
         return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
@@ -495,7 +620,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                 </button>
                             </div>
                         </div>
-                                            ))}
+                        ))}
                     </div>
 
                     {/* 무한 스크롤 트리거 */}
