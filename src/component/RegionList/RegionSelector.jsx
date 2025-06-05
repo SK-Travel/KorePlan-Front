@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selectedWard }) => {
+const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selectedWards = [] }) => {
     // 고정된 지역 목록 (하드코딩)
     const regions = [
         '전국', '서울특별시', '부산광역시', '대구광역시', '인천광역시', 
@@ -41,14 +41,14 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
             if (data.wards && data.wards.length > 0) {
                 setWards(data.wards);
                 setShowWards(true);
-                console.log(` ${regionName} 구/군 목록 로드:`, data.wards);
+                console.log(`${regionName} 구/군 목록 로드:`, data.wards);
             } else {
-                console.warn(` ${regionName}에 구/군 데이터가 없습니다.`);
+                console.warn(`${regionName}에 구/군 데이터가 없습니다.`);
                 setWards([]);
                 setShowWards(false);
             }
         } catch (error) {
-            console.error(` ${regionName} 구/군 로드 실패:`, error.message);
+            console.error(`${regionName} 구/군 로드 실패:`, error.message);
             setWards([]);
             setShowWards(false);
         } finally {
@@ -64,13 +64,28 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
         }
     };
 
-    // 구/군 버튼 클릭 핸들러
+    // 구/군 버튼 클릭 핸들러 (다중 선택 지원)
     const handleWardClick = (wardName) => {
         console.log('🏘️ 구/군 선택:', wardName);
+        
+        let newSelectedWards = [...selectedWards];
+        
+        if (selectedWards.includes(wardName)) {
+            // 이미 선택된 경우 제거
+            newSelectedWards = selectedWards.filter(ward => ward !== wardName);
+        } else {
+            // 새로 선택하는 경우 추가
+            newSelectedWards.push(wardName);
+        }
+        
+        console.log('🏘️ 새로운 구/군 선택:', newSelectedWards);
+        
         if (onWardChange) {
-            onWardChange(wardName);
+            onWardChange(newSelectedWards);
         }
     };
+
+
 
     // 버튼 스타일 함수
     const getButtonStyle = (isSelected, baseColor = '#3498db') => ({
@@ -89,6 +104,8 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
         transform: isSelected ? 'translateY(-1px)' : 'translateY(0)',
         userSelect: 'none'
     });
+
+
 
     // 섹션 스타일
     const sectionStyle = {
@@ -140,7 +157,6 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                 <h3 style={titleStyle}>
                     <span>📍</span>
                     시/도 선택
-                    
                 </h3>
                 <div style={buttonContainerStyle}>
                     {regions.map((region) => (
@@ -174,7 +190,7 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                 <div style={sectionStyle}>
                     <h3 style={titleStyle}>
                         <span>🏘️</span>
-                        구/군 선택
+                        구/군 선택 (다중 선택 가능)
                         <span style={{
                             fontSize: '12px',
                             color: '#7f8c8d',
@@ -183,6 +199,19 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                         }}>
                             ({selectedRegion})
                         </span>
+                        {selectedWards.length > 0 && (
+                            <span style={{
+                                fontSize: '12px',
+                                color: '#27ae60',
+                                fontWeight: '600',
+                                marginLeft: '8px',
+                                backgroundColor: '#d5f4e6',
+                                padding: '2px 8px',
+                                borderRadius: '10px'
+                            }}>
+                                {selectedWards.length}개 선택됨
+                            </span>
+                        )}
                         {wardsLoading && (
                             <span style={{
                                 fontSize: '12px',
@@ -208,20 +237,48 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                         </div>
                     ) : showWards && wards.length > 0 ? (
                         <div style={buttonContainerStyle}>
+                            {/* 전체 버튼 */}
+                            <button
+                                key="전체"
+                                style={getButtonStyle(selectedWards.length === 0, '#e74c3c')}
+                                onClick={() => {
+                                    if (onWardChange) {
+                                        onWardChange([]);
+                                    }
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (selectedWards.length !== 0) {
+                                        e.target.style.backgroundColor = '#fadbd8';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (selectedWards.length !== 0) {
+                                        e.target.style.backgroundColor = 'white';
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                    }
+                                }}
+                            >
+                                전체
+                            </button>
+                            
+                            {/* 개별 구/군 버튼들 */}
                             {wards.map((ward) => (
                                 <button
                                     key={ward}
-                                    style={getButtonStyle(selectedWard === ward, '#27ae60')}
+                                    style={getButtonStyle(selectedWards.includes(ward), '#27ae60')}
                                     onClick={() => handleWardClick(ward)}
                                     onMouseEnter={(e) => {
-                                        if (selectedWard !== ward) {
+                                        if (!selectedWards.includes(ward)) {
                                             e.target.style.backgroundColor = '#d5f4e6';
                                             e.target.style.transform = 'translateY(-2px)';
                                             e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
-                                        if (selectedWard !== ward) {
+                                        if (!selectedWards.includes(ward)) {
                                             e.target.style.backgroundColor = 'white';
                                             e.target.style.transform = 'translateY(0)';
                                             e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
@@ -269,11 +326,14 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                     <strong style={{ color: '#3498db', marginLeft: '8px' }}>
                         {selectedRegion || '지역 미선택'}
                     </strong>
-                    {selectedWard && selectedWard !== '전체' && (
+                    {selectedWards.length > 0 && (
                         <>
-                            <span style={{ color: '#7f8c8d', margin: '0 4px' }}></span>
+                            <span style={{ color: '#7f8c8d', margin: '0 4px' }}>→</span>
                             <strong style={{ color: '#27ae60' }}>
-                                {selectedWard}
+                                {selectedWards.length === 1 ? 
+                                    selectedWards[0] : 
+                                    `${selectedWards.slice(0, 2).join(', ')}${selectedWards.length > 2 ? ` 외 ${selectedWards.length - 2}개` : ''}`
+                                }
                             </strong>
                         </>
                     )}
@@ -287,16 +347,29 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                 }}>
                     {selectedRegion === '전국' ? (
                         '전국 데이터를 표시합니다'
-                    ) : selectedRegion && !selectedWard ? (
+                    ) : selectedRegion && selectedWards.length === 0 ? (
                         `${selectedRegion} 전체 데이터를 표시합니다`
-                    ) : selectedRegion && selectedWard && selectedWard !== '전체' ? (
-                        `${selectedRegion} ${selectedWard} 데이터를 표시합니다`
-                    ) : selectedRegion && selectedWard === '전체' ? (
-                        `${selectedRegion} 전체 데이터를 표시합니다`
+                    ) : selectedRegion && selectedWards.length > 0 ? (
+                        `${selectedRegion} ${selectedWards.length}개 구/군 데이터를 표시합니다`
                     ) : (
                         '지역을 선택해주세요'
                     )}
                 </div>
+                
+                {/* 선택된 구/군 목록 상세 표시 */}
+                {selectedWards.length > 0 && (
+                    <div style={{
+                        fontSize: '11px',
+                        color: '#34495e',
+                        marginTop: '8px',
+                        padding: '8px',
+                        backgroundColor: '#f1f2f6',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd'
+                    }}>
+                        <strong>선택된 구/군:</strong> {selectedWards.join(', ')}
+                    </div>
+                )}
             </div>
         </div>
     );
