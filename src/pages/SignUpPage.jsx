@@ -13,18 +13,18 @@ import {
     RightSide,
 } from '../styles/MainPageStyle.js'
 
-import SignUpBox from '../Component/SignUp/SignUpBox.jsx'
+import SignUpBox from '../component/SignUp/SignUpBox.jsx'
 
 const SignUpPage = () => {
     return (
-        <div>
-            <Header />
+        
+            
             <div className="d-flex justify-content-center">
                 <SignUpBox />
             </div>
 
-            <Footer />
-        </div>
+            
+        
     );
 };
 

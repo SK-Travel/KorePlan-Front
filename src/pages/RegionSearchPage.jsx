@@ -10,6 +10,7 @@ import {
 import RegionSelector from '../component/RegionList/RegionSelector.jsx';
 import ThemeSelector from '../component/RegionList/ThemeSelector.jsx';
 import DataCardList from '../component/RegionList/DataCardList.jsx';
+import ScrollToTop from '../component/Button/ScrollToTop.jsx';
 
 const RegionSearchPage = () => {
     // 상태 관리
@@ -72,6 +73,7 @@ const RegionSearchPage = () => {
                             selectedWard={selectedWard} // 이 부분은 DataCardList 컴포넌트에 따라 달라질 수 있음
                             selectedTheme={selectedTheme}
                         />
+                        <ScrollToTop/>
                     </MainContent>
                 </Main>
             </BodyWrapper>

@@ -16,6 +16,10 @@ export const BodyWrapper = styled.div`
   margin-top: 10px;
   margin-bottom: 50px;
   padding: 0;
+  @media (max-width: 768px) {
+    margin-top: 110px; 
+    justify-content: center; // ← Main을 중앙에 배치
+  }
 `;
 
 export const LeftSide = styled.div`

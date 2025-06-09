@@ -1,6 +1,6 @@
 import React from 'react';
 import Header from '../component/fragments/Header.jsx';
-//import Footer from '../component/fragments/Footer.jsx';
+import Footer from '../component/fragments/Footer.jsx';
 import Calendar from '../component/Main/Calendar.jsx';
 import Top5Place from '../component/Main/Top5Place.jsx';
 import Top5Hotel from '../component/Main/Top5Hotel.jsx';
@@ -41,7 +41,7 @@ const MainPage = () => {
 
             </BodyWrapper>
 
-            {/* <Footer /> */}
+            <Footer />
         </PageWrapper>
     );
 };
