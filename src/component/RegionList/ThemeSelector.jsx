@@ -1,6 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    // 모바일 감지
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     // 고정된 테마 목록 (하드코딩 - 서버와 무관하게 작동)
     const themes = [
         { key: '관광지', label: '🏛️ 관광지', color: '#e74c3c' },
@@ -19,7 +33,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
         }
     };
 
-    // 버튼 스타일 함수
+    // 버튼 스타일 함수 (데스크톱)
     const getButtonStyle = (isSelected, themeColor) => ({
         padding: '12px 20px',
         margin: '8px',
@@ -39,11 +53,32 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
         textAlign: 'center'
     });
 
+    // 모바일 버튼 스타일 함수
+    const getMobileButtonStyle = (isSelected, themeColor) => ({
+        width: 'calc(33.33% - 6px)',
+        padding: '12px 6px',
+        margin: '3px',
+        border: isSelected ? `3px solid ${themeColor}` : '2px solid #e1e8ed',
+        borderRadius: '20px',
+        background: isSelected ? themeColor : 'white',
+        color: isSelected ? 'white' : '#2c3e50',
+        cursor: 'pointer',
+        fontSize: '13px',
+        fontWeight: isSelected ? '700' : '500',
+        transition: 'all 0.3s ease',
+        display: 'inline-block',
+        boxShadow: isSelected ? `0 4px 15px ${themeColor}50` : '0 2px 6px rgba(0,0,0,0.1)',
+        transform: isSelected ? 'translateY(-1px)' : 'translateY(0)',
+        userSelect: 'none',
+        textAlign: 'center',
+        boxSizing: 'border-box'
+    });
+
     return (
         <div style={{
             width: '100%',
             backgroundColor: 'white',
-            padding: '25px',
+            padding: isMobile ? '20px' : '25px',
             borderRadius: '16px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -53,7 +88,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 textAlign: 'center',
                 margin: '0 0 25px 0',
                 color: '#2c3e50',
-                fontSize: '22px',
+                fontSize: isMobile ? '20px' : '22px',
                 fontWeight: '700'
             }}>
                 🎯 테마 선택
@@ -61,7 +96,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
 
             {/* 테마 선택 버튼들 */}
             <div style={{
-                padding: '20px',
+                padding: isMobile ? '15px' : '20px',
                 backgroundColor: '#f8f9fa',
                 borderRadius: '12px',
                 border: '1px solid #e9ecef'
@@ -69,21 +104,26 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '4px',
-                    justifyContent: 'center'
+                    gap: isMobile ? '0px' : '4px',
+                    justifyContent: isMobile ? 'flex-start' : 'center'
                 }}>
                     {themes.map((theme) => (
                         <button
                             key={theme.key}
-                            style={getButtonStyle(selectedTheme === theme.key, theme.color)}
+                            style={isMobile ? 
+                                getMobileButtonStyle(selectedTheme === theme.key, theme.color) :
+                                getButtonStyle(selectedTheme === theme.key, theme.color)
+                            }
                             onClick={() => handleThemeClick(theme.key)}
                             onMouseEnter={(e) => {
                                 if (selectedTheme !== theme.key) {
                                     e.target.style.backgroundColor = `${theme.color}15`;
                                     e.target.style.borderColor = theme.color;
                                     e.target.style.color = theme.color;
-                                    e.target.style.transform = 'translateY(-3px)';
-                                    e.target.style.boxShadow = `0 8px 25px ${theme.color}30`;
+                                    e.target.style.transform = isMobile ? 'translateY(-1px)' : 'translateY(-3px)';
+                                    e.target.style.boxShadow = isMobile ? 
+                                        `0 6px 20px ${theme.color}30` : 
+                                        `0 8px 25px ${theme.color}30`;
                                 }
                             }}
                             onMouseLeave={(e) => {
@@ -92,7 +132,9 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                                     e.target.style.borderColor = '#e1e8ed';
                                     e.target.style.color = '#2c3e50';
                                     e.target.style.transform = 'translateY(0)';
-                                    e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    e.target.style.boxShadow = isMobile ?
+                                        '0 2px 6px rgba(0,0,0,0.1)' :
+                                        '0 2px 8px rgba(0,0,0,0.1)';
                                 }
                             }}
                         >
@@ -104,7 +146,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
 
             {/* 현재 선택된 테마 표시 */}
             <div style={{
-                padding: '15px',
+                padding: isMobile ? '12px' : '15px',
                 backgroundColor: '#e8f4f8',
                 borderRadius: '10px',
                 textAlign: 'center',
@@ -112,7 +154,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 border: '1px solid #b8e0d2'
             }}>
                 <div style={{
-                    fontSize: '14px',
+                    fontSize: isMobile ? '13px' : '14px',
                     color: '#2c3e50',
                     fontWeight: '500'
                 }}>
@@ -120,7 +162,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                     <strong style={{ 
                         color: themes.find(t => t.key === selectedTheme)?.color || '#3498db',
                         marginLeft: '8px',
-                        fontSize: '16px'
+                        fontSize: isMobile ? '15px' : '16px'
                     }}>
                         {themes.find(t => t.key === selectedTheme)?.label || '테마 미선택'}
                     </strong>
@@ -128,7 +170,7 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 
                 {/* 테마 설명 */}
                 <div style={{
-                    fontSize: '12px',
+                    fontSize: isMobile ? '11px' : '12px',
                     color: '#7f8c8d',
                     marginTop: '8px'
                 }}>

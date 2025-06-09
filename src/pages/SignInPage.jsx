@@ -7,12 +7,12 @@ import SignInBox from '../component/SignIn/SignInBox.jsx';
 const SignInPage = () => {
     return (
         <div>
-            <Header />
+            
             <div className="d-flex justify-content-center">
                 <SignInBox />
             </div>
 
-            <Footer />
+            
         </div>
     );
 };

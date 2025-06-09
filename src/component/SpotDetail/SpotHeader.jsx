@@ -1,7 +1,7 @@
 import React from 'react';
-import { MapPin, Heart, Eye, Bookmark, Share2 } from 'lucide-react';
+import { MapPin, Heart, Eye, Star } from 'lucide-react';
 
-const SpotHeader = ({ spotData }) => {
+const SpotHeader = ({ spotData, stats }) => {
   // spotData가 없으면 로딩 상태 표시
   if (!spotData) {
     return (
@@ -40,6 +40,19 @@ const SpotHeader = ({ spotData }) => {
     );
   }
 
+  // 테마 코드를 한글명으로 변환
+  const getThemeName = (themeCode) => {
+    const themeMapping = {
+      12: '관광지',
+      14: '문화시설',
+      28: '레포츠',
+      32: '숙박',
+      38: '쇼핑',
+      39: '음식점'
+    };
+    return themeMapping[themeCode] || '기타';
+  };
+
   // 지역 정보 포맷팅 (regionName + wardName)
   const formatLocation = () => {
     const parts = [];
@@ -47,6 +60,14 @@ const SpotHeader = ({ spotData }) => {
     if (spotData.wardName && spotData.wardName !== spotData.regionName) {
       parts.push(spotData.wardName);
     }
+    return parts.join(' ');
+  };
+
+  // 주소 정보 포맷팅 (addr1 + addr2)
+  const formatAddress = () => {
+    const parts = [];
+    if (spotData.addr1) parts.push(spotData.addr1);
+    if (spotData.addr2) parts.push(spotData.addr2);
     return parts.join(' ');
   };
 
@@ -68,7 +89,11 @@ const SpotHeader = ({ spotData }) => {
   console.log('🎯 SpotHeader에서 사용할 데이터:', {
     title: spotData.title,
     regionName: spotData.regionName,
-    wardName: spotData.wardName
+    wardName: spotData.wardName,
+    addr1: spotData.addr1,
+    addr2: spotData.addr2,
+    theme: spotData.theme,
+    themeName: getThemeName(spotData.theme)
   });
 
   return (
@@ -93,7 +118,7 @@ const SpotHeader = ({ spotData }) => {
           fontWeight: '500',
           marginBottom: '20px'
         }}>
-          여행지
+          {getThemeName(spotData.theme)}
         </div>
 
         {/* 장소명 */}
@@ -115,11 +140,23 @@ const SpotHeader = ({ spotData }) => {
           gap: '8px',
           fontSize: '18px',
           color: '#6b7280',
-          marginBottom: '40px'
+          marginBottom: '8px'
         }}>
           <MapPin size={20} color="#9ca3af" />
           <span>{formatLocation()}</span>
         </div>
+
+        {/* 상세 주소 */}
+        {formatAddress() && (
+          <div style={{
+            fontSize: '16px',
+            color: '#9ca3af',
+            marginBottom: '40px',
+            lineHeight: '1.5'
+          }}>
+            {formatAddress()}
+          </div>
+        )}
 
         {/* 통계 및 액션 버튼 */}
         <div style={{
@@ -142,7 +179,7 @@ const SpotHeader = ({ spotData }) => {
           }}>
             <Heart size={18} color="#ef4444" />
             <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              185
+              {formatNumber(stats?.likeCount || 0)}
             </span>
           </div>
 
@@ -159,12 +196,12 @@ const SpotHeader = ({ spotData }) => {
           }}>
             <Eye size={18} color="#3b82f6" />
             <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              21.4K
+              {formatNumber(stats?.viewCount || 0)}
             </span>
           </div>
 
-          {/* 북마크 */}
-          <button style={{
+          {/* 별점 */}
+          <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -172,47 +209,13 @@ const SpotHeader = ({ spotData }) => {
             backgroundColor: '#f9fafb',
             border: '1px solid #e5e7eb',
             borderRadius: '30px',
-            color: '#6b7280',
             ...buttonHoverStyle
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f3f4f6';
-            e.target.style.borderColor = '#d1d5db';
-            e.target.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#f9fafb';
-            e.target.style.borderColor = '#e5e7eb';
-            e.target.style.transform = 'translateY(0)';
           }}>
-            <Bookmark size={18} />
-          </button>
-
-          {/* 공유 */}
-          <button style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 20px',
-            backgroundColor: '#f9fafb',
-            border: '1px solid #e5e7eb',
-            borderRadius: '30px',
-            color: '#6b7280',
-            ...buttonHoverStyle
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f3f4f6';
-            e.target.style.borderColor = '#d1d5db';
-            e.target.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#f9fafb';
-            e.target.style.borderColor = '#e5e7eb';
-            e.target.style.transform = 'translateY(0)';
-          }}>
-            <Share2 size={18} />
-            <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>45</span>
-          </button>
+            <Star size={18} color="#fbbf24" fill="#fbbf24" />
+            <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+              {stats?.rating ? stats.rating.toFixed(1) : '0.0'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
