@@ -109,5 +109,4 @@ const TravelPlannerModal  = ({ onPlanGenerated  }) => {
 TravelPlannerModal.propTypes = {
   onPlanGenerated: PropTypes.func.isRequired,
 };
-// a
 export default TravelPlannerModal;
