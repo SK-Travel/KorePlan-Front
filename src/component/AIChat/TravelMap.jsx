@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 
+
 const TravelMap = ({ locations }) => {
     const [selectedDay, setSelectedDay] = useState(1);       // 현재 선택된 일차
 
@@ -13,11 +14,11 @@ const TravelMap = ({ locations }) => {
 
     // 기본 색 (Day에 따라)
     const DAY_COLOR_MAP = {
-    1: '#FF4D4D',  // 빨간색
-    2: '#A9F5A9',  // 연두색
-    3: '#4DB8FF',  // 하늘색
-    4: '#FFD700',  // 금색
-    5: '#D291BC',  // 보라핑크
+        1: '#FF4D4D', // 선명한 빨간색
+        2: '#4CAF50', // 선명한 초록색
+        3: '#2196F3', // 선명한 파란색
+        4: '#FFC107', // 진한 노란색 (약간 주황 느낌)
+        5: '#9C27B0', // 진한 보라색
     };
 
     // 여행 일차 목록 추출 (중복 제거)
@@ -29,120 +30,160 @@ const TravelMap = ({ locations }) => {
         .sort((a, b) => a.order - b.order);
     
     
+    // ✅ 지도 및 마커/폴리라인 최초 생성
     useEffect(() => {
-        if (!mapRef.current || !window.naver || dayLocations.length === 0) return;
+        if (!mapRef.current || !window.naver || locations.length === 0) return;
 
         const naver = window.naver;
 
-        // 지도 생성 (최초 1회)
+        // ✅ 지도 최초 1회 생성
         if (!mapInstanceRef.current) {
             const firstLoc = locations[0];
             mapInstanceRef.current = new naver.maps.Map(mapRef.current, {
                 center: new naver.maps.LatLng(firstLoc.lat, firstLoc.lng),
                 zoom: 14,
-                disableDoubleClickZoom: true,  // 더블클릭 줌 비활성화
+                disableDoubleClickZoom: true,
+            });
+
+           // resize
+            requestAnimationFrame(() => {
+                naver.maps.Event.trigger(mapInstanceRef.current, 'resize');
             });
         }
 
         const map = mapInstanceRef.current;
 
+        if (!map._hasCenteredOnce) {
+            map.setCenter(new naver.maps.LatLng(locations[0].lat, locations[0].lng));
+            map._hasCenteredOnce = true;
+        }
 
-        // 모든 Day에 대해 마커, 폴리라인, 애니메이션 마커 생성 or 재사용
         dayList.forEach(day => {
-            const dayLocs = locations.filter(loc => Number(loc.day) === day).sort((a,b) => a.order - b.order);
-            if (dayLocs.length === 0) return;
+            const dayLocs = locations.filter(loc => Number(loc.day) === day).sort((a, b) => a.order - b.order);
+            if (!dayLocs.length) return;
 
-            // 기존 마커 삭제 후 새로 생성
-            if (markersByDay.current[day]) {
-            markersByDay.current[day].forEach(marker => marker.setMap(null));
-            }
+            if (markersByDay.current[day]) markersByDay.current[day].forEach(m => m.setMap(null));
+            if (polylinesByDay.current[day]) polylinesByDay.current[day].setMap(null);
+
             markersByDay.current[day] = dayLocs.map(loc => {
                 const marker = new naver.maps.Marker({
                     position: new naver.maps.LatLng(loc.lat, loc.lng),
                     map,
                     title: loc.name,
                     icon: {
-                        content: `<div style="width: 16px; height: 16px; background-color: ${DAY_COLOR_MAP[day]}; border-radius: 50%; border: 2px solid black;"></div>`,
-                        size: new naver.maps.Size(16, 16),
-                        anchor: new naver.maps.Point(8, 8),
+                        content: `
+                            <div style="text-align:center;">
+                                <div style="width: 16px; height: 16px; background-color: ${DAY_COLOR_MAP[day]}; border-radius: 50%; border: 2px solid black; margin: 0 auto;"></div>
+                                <div style="font-size: 12px; margin-top:2px; color: black; font-weight: bold;">${loc.day}. ${loc.order}</div>
+                            </div>
+                        `,
+                        anchor: new naver.maps.Point(8, 8), // ✅ 동그라미 중심에 anchor 맞춤 (16px 기준)
                     },
                 });
 
-                // 클릭 시 선택 day 변경 및 infoWindow 표시
                 naver.maps.Event.addListener(marker, 'click', () => {
-                setSelectedDay(day);  // 폴리라인 클릭 시에도 day 변경 효과를 동일하게 줌
-                // infoWindow 처리 로직 추가 가능
+                    setSelectedDay(day);
                 });
 
                 return marker;
             });
 
-        // 기존 폴리라인 삭제 후 새로 생성
-        if (polylinesByDay.current[day]) {
-            polylinesByDay.current[day].setMap(null);
+            const path = dayLocs.map(loc => new naver.maps.LatLng(loc.lat, loc.lng));
+            const polyline = new naver.maps.Polyline({
+                path,
+                map,
+                strokeColor: DAY_COLOR_MAP[day],
+                strokeOpacity: 0.6,
+                strokeWeight: 4,
+                strokeStyle: 'shortdash',
+            });
+
+            naver.maps.Event.addListener(polyline, 'click', () => {
+                setSelectedDay(day);
+            });
+
+            polylinesByDay.current[day] = polyline;
+        });
+    }, []);
+
+    // ✅ 선택된 Day의 첫 장소로 지도 중심 이동
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        const firstLoc = locations
+            .filter(loc => Number(loc.day) === selectedDay)
+            .sort((a, b) => a.order - b.order)[0];
+
+        if (firstLoc) {
+            // ✅ 이 줄 추가됨 (지도 깨짐 방지)
+            window.naver.maps.Event.trigger(map, 'resize');
+
+            map.panTo(new window.naver.maps.LatLng(firstLoc.lat, firstLoc.lng));
         }
+    }, [selectedDay]);
 
-        const path = dayLocs.map(loc => new naver.maps.LatLng(loc.lat, loc.lng));
-            polylinesByDay.current[day] = new naver.maps.Polyline({
-            path,
-            map,
-            strokeColor: DAY_COLOR_MAP[day],
-            strokeOpacity: selectedDay === day ? 1 : 0.6,
-            strokeWeight: selectedDay === day ? 6 : 4,
-            strokeStyle: selectedDay === day ? 'solid' : 'shortdash',
+    // ✅ 선택된 Day에 따라 폴리라인 강조 스타일 변경
+    useEffect(() => {
+        dayList.forEach(day => {
+            const polyline = polylinesByDay.current[day];
+            if (!polyline) return;
+
+            polyline.setOptions({
+                strokeOpacity: selectedDay === day ? 1 : 0.6,
+                strokeWeight: selectedDay === day ? 6 : 4,
+                strokeStyle: selectedDay === day ? 'solid' : 'shortdash',
+            });
         });
+    }, [selectedDay, dayList]);
 
-        // 폴리라인 클릭 시 선택 day 변경
-        naver.maps.Event.addListener(polylinesByDay.current[day], 'click', () => {
-            setSelectedDay(day);
-        });
+return (
+        <div style={{ width: '900px', height: '800px' }}>
+            <div style={{ marginBottom: 20, display: 'flex', gap: 8 }}>
+                {dayList.map(day => (
+                    <button
+                        key={day}
+                        onClick={() => setSelectedDay(day)}
+                        style={{
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            borderRadius: 4,
+                            border: selectedDay === day ? '2px solid #0077FF' : '1px solid #ccc',
+                            backgroundColor: selectedDay === day ? '#E6F0FF' : '#fff',
+                            fontWeight: selectedDay === day ? 'bold' : 'normal',
+                            transition: 'all 0.2s ease-in-out',
+                        }}
+                    >
+                        Day {day}
+                    </button>
+                ))}
+            </div>
 
-        });
+            <div>
+                <div
+                    ref={mapRef}
+                    style={{
+                        width: '100%',
+                        height: '500px',
+                        border: '1px solid #ccc',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    }}
+                />
+            </div>
 
-        // 선택된 Day 중심으로 지도 이동
-        const selectedLocs = locations.filter(loc => Number(loc.day) === selectedDay);
-        if (selectedLocs.length > 0) {
-            map.setCenter(new naver.maps.LatLng(selectedLocs[0].lat, selectedLocs[0].lng));
-        }
-
-    }, [locations, selectedDay]);
-
-    return(
-    <div>
-        <div style={{ marginBottom: 20, display: 'flex', gap: 8 }}>
-            {dayList.map(day => (
-            <button
-                key={day}
-                onClick={() => setSelectedDay(day)}
-                style={{
-                padding: '8px 16px',
-                cursor: 'pointer',
-                borderRadius: 4,
-                border: selectedDay === day ? '2px solid #0077FF' : '1px solid #ccc',
-                backgroundColor: selectedDay === day ? '#E6F0FF' : '#fff',
-                fontWeight: selectedDay === day ? 'bold' : 'normal',
-                transition: 'all 0.2s ease-in-out',
-                }}
-            >
-                Day {day}
-            </button>
-            ))}
+            <div style={{ marginTop: '20px' }}>
+                <h3>Day {selectedDay} 일정</h3>
+                <ol>
+                    {dayLocations.map((loc, idx) => (
+                        <li key={idx} style={{ marginBottom: '8px' }}>
+                            <strong>{loc.name}</strong> ({loc.region}) - {loc.description}
+                        </li>
+                    ))}
+                </ol>
+            </div>
         </div>
-
-        <div ref={mapRef} style={{ width: '100%', height: '500px', border: '1px solid #ccc' }} />
-
-        <div style={{ marginTop: '20px' }}>
-            <h3>Day {selectedDay} 일정</h3>
-            <ol>
-            {locations.filter(loc => Number(loc.day) === selectedDay).map((loc, idx) => (
-                <li key={idx} style={{ marginBottom: '8px' }}>
-                <strong>{loc.name}</strong> ({loc.region}) - {loc.description}
-                </li>
-            ))}
-            </ol>
-        </div>
-    </div>
-    )
+    );
 
 };
 

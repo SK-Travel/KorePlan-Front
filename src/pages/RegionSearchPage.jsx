@@ -73,7 +73,7 @@ const RegionSearchPage = () => {
                             selectedWard={selectedWard} // 이 부분은 DataCardList 컴포넌트에 따라 달라질 수 있음
                             selectedTheme={selectedTheme}
                         />
-                        <ScrollToTop/>
+                        <ScrollToTop />
                     </MainContent>
                 </Main>
             </BodyWrapper>
