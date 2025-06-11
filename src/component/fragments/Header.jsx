@@ -54,7 +54,7 @@ const Header = () => {
             여행후기
           </Button>
           <Button 
-            onClick={() => navigate('/review')}
+            onClick={() => navigate('/AIChat')}
             style={{ color: '#333', fontSize: '15px', fontWeight: '500' }}
           >
             AI 추천
