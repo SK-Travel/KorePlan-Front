@@ -1,36 +1,56 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 //CSS
 import { 
     PageWrapper, 
     BodyWrapper,
-    LeftSide,
-    RightSide,
     Main,
     MainContent,
-    } from '../styles/FestivalStyle';
+} from '../styles/MainPageStyle'
 //------------------------------------------
-import Festival from '../component/Festival/Festival';
 import Header from '../component/fragments/Header';
+import FestivalHeader from '../component/Festival/FestivalHeader';
+import FestivalCardList from '../component/Festival/FestivalCardList';
 
 const AllFestival = () => {
-    //const thisMonth;
-    //const nextMonth;
+    // 필터 상태 관리
+    const [filterState, setFilterState] = useState({
+        selectedRegion: '전국',
+        selectedCategory: '전체',
+        selectedStatus: '',
+        selectedMonth: '',
+        searchKeyword: ''
+    });
+
+    // FestivalHeader에서 필터 변경시 호출되는 함수
+    const handleFilterChange = useCallback((newFilterState) => {
+        console.log('🔄 필터 변경:', newFilterState);
+        setFilterState(newFilterState);
+    }, []);
+
     return (
         <div>
             <PageWrapper>
                 <Header />
 
                 <BodyWrapper>
-                    <LeftSide/>
                     <Main>
                         <MainContent>
-                            <Festival/>
-                            <Festival/>
+                            {/* 필터링 헤더 */}
+                            <FestivalHeader 
+                                onFilterChange={handleFilterChange}
+                            />
+                            
+                            {/* 축제 카드 리스트 */}
+                            <FestivalCardList
+                                selectedRegion={filterState.selectedRegion}
+                                selectedCategory={filterState.selectedCategory}
+                                selectedStatus={filterState.selectedStatus}
+                                selectedMonth={filterState.selectedMonth}
+                                searchKeyword={filterState.searchKeyword}
+                            />
                         </MainContent>
                     </Main>
-                    <RightSide/>
                 </BodyWrapper>
-
             </PageWrapper>
         </div>
     );
