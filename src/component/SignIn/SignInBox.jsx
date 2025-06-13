@@ -561,6 +561,40 @@ const SignInBox = () => {
                             </button>
 
                             <button
+                                onClick={handleKakaoLogin}
+                                style={{
+                                    width: '100%',
+                                    background: '#FEE500',
+                                    border: 'none',
+                                    color: '#000000',
+                                    fontWeight: '500',
+                                    paddingTop: '12px',
+                                    paddingBottom: '12px',
+                                    borderRadius: '16px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '12px',
+                                    marginBottom: '12px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.opacity = '0.9';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.opacity = '1';
+                                }}
+                            >
+                                <img
+                                    src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png"
+                                    alt="Kakao Icon"
+                                    style={{ width: '20px', height: '20px' }}
+                                />
+                                <span>카카오로 시작하기</span>
+                            </button>
+
+                            <button
                                 onClick={handleNaverLogin}
                                 style={{
                                     width: '100%',

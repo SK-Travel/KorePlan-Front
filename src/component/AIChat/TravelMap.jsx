@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 
 
 const TravelMap = ({ locations }) => {
@@ -11,6 +12,22 @@ const TravelMap = ({ locations }) => {
     // Day별 마커, 폴리라인, 애니메이션마커 refs를 저장하기 위해 객체로 관리
     const markersByDay = useRef({});
     const polylinesByDay = useRef({});
+
+    const navigate = useNavigate(); // 네비게이트
+    // 페이지 바로가기용 후버
+    const [hovered, setHovered] = useState(null);
+
+    // 페이지 바로가기용 스타일
+    const getLinkStyle = (idx) => ({
+        color: hovered === idx ? 'white' : 'black',
+        textDecoration: 'none',
+        fontWeight: 'bold',
+        backgroundColor: hovered === idx ? 'deepskyblue' : 'lightgreen',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        transition: 'background-color 0.2s',
+        height: '30px',
+    });
 
     // 기본 색 (Day에 따라)
     const DAY_COLOR_MAP = {
@@ -137,8 +154,42 @@ const TravelMap = ({ locations }) => {
         });
     }, [selectedDay, dayList]);
 
+    // myList추가 핸들
+    const handleAddToMyPlan = async() => {
+        try {
+            const response = await fetch('/api/my-plan/list', locations, {
+                widthCredentials: true
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.code === 200) {
+                    alert("리스트에 추가되었습니다."); 
+                    window.location.href= 'http://localhost:5173/myplan';
+                } else {
+                    alert(data.error_message);
+                }
+            }
+
+        } catch (error) {
+            console.log("리스트 저장 실패: ", error);
+            alert("리스트 저장 중 오류가 발생했습니다.")
+        }
+    }
+
+    // Data의 ContentId -> Theme의 ContentTypeId으로 ThemeName불러오기
+    const handleCardClick = (item) => {
+        navigate(`/spot/${item.contentId}`, {
+            state: {
+                contentId: item.contentId,
+                selectedTheme: selectedTheme,
+                spotData: item,
+            }
+        });
+    };
+
 return (
-        <div style={{ width: '900px', height: '800px' }}>
+        <div style={{ width: '900px', minHeight: '800px' }}>
             <div style={{ marginBottom: 20, display: 'flex', gap: 8 }}>
                 {dayList.map(day => (
                     <button
@@ -177,10 +228,39 @@ return (
                 <ol>
                     {dayLocations.map((loc, idx) => (
                         <li key={idx} style={{ marginBottom: '8px' }}>
-                            <strong>{loc.name}</strong> ({loc.region}) - {loc.description}
+                            <div className="d-flex">
+                                {loc.firstimage ? 
+                                (<div><img src={loc.firstimage} width="170" /></div>) 
+                                : 
+                                (<div className="d-flex align-items-center justify-content-center" style={{ width: '170px', height: '170px', backgroundColor: '#f0f0f0', color: '#555', fontSize: '14px' }}>
+                                    이미지가 부재합니다.
+                                    </div>
+                                )}
+                                <button onClick={handleCardClick} target="_blank" rel="noopener noreferrer" className="ms-4"
+                                        style={getLinkStyle(idx)} onMouseEnter={() => setHovered(idx)} onMouseLeave={() => setHovered(null)}>
+                                    상세 페이지 바로가기
+                                </button>
+                            </div>
+                            <strong>{loc.name}</strong>
+                            ({loc.region})
                         </li>
                     ))}
                 </ol>
+            </div>
+
+            <div style={{ marginTop: '30px' }}>
+                <button onClick={handleAddToMyPlan}
+                    style={{
+                        padding: '10px 20px',
+                        fontSize: '16px',
+                        backgroundColor: '#007BFF',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                    }}>
+                    리스트에 추가하기
+                </button>
             </div>
         </div>
     );
