@@ -10,7 +10,8 @@ import {
 import Header from '../component/fragments/Header';
 import FestivalHeader from '../component/Festival/FestivalHeader';
 import FestivalCardList from '../component/Festival/FestivalCardList';
-
+import ScrollToTop from '../component/Button/ScrollToTop';
+import Footer from '../component/fragments/Footer';
 const AllFestival = () => {
     // 필터 상태 관리
     const [filterState, setFilterState] = useState({
@@ -48,9 +49,11 @@ const AllFestival = () => {
                                 selectedMonth={filterState.selectedMonth}
                                 searchKeyword={filterState.searchKeyword}
                             />
+                            <ScrollToTop/>
                         </MainContent>
                     </Main>
                 </BodyWrapper>
+                <Footer/>
             </PageWrapper>
         </div>
     );

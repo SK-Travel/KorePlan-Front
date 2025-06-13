@@ -10,6 +10,8 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [hasMore, setHasMore] = useState(true);
+    const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const navigate = useNavigate();
     const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
@@ -44,6 +46,17 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             }
         };
     }, [hasMore, loadingMore, displayedData]);
+
+    // 토스트 자동 닫기
+    useEffect(() => {
+        if (snackbar.open) {
+            const timer = setTimeout(() => {
+                handleSnackbarClose();
+            }, 3000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [snackbar.open]);
 
     const resetAndLoadData = () => {
         setDataList([]);
@@ -88,6 +101,8 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                 params.append('ward', selectedWard);
             }
 
+            console.log('🔍 API 요청:', `${API_BASE_URL}/filter?${params.toString()}`);
+
             const response = await fetch(`${API_BASE_URL}/filter?${params.toString()}`);
 
             if (!response.ok) {
@@ -95,9 +110,12 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             }
 
             const data = await response.json();
+            console.log('📊 API 응답 데이터:', data);
 
             if (data.success !== false) {
                 const newDataList = data.dataList || [];
+                console.log('📝 받은 데이터 샘플:', newDataList[0]); // 첫 번째 아이템 로그 확인
+                
                 setDataList(newDataList);
                 setDisplayedData(newDataList.slice(0, ITEMS_PER_PAGE));
                 setTotalCount(data.totalCount || 0);
@@ -123,10 +141,70 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         navigate(`/spot/${item.contentId}`, {
             state: {
                 contentId: item.contentId,
-                contentTypeId: item.theme, // 백엔드에서 직접 오는 숫자값 사용
+                contentTypeId: item.theme,
                 selectedTheme: selectedTheme,
                 spotData: item,
             }
+        });
+    };
+
+    // 찜 버튼 토글
+    const toggleBookmark = (item, e) => {
+        e.stopPropagation();
+        const itemId = item.contentId || item.id;
+        const itemTitle = item.title || '항목';
+        
+        const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
+        
+        setBookmarkedItems(prev => {
+            const newSet = new Set(prev);
+            if (isCurrentlyBookmarked) {
+                newSet.delete(itemId);
+            } else {
+                newSet.add(itemId);
+            }
+            return newSet;
+        });
+        
+        // 토스트 메시지 표시
+        if (isCurrentlyBookmarked) {
+            setSnackbar({
+                open: true,
+                message: `"${itemTitle}"이(가) 찜 목록에서 제거되었습니다`,
+                severity: 'info'
+            });
+        } else {
+            setSnackbar({
+                open: true,
+                message: `"${itemTitle}"이(가) 찜 목록에 추가되었습니다`,
+                severity: 'success'
+            });
+        }
+    };
+
+    // 스낵바 닫기
+    const handleSnackbarClose = () => {
+        setSnackbar(prev => ({ ...prev, open: false }));
+    };
+
+    // 숫자 포맷팅
+    const formatNumber = (num) => {
+        if (!num) return '0';
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toLocaleString();
+    };
+
+    // 받은 데이터 확인용 (개발 중에만 사용)
+    const logItemData = (item) => {
+        console.log('📊 아이템 데이터:', {
+            contentId: item.contentId,
+            title: item.title,
+            viewCount: item.viewCount,
+            likeCount: item.likeCount,
+            rating: item.rating,
+            reviewCount: item.reviewCount
         });
     };
 
@@ -298,144 +376,198 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         gap: '20px',
                         justifyContent: 'center',
                     }}>
-                        {displayedData.map((item, index) => (
-                            <div
-                                key={item.id || index}
-                                style={cardStyle}
-                                onClick={() => handleCardClick(item)}
-                                onMouseEnter={(e) => {
-                                    Object.assign(e.currentTarget.style, cardHoverStyle);
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                                }}
-                            >
-                                {/* 이미지 섹션 */}
-                                <div style={{
-                                    height: '200px',
-                                    overflow: 'hidden',
-                                    position: 'relative',
-                                    backgroundColor: '#f8f9fa'
-                                }}>
-                                    <img
-                                        src={getImageUrl(item.firstImage || item.firstimage)}
-                                        alt={item.title || '이미지'}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover',
-                                            transition: 'transform 0.3s ease'
-                                        }}
-                                        onError={handleImageError}
-                                        onMouseEnter={(e) => {
-                                            e.target.style.transform = 'scale(1.05)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.target.style.transform = 'scale(1)';
-                                        }}
-                                    />
-
-                                    {/* 테마 배지 */}
+                        {displayedData.map((item, index) => {
+                            const itemId = item.contentId || item.id;
+                            const isBookmarked = bookmarkedItems.has(itemId);
+                            
+                            // 개발 중 데이터 확인 (첫 번째 아이템만)
+                            if (index === 0) {
+                                logItemData(item);
+                            }
+                            
+                            return (
+                                <div
+                                    key={item.id || index}
+                                    style={cardStyle}
+                                    onClick={() => handleCardClick(item)}
+                                    onMouseEnter={(e) => {
+                                        Object.assign(e.currentTarget.style, cardHoverStyle);
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                                    }}
+                                >
+                                    {/* 이미지 섹션 */}
                                     <div style={{
-                                        position: 'absolute',
-                                        top: '12px',
-                                        left: '12px',
-                                        backgroundColor: 'rgba(52, 152, 219, 0.9)',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '12px',
-                                        fontSize: '12px',
-                                        fontWeight: '600'
-                                    }}>
-                                        {selectedTheme}
-                                    </div>
-                                </div>
-
-                                {/* 카드 내용 */}
-                                <div style={{ padding: '20px' }}>
-                                    {/* 제목 */}
-                                    <h3 style={{
-                                        margin: '0 0 12px 0',
-                                        fontSize: '18px',
-                                        fontWeight: '600',
-                                        color: '#2c3e50',
-                                        lineHeight: '1.4',
+                                        height: '200px',
                                         overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
+                                        position: 'relative',
+                                        backgroundColor: '#f8f9fa'
                                     }}>
-                                        {item.title || '제목 없음'}
-                                    </h3>
+                                        <img
+                                            src={getImageUrl(item.firstImage || item.firstimage)}
+                                            alt={item.title || '이미지'}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                transition: 'transform 0.3s ease'
+                                            }}
+                                            onError={handleImageError}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'scale(1.05)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'scale(1)';
+                                            }}
+                                        />
 
-                                    {/* 위치 정보 */}
-                                    <div style={{
-                                        fontSize: '14px',
-                                        color: '#7f8c8d',
-                                        marginBottom: '15px',
-                                        fontWeight: '500',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}>
-                                        <span>📍</span>
-                                        {item.regionName || selectedRegion}
-                                        {item.wardName && item.wardName !== selectedRegion && (
-                                            <span> {item.wardName}</span>
-                                        )}
-                                    </div>
-
-                                    {/* 리뷰/찜 하드코딩 (임시) */}
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        marginBottom: '15px',
-                                        padding: '10px',
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '8px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <span>⭐</span>
-                                            <span style={{ fontSize: '14px', fontWeight: '600' }}>4.5</span>
-                                            <span style={{ fontSize: '12px', color: '#7f8c8d' }}>(128)</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <span>❤️</span>
-                                            <span style={{ fontSize: '14px', fontWeight: '600' }}>234</span>
-                                        </div>
-                                    </div>
-
-                                    {/* 자세히 보기 버튼 */}
-                                    <button
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            backgroundColor: '#3498db',
+                                        {/* 테마 배지 */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '12px',
+                                            left: '12px',
+                                            backgroundColor: 'rgba(52, 152, 219, 0.9)',
                                             color: 'white',
-                                            border: 'none',
-                                            borderRadius: '10px',
-                                            fontSize: '14px',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '12px',
+                                            fontWeight: '600'
+                                        }}>
+                                            {selectedTheme}
+                                        </div>
+
+                                        {/* 찜 버튼 */}
+                                        <button
+                                            onClick={(e) => toggleBookmark(item, e)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '12px',
+                                                right: '12px',
+                                                width: '36px',
+                                                height: '36px',
+                                                borderRadius: '50%',
+                                                border: 'none',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontSize: '16px',
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'scale(1.1)';
+                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'scale(1)';
+                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                                            }}
+                                        >
+                                            {isBookmarked ? '❤️' : '🤍'}
+                                        </button>
+                                    </div>
+
+                                    {/* 카드 내용 */}
+                                    <div style={{ padding: '20px' }}>
+                                        {/* 제목 */}
+                                        <h3 style={{
+                                            margin: '0 0 12px 0',
+                                            fontSize: '18px',
                                             fontWeight: '600',
-                                            cursor: 'pointer',
-                                            transition: 'background-color 0.2s ease'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.target.style.backgroundColor = '#2980b9';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.target.style.backgroundColor = '#3498db';
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleCardClick(item);
-                                        }}
-                                    >
-                                        자세히 보기 →
-                                    </button>
+                                            color: '#2c3e50',
+                                            lineHeight: '1.4',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            {item.title || '제목 없음'}
+                                        </h3>
+
+                                        {/* 위치 정보 */}
+                                        <div style={{
+                                            fontSize: '14px',
+                                            color: '#7f8c8d',
+                                            marginBottom: '15px',
+                                            fontWeight: '500',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}>
+                                            <span>📍</span>
+                                            {item.regionName || selectedRegion}
+                                            {item.wardName && item.wardName !== selectedRegion && (
+                                                <span> {item.wardName}</span>
+                                            )}
+                                        </div>
+
+                                        {/* 실제 통계 정보 표시 */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            marginBottom: '15px',
+                                            padding: '10px',
+                                            backgroundColor: '#f8f9fa',
+                                            borderRadius: '8px'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span>⭐</span>
+                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                    {item.rating ? item.rating.toFixed(1) : '0.0'}
+                                                </span>
+                                                <span style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                                                    ({formatNumber(item.reviewCount || 0)})
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span>👁️</span>
+                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                    {formatNumber(item.viewCount || 0)}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span>❤️</span>
+                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                    {formatNumber(item.likeCount || 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* 자세히 보기 버튼 */}
+                                        <button
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                backgroundColor: '#3498db',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                transition: 'background-color 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.backgroundColor = '#2980b9';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.backgroundColor = '#3498db';
+                                            }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleCardClick(item);
+                                            }}
+                                        >
+                                            자세히 보기 →
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* 무한 스크롤 트리거 */}
@@ -493,9 +625,59 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         </div>
                     )}
 
-                    {/* 로딩 애니메이션 CSS */}
+                    {/* 커스텀 토스트 */}
+                    {snackbar.open && (
+                        <div style={{
+                            position: 'fixed',
+                            top: '80px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 9999,
+                            backgroundColor: snackbar.severity === 'success' ? '#4caf50' : '#2196f3',
+                            color: 'white',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            animation: 'slideDown 0.3s ease-out',
+                            maxWidth: '400px'
+                        }}>
+                            <span>{snackbar.severity === 'success' ? '✅' : 'ℹ️'}</span>
+                            {snackbar.message}
+                            <button
+                                onClick={handleSnackbarClose}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    marginLeft: '8px',
+                                    fontSize: '16px',
+                                    padding: '0'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+
+                    {/* CSS 애니메이션 */}
                     <style>
                         {`
+                            @keyframes slideDown {
+                                0% {
+                                    opacity: 0;
+                                    transform: translateX(-50%) translateY(-20px);
+                                }
+                                100% {
+                                    opacity: 1;
+                                    transform: translateX(-50%) translateY(0);
+                                }
+                            }
                             @keyframes spin {
                                 0% { transform: rotate(0deg); }
                                 100% { transform: rotate(360deg); }
@@ -510,31 +692,14 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     padding: '80px 20px',
                     color: '#7f8c8d'
                 }}>
-                    <div style={{
-                        fontSize: '64px',
-                        marginBottom: '20px'
-                    }}>
-                        🔍
-                    </div>
-                    <div style={{
-                        fontSize: '24px',
-                        fontWeight: '600',
-                        marginBottom: '12px',
-                        color: '#34495e'
-                    }}>
+                    <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔍</div>
+                    <div style={{ fontSize: '24px', fontWeight: '600', marginBottom: '12px', color: '#34495e' }}>
                         검색 결과가 없습니다
                     </div>
-                    <div style={{
-                        fontSize: '16px',
-                        color: '#95a5a6',
-                        marginBottom: '8px'
-                    }}>
+                    <div style={{ fontSize: '16px', color: '#95a5a6', marginBottom: '8px' }}>
                         다른 지역이나 테마를 선택해보세요
                     </div>
-                    <div style={{
-                        fontSize: '14px',
-                        color: '#bdc3c7'
-                    }}>
+                    <div style={{ fontSize: '14px', color: '#bdc3c7' }}>
                         현재 조건: {selectedRegion}
                         {selectedWard && selectedWard !== '전체' ? ` > ${selectedWard}` : ''}
                         {` > ${selectedTheme}`}

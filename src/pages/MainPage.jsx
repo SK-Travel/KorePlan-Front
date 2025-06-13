@@ -18,6 +18,7 @@ import {
     Row,
     RightSide,
 } from '../styles/MainPageStyle.js'
+import ScrollToTop from '../component/Button/ScrollToTop.jsx';
 
 
 
@@ -35,6 +36,7 @@ const MainPage = () => {
                         <Top5Hotel />
                         <Top5Festival/>
                         <Calendar />
+                        <ScrollToTop/>
                     </MainContent>
                 </Main>
            

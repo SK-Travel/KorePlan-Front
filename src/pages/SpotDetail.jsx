@@ -24,102 +24,48 @@ const SpotDetail = () => {
     const location = useLocation();
     const { contentId, contentTypeId, spotData, selectedTheme } = location.state || {};
     
-    // 통계 데이터 상태 관리
-    const [spotStats, setSpotStats] = useState({
-        viewCount: 0,
-        likeCount: 0,
-        rating: 4.5, // 임시 하드코딩
-        reviewCount: 0
-    });
-    
-    const [statsLoading, setStatsLoading] = useState(true);
-    const [statsError, setStatsError] = useState(null);
+    // 통계 데이터는 이제 spotData에 포함되어 있음
+    // 필요한 경우에만 별도 상태로 관리 (좋아요 토글 등)
+    const [localSpotData, setLocalSpotData] = useState(spotData);
+    const [viewCountIncremented, setViewCountIncremented] = useState(false);
 
-    // 페이지 진입 시 조회수 증가 및 통계 데이터 가져오기
+    // 페이지 진입 시 조회수 증가
     useEffect(() => {
-        if (!contentId) return;
+        if (!contentId || viewCountIncremented) return;
 
-        const initializeSpotData = async () => {
+        const incrementViewCount = async () => {
             try {
-                setStatsLoading(true);
-                setStatsError(null);
-
-                // 1. 조회수 증가 API 호출
-                await incrementViewCount(contentId);
+                const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}/view`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
-                // 2. 통계 데이터 가져오기 API 호출
-                await fetchSpotStats(contentId);
-
+                if (response.ok) {
+                    console.log('✅ 조회수가 증가했습니다');
+                    // 로컬 상태의 조회수 업데이트
+                    setLocalSpotData(prev => ({
+                        ...prev,
+                        viewCount: (prev?.viewCount || 0) + 1
+                    }));
+                    setViewCountIncremented(true);
+                } else {
+                    console.warn('⚠️ 조회수 증가 실패:', response.status);
+                }
             } catch (error) {
-                console.error('❌ 스팟 데이터 초기화 실패:', error);
-                setStatsError(error.message);
-            } finally {
-                setStatsLoading(false);
+                console.error('❌ 조회수 증가 API 호출 오류:', error);
+                // 조회수 증가 실패해도 페이지는 정상 작동
             }
         };
 
-        initializeSpotData();
-    }, [contentId]);
+        incrementViewCount();
+    }, [contentId, viewCountIncremented]);
 
-    // 조회수 증가 API 함수
-    const incrementViewCount = async (contentId) => {
-        try {
-            const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}/view`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                console.log('✅ 조회수가 증가했습니다');
-            } else {
-                console.warn('⚠️ 조회수 증가 실패:', response.status);
-            }
-        } catch (error) {
-            console.error('❌ 조회수 증가 API 호출 오류:', error);
-            // 조회수 증가 실패해도 페이지는 정상 작동
-        }
-    };
-
-    // 통계 데이터 가져오기 API 함수
-    const fetchSpotStats = async (contentId) => {
-        try {
-            const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            // API 응답 구조에 맞춰 데이터 설정
-            setSpotStats({
-                viewCount: data.viewCount || 0,
-                likeCount: data.likeCount || 0,
-                rating: data.rating || 0,
-                reviewCount: data.reviewCount || 0
-            });
-            
-            console.log('✅ 통계 데이터 로드 완료:', data);
-            
-        } catch (error) {
-            console.error('❌ 통계 데이터 로드 실패:', error);
-            
-            // 실패 시 기본값 또는 하드코딩된 값 사용
-            setSpotStats({
-                viewCount: 21400, // 임시 하드코딩
-                likeCount: 185,   // 임시 하드코딩
-                rating: 4.5,      // 임시 하드코딩
-                reviewCount: 128  // 임시 하드코딩
-            });
-            
-            throw error; // 에러를 다시 던져서 상위에서 처리
-        }
-    };
-
-    // 좋아요 토글 함수 (SpotHeader에서 호출할 수 있도록)
+    // 좋아요 토글 함수
     const handleLikeToggle = async () => {
+        if (!contentId) return;
+        
         try {
             const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}/like`, {
                 method: 'POST',
@@ -131,19 +77,22 @@ const SpotDetail = () => {
             if (response.ok) {
                 const result = await response.json();
                 // 좋아요 수 업데이트
-                setSpotStats(prev => ({
+                setLocalSpotData(prev => ({
                     ...prev,
-                    likeCount: result.likeCount
+                    likeCount: result.likeCount || (prev?.likeCount || 0) + 1
                 }));
                 console.log('✅ 좋아요 상태 변경됨');
             }
         } catch (error) {
             console.error('❌ 좋아요 처리 실패:', error);
+            // 실패 시에도 UI 업데이트 (낙관적 업데이트)
+            setLocalSpotData(prev => ({
+                ...prev,
+                likeCount: (prev?.likeCount || 0) + 1
+            }));
         }
     };
 
-    
-    
     // spotData가 없는 경우 처리
     if (!spotData || !contentId) {
         return (
@@ -213,6 +162,16 @@ const SpotDetail = () => {
             </PageWrapper>
         );
     }
+
+    // 디버깅용 로그
+    console.log('🎯 SpotDetail에서 사용할 spotData:', {
+        title: localSpotData?.title,
+        contentId,
+        viewCount: localSpotData?.viewCount,
+        likeCount: localSpotData?.likeCount,
+        rating: localSpotData?.rating,
+        reviewCount: localSpotData?.reviewCount
+    });
     
     // 정상적으로 데이터가 있는 경우
     return (
@@ -222,23 +181,18 @@ const SpotDetail = () => {
             <BodyWrapper>
                 <Main>
                     <MainContent>
-                        {/* SpotHeader에 spotData와 spotStats 전달 */}
+                        {/* SpotHeader에 spotData만 전달 (통계 데이터 포함) */}
                         <SpotHeader 
-                            spotData={spotData}
-                            stats={spotStats} 
-                            statsLoading={statsLoading}
-                            statsError={statsError}
+                            spotData={localSpotData}
                             onLikeToggle={handleLikeToggle}
                         />
                         
-                        {/* SpotImages에 contentId와 contentTypeId 전달 */}
+                        {/* SpotImages에 contentId 전달 */}
                         <SpotImages 
                             contentId={contentId} 
-                            contentTypeId={contentTypeId}
-                            displayMode="slider" 
                         />
                         
-                        <SpotInfo spotData={spotData} />
+                        <SpotInfo spotData={localSpotData} />
 
                         <ScrollToTop/>
                     </MainContent>
