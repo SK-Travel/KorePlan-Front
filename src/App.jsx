@@ -36,7 +36,7 @@ export function App() {
     { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지
-    { path: "/MyList", element: <MyListPage />}, // MyList & 찜 페이지
+    { path: "/myplan", element: <MyListPage />}, // MyList & 찜 페이지
 
   ]);
   return <RouterProvider router={router} />;
