@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Heart, Eye, Star } from 'lucide-react';
 
-const SpotHeader = ({ spotData, stats }) => {
+const SpotHeader = ({ spotData }) => {
   // spotData가 없으면 로딩 상태 표시
   if (!spotData) {
     return (
@@ -93,7 +93,12 @@ const SpotHeader = ({ spotData, stats }) => {
     addr1: spotData.addr1,
     addr2: spotData.addr2,
     theme: spotData.theme,
-    themeName: getThemeName(spotData.theme)
+    themeName: getThemeName(spotData.theme),
+    // 통계 데이터 확인
+    viewCount: spotData.viewCount,
+    likeCount: spotData.likeCount,
+    rating: spotData.rating,
+    reviewCount: spotData.reviewCount
   });
 
   return (
@@ -179,7 +184,7 @@ const SpotHeader = ({ spotData, stats }) => {
           }}>
             <Heart size={18} color="#ef4444" />
             <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {formatNumber(stats?.likeCount || 0)}
+              {formatNumber(spotData.likeCount || 0)}
             </span>
           </div>
 
@@ -196,7 +201,7 @@ const SpotHeader = ({ spotData, stats }) => {
           }}>
             <Eye size={18} color="#3b82f6" />
             <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {formatNumber(stats?.viewCount || 0)}
+              {formatNumber(spotData.viewCount || 0)}
             </span>
           </div>
 
@@ -213,7 +218,10 @@ const SpotHeader = ({ spotData, stats }) => {
           }}>
             <Star size={18} color="#fbbf24" fill="#fbbf24" />
             <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {stats?.rating ? stats.rating.toFixed(1) : '0.0'}
+              {spotData.rating ? spotData.rating.toFixed(1) : '0.0'}
+            </span>
+            <span style={{ fontSize: '14px', color: '#9ca3af', marginLeft: '4px' }}>
+              ({formatNumber(spotData.reviewCount || 0)})
             </span>
           </div>
         </div>

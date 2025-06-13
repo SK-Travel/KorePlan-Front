@@ -29,10 +29,8 @@ export function App() {
     { path: "/search", element: <Search /> }, // 검색 페이지
     { path: "/spot/:id", element: <SpotDetail /> }, // 상세보기 페이지
     { path: "/festival", element: <FestivalPage/>}, // 축제 정보 페이지
-    { path: "/festival/:id",element:<DetailFestival/>}, //축제 상세 정보 페이지
+    { path: "/festival/:contentId",element:<DetailFestival/>}, //축제 상세 정보 페이지
     { path: "/oauth2/redirection", element: <OAuth2RedirectBox />}, // Oauth2User redirect페이지
-    { path: "/festival/:id",element:<DetailFestival/>},//축제 상세 정보 페이지
-    { path: "/tt",element:<Top5Place/>},//슬라이드 배너 확인용 페이지지
     { path: "/AIChat", element: <AIChatPage /> }, // AI 챗봇
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지

@@ -75,50 +75,53 @@ const FestivalCardList = ({ selectedRegion, selectedCategory, selectedStatus, se
         }, 500);
     }, [displayedData, dataList, loadingMore, hasMore]);
 
-    // API 엔드포인트 결정 함수
+    // 통합된 API 엔드포인트 결정 함수
     const getApiEndpoint = () => {
-        // 검색 키워드가 있으면 검색 API 사용
+        // 검색 키워드가 있으면 키워드 검색 API 사용
         if (searchKeyword && searchKeyword.trim() !== '') {
-            return `/search?keyword=${encodeURIComponent(searchKeyword.trim())}`;
+            return `/keyword?q=${encodeURIComponent(searchKeyword.trim())}`;
         }
 
-        // 상태별 필터링이 가장 우선
-        if (selectedStatus) {
-            switch (selectedStatus) {
-                case '진행중':
-                    return '/ongoing';
-                case '진행예정':
-                    return '/upcoming';
-                default:
-                    break;
+        // 통합 검색 API 사용
+        const params = new URLSearchParams();
+        
+        // 지역 조건 (빈 문자열이나 null도 처리)
+        if (selectedRegion && selectedRegion !== '전국' && selectedRegion.trim() !== '') {
+            params.append('region', selectedRegion.trim());
+        }
+        
+        // 카테고리 조건 (빈 문자열이나 null도 처리)
+        if (selectedCategory && selectedCategory !== '전체' && selectedCategory.trim() !== '') {
+            params.append('category', selectedCategory.trim());
+        }
+        
+        // 상태 조건 처리
+        if (selectedStatus && selectedStatus !== '전체' && selectedStatus.trim() !== '') {
+            params.append('status', selectedStatus.trim());
+        }
+        
+        // 월 조건 (상태가 설정되지 않았을 때만 또는 상태가 '전체'일 때)
+        if (selectedMonth && selectedMonth.trim() !== '' && 
+            (!selectedStatus || selectedStatus === '전체' || selectedStatus.trim() === '')) {
+            const monthNum = parseInt(selectedMonth.replace('월', '').trim());
+            if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
+                params.append('month', monthNum);
             }
         }
 
-        // 월별 필터링
-        if (selectedMonth) {
-            // 숫자 월 (예: "6월" -> 6)
-            const monthNum = parseInt(selectedMonth.replace('월', ''));
-            return `/month/${monthNum}`;
-        }
+        const queryString = params.toString();
+        const endpoint = `/search${queryString ? `?${queryString}` : ''}`;
+        
+        console.log('🔍 필터링 상태:', {
+            selectedRegion,
+            selectedCategory, 
+            selectedStatus,
+            selectedMonth,
+            params: Object.fromEntries(params.entries()),
+            endpoint
+        });
 
-        // 지역/카테고리 필터링
-        if (selectedRegion && selectedCategory && 
-            selectedRegion !== '전국' && selectedCategory !== '전체') {
-            return `/filter?region=${encodeURIComponent(selectedRegion)}&category=${encodeURIComponent(selectedCategory)}`;
-        }
-
-        // 지역별 필터링
-        if (selectedRegion && selectedRegion !== '전국') {
-            return `/region/${encodeURIComponent(selectedRegion)}`;
-        }
-
-        // 카테고리별 필터링
-        if (selectedCategory && selectedCategory !== '전체') {
-            return `/category/${encodeURIComponent(selectedCategory)}`;
-        }
-
-        // 기본: 전체 축제
-        return '/all';
+        return endpoint;
     };
 
     const loadData = async () => {
@@ -275,7 +278,7 @@ const FestivalCardList = ({ selectedRegion, selectedCategory, selectedStatus, se
                 }}>
                     {selectedRegion && selectedRegion !== '전국' ? selectedRegion : '전국'} 
                     {selectedCategory && selectedCategory !== '전체' ? ` > ${selectedCategory}` : ''}
-                    {selectedStatus ? ` > ${selectedStatus}` : ''}
+                    {selectedStatus && selectedStatus !== '전체' ? ` > ${selectedStatus}` : ''}
                     {selectedMonth ? ` > ${selectedMonth}` : ''}
                 </div>
             </div>
@@ -360,12 +363,20 @@ const FestivalCardList = ({ selectedRegion, selectedCategory, selectedStatus, se
                     fontSize: '16px',
                     color: '#34495e'
                 }}>
-                    {selectedRegion && selectedRegion !== '전국' ? selectedRegion : '전국'}의 
-                    {selectedCategory && selectedCategory !== '전체' ? ` ${selectedCategory}` : ' 축제'}
-                    {selectedStatus ? ` (${selectedStatus})` : ''}
-                    {selectedMonth ? ` (${selectedMonth})` : ''}
-                    {' '}
-                    <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>를 조회하였습니다.
+                    {searchKeyword ? (
+                        <>
+                            "<strong>{searchKeyword}</strong>" 검색 결과: <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>
+                        </>
+                    ) : (
+                        <>
+                            {selectedRegion && selectedRegion !== '전국' ? selectedRegion : '전국'}의 
+                            {selectedCategory && selectedCategory !== '전체' ? ` ${selectedCategory}` : ' 축제'}
+                            {selectedStatus && selectedStatus !== '전체' ? ` (${selectedStatus})` : ''}
+                            {selectedMonth ? ` (${selectedMonth})` : ''}
+                            {' '}
+                            <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>를 조회하였습니다.
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -629,23 +640,29 @@ const FestivalCardList = ({ selectedRegion, selectedCategory, selectedStatus, se
                         marginBottom: '12px',
                         color: '#34495e'
                     }}>
-                        해당 조건의 축제가 없습니다
+                        {searchKeyword ? '검색 결과가 없습니다' : '해당 조건의 축제가 없습니다'}
                     </div>
                     <div style={{
                         fontSize: '16px',
                         color: '#95a5a6',
                         marginBottom: '8px'
                     }}>
-                        다른 지역이나 카테고리를 선택해보세요
+                        {searchKeyword ? '다른 키워드로 검색해보세요' : '다른 지역이나 카테고리를 선택해보세요'}
                     </div>
                     <div style={{
                         fontSize: '14px',
                         color: '#bdc3c7'
                     }}>
-                        현재 조건: {selectedRegion && selectedRegion !== '전국' ? selectedRegion : '전국'}
-                        {selectedCategory && selectedCategory !== '전체' ? ` > ${selectedCategory}` : ''}
-                        {selectedStatus ? ` > ${selectedStatus}` : ''}
-                        {selectedMonth ? ` > ${selectedMonth}` : ''}
+                        {searchKeyword ? (
+                            `검색어: "${searchKeyword}"`
+                        ) : (
+                            <>
+                                현재 조건: {selectedRegion && selectedRegion !== '전국' ? selectedRegion : '전국'}
+                                {selectedCategory && selectedCategory !== '전체' ? ` > ${selectedCategory}` : ''}
+                                {selectedStatus && selectedStatus !== '전체' ? ` > ${selectedStatus}` : ''}
+                                {selectedMonth ? ` > ${selectedMonth}` : ''}
+                            </>
+                        )}
                     </div>
                 </div>
             )}
