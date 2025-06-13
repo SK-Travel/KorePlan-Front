@@ -39,7 +39,7 @@ const Header = () => {
             onClick={() => navigate('/festival')}
             style={{ color: '#333', fontSize: '15px', fontWeight: '500' }}
           >
-            축제/행사
+            축제/행사/공연
           </Button>
           <Button 
             onClick={() => navigate('/myplan')}

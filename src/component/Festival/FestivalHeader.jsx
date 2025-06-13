@@ -6,8 +6,12 @@ const FestivalHeader = ({ onFilterChange }) => {
     const [selectedStatus, setSelectedStatus] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [appliedSearchKeyword, setAppliedSearchKeyword] = useState(''); // 실제 적용된 검색어
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeModalTab, setActiveModalTab] = useState('time');
+    
+    // 모바일 체크용 state
+    const [isMobile, setIsMobile] = useState(false);
 
     // 지역 목록
     const regions = [
@@ -39,25 +43,57 @@ const FestivalHeader = ({ onFilterChange }) => {
         { type: 'month', status: '', month: '12월', label: '12월' },
     ];
 
-    // 실시간 검색 (상단 검색바)
+    // 화면 크기 체크
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // 초기 로드시에만 전체 목록 표시
     useEffect(() => {
         onFilterChange({
             selectedRegion: '전국',
             selectedCategory: '전체', 
             selectedStatus: '',
             selectedMonth: '',
-            searchKeyword
+            searchKeyword: ''
         });
-    }, [searchKeyword]);
+    }, []);
+
+    // 검색 실행 함수
+    const executeSearch = () => {
+        setAppliedSearchKeyword(searchKeyword);
+        onFilterChange({
+            selectedRegion: '전국',
+            selectedCategory: '전체',
+            selectedStatus: '',
+            selectedMonth: '',
+            searchKeyword: searchKeyword.trim()
+        });
+    };
+
+    // 엔터키 검색
+    const handleSearchKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            executeSearch();
+        }
+    };
 
     // 필터 적용 (하단 조회 버튼)
     const applyFilters = () => {
+        setAppliedSearchKeyword(''); // 필터 적용시에는 검색어 초기화
         onFilterChange({
             selectedRegion,
             selectedCategory,
             selectedStatus,
             selectedMonth,
-            searchKeyword: '' // 필터 적용시에는 검색어는 빈값
+            searchKeyword: ''
         });
     };
 
@@ -98,6 +134,7 @@ const FestivalHeader = ({ onFilterChange }) => {
         setSelectedStatus('');
         setSelectedMonth('');
         setSearchKeyword('');
+        setAppliedSearchKeyword('');
         // 필터 초기화시 전체 축제 로드
         onFilterChange({
             selectedRegion: '전국',
@@ -147,6 +184,7 @@ const FestivalHeader = ({ onFilterChange }) => {
                             placeholder="축제명으로 검색해보세요..."
                             value={searchKeyword}
                             onChange={(e) => setSearchKeyword(e.target.value)}
+                            onKeyPress={handleSearchKeyPress}
                             style={{
                                 width: '100%',
                                 padding: '16px 50px 16px 20px',
@@ -167,26 +205,45 @@ const FestivalHeader = ({ onFilterChange }) => {
                                 e.target.style.backgroundColor = '#f8f9fa';
                             }}
                         />
-                        <div style={{
-                            position: 'absolute',
-                            right: '15px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            fontSize: '20px',
-                            color: '#8b5cf6'
-                        }}>
+                        <button
+                            onClick={executeSearch}
+                            style={{
+                                position: 'absolute',
+                                right: '15px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '20px',
+                                color: '#8b5cf6',
+                                cursor: 'pointer',
+                                padding: '5px',
+                                borderRadius: '50%',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+                                e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'transparent';
+                                e.target.style.transform = 'translateY(-50%) scale(1)';
+                            }}
+                            title="검색하기"
+                        >
                             🔍
-                        </div>
+                        </button>
                     </div>
                 </div>
 
-                {/* 필터 버튼들 */}
+                {/* 필터 버튼들 - 모바일 반응형 */}
                 <div style={{
                     display: 'flex',
-                    gap: '15px',
+                    gap: isMobile ? '12px' : '15px',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    flexWrap: 'wrap',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    flexWrap: isMobile ? 'nowrap' : 'wrap',
                     padding: '0 30px'
                 }}>
                     {/* 시기 필터 */}
@@ -205,6 +262,7 @@ const FestivalHeader = ({ onFilterChange }) => {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
                             minWidth: '120px',
+                            width: isMobile ? '280px' : 'auto',
                             justifyContent: 'space-between'
                         }}
                         onMouseEnter={(e) => {
@@ -241,6 +299,7 @@ const FestivalHeader = ({ onFilterChange }) => {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
                             minWidth: '120px',
+                            width: isMobile ? '280px' : 'auto',
                             justifyContent: 'space-between'
                         }}
                         onMouseEnter={(e) => {
@@ -277,6 +336,7 @@ const FestivalHeader = ({ onFilterChange }) => {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
                             minWidth: '120px',
+                            width: isMobile ? '280px' : 'auto',
                             justifyContent: 'space-between'
                         }}
                         onMouseEnter={(e) => {
@@ -297,65 +357,77 @@ const FestivalHeader = ({ onFilterChange }) => {
                         <span style={{ fontSize: '12px', color: '#666' }}>▼</span>
                     </button>
 
-                    {/* 필터 초기화 버튼 */}
-                    <button
-                        onClick={resetFilters}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: '#f8f9fa',
-                            border: '2px solid #e9ecef',
-                            borderRadius: '50%',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#e9ecef';
-                            e.target.style.transform = 'rotate(180deg)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#f8f9fa';
-                            e.target.style.transform = 'rotate(0deg)';
-                        }}
-                        title="필터 초기화"
-                    >
-                        🔄
-                    </button>
+                    {/* 하단 버튼들 그룹 (모바일에서는 가로로 배치) */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'center',
+                        width: isMobile ? '280px' : 'auto',
+                        justifyContent: isMobile ? 'space-between' : 'center'
+                    }}>
+                        {/* 필터 초기화 버튼 */}
+                        <button
+                            onClick={resetFilters}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: isMobile ? '130px' : '40px',
+                                height: '40px',
+                                backgroundColor: '#f8f9fa',
+                                border: '2px solid #e9ecef',
+                                borderRadius: isMobile ? '25px' : '50%',
+                                fontSize: isMobile ? '14px' : '16px',
+                                fontWeight: isMobile ? '500' : 'normal',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#e9ecef';
+                                e.target.style.transform = isMobile ? 'translateY(-2px)' : 'rotate(180deg)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = '#f8f9fa';
+                                e.target.style.transform = isMobile ? 'translateY(0)' : 'rotate(0deg)';
+                            }}
+                            title="필터 초기화"
+                        >
+                            {isMobile ? '새로고침' : '🔄'}
+                        </button>
 
-                    {/* 조회 버튼 */}
-                    <button
-                        onClick={applyFilters}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '12px 25px',
-                            backgroundColor: '#8b5cf6',
-                            border: 'none',
-                            borderRadius: '25px',
-                            color: 'white',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#7c3aed';
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#8b5cf6';
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'none';
-                        }}
-                    >
-                        조회하기
-                    </button>
+                        {/* 조회 버튼 */}
+                        <button
+                            onClick={applyFilters}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                padding: '12px 25px',
+                                backgroundColor: '#8b5cf6',
+                                border: 'none',
+                                borderRadius: '25px',
+                                color: 'white',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                width: isMobile ? '130px' : 'auto'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#7c3aed';
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = '#8b5cf6';
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        >
+                            조회하기
+                        </button>
+                    </div>
                 </div>
             </div>
 
