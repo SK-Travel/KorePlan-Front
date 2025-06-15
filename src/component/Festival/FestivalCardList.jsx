@@ -14,7 +14,7 @@ const FestivalCardList = ({ selectedRegion, selectedCategory, selectedStatus, se
     const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
 
-    const API_BASE_URL = 'http://localhost:8080/api/festival';
+    const API_BASE_URL = '/api/festival';
 
     // 초기 로드: 전체 축제 조회
     useEffect(() => {
