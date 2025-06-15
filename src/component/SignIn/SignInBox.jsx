@@ -189,15 +189,15 @@ const SignInBox = () => {
 
     // 기존 소셜 로그인 로직 유지
     const handleGoogleLogin = () => {
-        window.location.href = "http://localhost:8080/oauth2/authorization/google";
+        window.location.href = "http://14.63.178.142:8080/oauth2/authorization/google";
     };
 
     const handleKakaoLogin = () => {
-        window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
+        window.location.href = "http://14.63.178.142:8080/oauth2/authorization/kakao";
     }
 
     const handleNaverLogin = () => {
-        window.location.href = "http://localhost:8080/oauth2/authorization/naver";
+        window.location.href = "http://14.63.178.142:8080/oauth2/authorization/naver";
     }
 
     if (!mounted) return null;

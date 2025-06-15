@@ -35,7 +35,7 @@ const SpotDetail = () => {
 
         const incrementViewCount = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}/view`, {
+                const response = await fetch(`/api/data/stats/${contentId}/view`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -67,7 +67,7 @@ const SpotDetail = () => {
         if (!contentId) return;
         
         try {
-            const response = await fetch(`http://localhost:8080/api/data/stats/${contentId}/like`, {
+            const response = await fetch(`/api/data/stats/${contentId}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
