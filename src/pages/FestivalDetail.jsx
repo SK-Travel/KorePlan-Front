@@ -63,7 +63,7 @@ const FestivalDetail = () => {
   // 조회수 증가 API 함수
   const incrementViewCount = async (contentId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/festival/${contentId}/view`, {
+      const response = await fetch(`/api/festival/${contentId}/view`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -16,7 +16,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
 
-    const API_BASE_URL = 'http://localhost:8080/api/region-list';
+    const API_BASE_URL = '/api/region-list';
 
     useEffect(() => {
         if (selectedRegion && selectedTheme) {
