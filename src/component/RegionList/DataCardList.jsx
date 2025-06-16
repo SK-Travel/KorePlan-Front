@@ -12,18 +12,25 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [hasMore, setHasMore] = useState(true);
     const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [bookmarkLoading, setBookmarkLoading] = useState(new Set()); // 찜 처리 중인 아이템들
     const navigate = useNavigate();
     const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
 
     const API_BASE_URL = '/api/region-list';
+    const LIKE_API_BASE_URL = '/api/like';
 
+    // 컴포넌트 마운트 시 사용자의 찜 목록 로드
+    useEffect(() => {
+        loadUserLikes();
+    }, []);
+    //선택지 변경시
     useEffect(() => {
         if (selectedRegion && selectedTheme) {
             resetAndLoadData();
         }
     }, [selectedRegion, selectedWard, selectedTheme]);
-
+    //무한 스크롤
     useEffect(() => {
         if (!hasMore || loadingMore) return;
 
@@ -57,6 +64,55 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             return () => clearTimeout(timer);
         }
     }, [snackbar.open]);
+
+    // 사용자의 찜 목록 불러오기
+    const loadUserLikes = async () => {
+        try {
+            const response = await fetch(`${LIKE_API_BASE_URL}/my-likes`, {
+                method: 'GET',
+                credentials: 'include', // 세션 쿠키 포함
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 && result.likedDataIds) {
+                    setBookmarkedItems(new Set(result.likedDataIds));
+                    console.log('✅ 사용자 찜 목록 로드 성공:', result.likedDataIds);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 찜 목록 로드 실패:', error);
+        }
+    };
+
+    // 여러 데이터의 찜 상태 확인
+    const checkLikeStatus = async (dataIds) => {
+        try {
+            const response = await fetch(`${LIKE_API_BASE_URL}/check-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ dataIds }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 && result.likeStatusMap) {
+                    // likeStatusMap에서 true인 항목들만 찜 목록에 추가
+                    const likedIds = Object.entries(result.likeStatusMap)
+                        .filter(([id, isLiked]) => isLiked)
+                        .map(([id]) => parseInt(id));
+                    
+                    setBookmarkedItems(new Set(likedIds));
+                    console.log('✅ 찜 상태 확인 성공:', result.likeStatusMap);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 찜 상태 확인 실패:', error);
+        }
+    };
 
     const resetAndLoadData = () => {
         setDataList([]);
@@ -114,13 +170,21 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
 
             if (data.success !== false) {
                 const newDataList = data.dataList || [];
-                console.log('📝 받은 데이터 샘플:', newDataList[0]); // 첫 번째 아이템 로그 확인
+                console.log('📝 받은 데이터 샘플:', newDataList[0]);
                 
                 setDataList(newDataList);
                 setDisplayedData(newDataList.slice(0, ITEMS_PER_PAGE));
                 setTotalCount(data.totalCount || 0);
                 setMessage(data.message || '데이터를 불러왔습니다.');
                 setHasMore(newDataList.length > ITEMS_PER_PAGE);
+
+                // 데이터 로드 후 찜 상태 확인
+                if (newDataList.length > 0) {
+                    const dataIds = newDataList.map(item => item.contentId).filter(id => id);
+                    if (dataIds.length > 0) {
+                        await checkLikeStatus(dataIds);
+                    }
+                }
             } else {
                 throw new Error(data.message || '데이터 조회에 실패했습니다.');
             }
@@ -148,36 +212,122 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         });
     };
 
-    // 찜 버튼 토글
-    const toggleBookmark = (item, e) => {
+    // DB와 연동된 찜 버튼 토글
+    const toggleBookmark = async (item, e) => {
         e.stopPropagation();
-        const itemId = item.contentId || item.id;
+        
+        const itemId = item.id;
         const itemTitle = item.title || '항목';
         
+        // 이미 처리 중인 아이템이면 중복 요청 방지
+        if (bookmarkLoading.has(itemId)) {
+            return;
+        }
+
         const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
         
-        setBookmarkedItems(prev => {
-            const newSet = new Set(prev);
-            if (isCurrentlyBookmarked) {
-                newSet.delete(itemId);
-            } else {
-                newSet.add(itemId);
-            }
-            return newSet;
-        });
+        // 로딩 상태 추가
+        setBookmarkLoading(prev => new Set([...prev, itemId]));
         
-        // 토스트 메시지 표시
-        if (isCurrentlyBookmarked) {
-            setSnackbar({
-                open: true,
-                message: `"${itemTitle}"이(가) 찜 목록에서 제거되었습니다`,
-                severity: 'info'
+        try {
+            console.log(`🔄 찜 ${isCurrentlyBookmarked ? '제거' : '추가'} 요청:`, itemId);
+            
+            const response = await fetch(`${LIKE_API_BASE_URL}/${itemId}`, {
+                method: 'POST',
+                credentials: 'include', // 세션 쿠키 포함
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
-        } else {
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('📊 찜 API 응답:', result);
+
+            if (result.code === 200) {
+                // 서버 응답에 따라 상태 업데이트
+                const newIsBookmarked = result.likeStatus === 1;
+                
+                setBookmarkedItems(prev => {
+                    const newSet = new Set(prev);
+                    if (newIsBookmarked) {
+                        newSet.add(itemId);
+                    } else {
+                        newSet.delete(itemId);
+                    }
+                    return newSet;
+                });
+                
+                // 해당 아이템의 likeCount 실시간 업데이트
+                setDataList(prevList => 
+                    prevList.map(dataItem => 
+                        (dataItem.contentId === itemId || dataItem.id === itemId) 
+                            ? { 
+                                ...dataItem, 
+                                likeCount: newIsBookmarked 
+                                    ? (dataItem.likeCount || 0) + 1 
+                                    : Math.max((dataItem.likeCount || 0) - 1, 0)
+                            }
+                            : dataItem
+                    )
+                );
+                
+                setDisplayedData(prevList => 
+                    prevList.map(dataItem => 
+                        (dataItem.contentId === itemId || dataItem.id === itemId)
+                            ? { 
+                                ...dataItem, 
+                                likeCount: newIsBookmarked 
+                                    ? (dataItem.likeCount || 0) + 1 
+                                    : Math.max((dataItem.likeCount || 0) - 1, 0)
+                            }
+                            : dataItem
+                    )
+                );
+                
+                // 성공 토스트 메시지
+                setSnackbar({
+                    open: true,
+                    message: result.message || (newIsBookmarked ? 
+                        `"${itemTitle}"이(가) 찜 목록에 추가되었습니다` : 
+                        `"${itemTitle}"이(가) 찜 목록에서 제거되었습니다`),
+                    severity: 'success'
+                });
+                
+                console.log(`✅ 찜 ${newIsBookmarked ? '추가' : '제거'} 성공, likeCount 업데이트됨`);
+                
+            } else if (result.code === 401) {
+                // 로그인 필요
+                setSnackbar({
+                    open: true,
+                    message: '로그인이 필요한 서비스입니다',
+                    severity: 'info'
+                });
+                console.log('⚠️ 로그인 필요');
+                
+            } else {
+                throw new Error(result.error_message || '찜 처리 중 오류가 발생했습니다');
+            }
+            
+        } catch (error) {
+            console.error('❌ 찜 처리 실패:', error);
+            
+            // 에러 토스트 메시지
             setSnackbar({
                 open: true,
-                message: `"${itemTitle}"이(가) 찜 목록에 추가되었습니다`,
-                severity: 'success'
+                message: '찜 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
+                severity: 'error'
+            });
+            
+        } finally {
+            // 로딩 상태 제거
+            setBookmarkLoading(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(itemId);
+                return newSet;
             });
         }
     };
@@ -379,6 +529,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         {displayedData.map((item, index) => {
                             const itemId = item.contentId || item.id;
                             const isBookmarked = bookmarkedItems.has(itemId);
+                            const isBookmarkLoading = bookmarkLoading.has(itemId);
                             
                             // 개발 중 데이터 확인 (첫 번째 아이템만)
                             if (index === 0) {
@@ -441,6 +592,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                         {/* 찜 버튼 */}
                                         <button
                                             onClick={(e) => toggleBookmark(item, e)}
+                                            disabled={isBookmarkLoading}
                                             style={{
                                                 position: 'absolute',
                                                 top: '12px',
@@ -449,25 +601,32 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                                 height: '36px',
                                                 borderRadius: '50%',
                                                 border: 'none',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                                cursor: 'pointer',
+                                                backgroundColor: isBookmarkLoading ? 
+                                                    'rgba(255, 255, 255, 0.7)' : 
+                                                    'rgba(255, 255, 255, 0.9)',
+                                                cursor: isBookmarkLoading ? 'not-allowed' : 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 fontSize: '16px',
                                                 transition: 'all 0.2s ease',
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                opacity: isBookmarkLoading ? 0.7 : 1
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.transform = 'scale(1.1)';
-                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                                                if (!isBookmarkLoading) {
+                                                    e.target.style.transform = 'scale(1.1)';
+                                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                                                }
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.transform = 'scale(1)';
-                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                                                if (!isBookmarkLoading) {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                                                }
                                             }}
                                         >
-                                            {isBookmarked ? '❤️' : '🤍'}
+                                            {isBookmarkLoading ? '⏳' : (isBookmarked ? '❤️' : '🤍')}
                                         </button>
                                     </div>
 
@@ -625,7 +784,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         </div>
                     )}
 
-                    {/* 커스텀 토스트 */}
+                    {/* 향상된 토스트 메시지 */}
                     {snackbar.open && (
                         <div style={{
                             position: 'fixed',
@@ -633,7 +792,8 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             left: '50%',
                             transform: 'translateX(-50%)',
                             zIndex: 9999,
-                            backgroundColor: snackbar.severity === 'success' ? '#4caf50' : '#2196f3',
+                            backgroundColor: snackbar.severity === 'success' ? '#4caf50' : 
+                                           snackbar.severity === 'error' ? '#f44336' : '#2196f3',
                             color: 'white',
                             padding: '12px 24px',
                             borderRadius: '8px',
@@ -646,7 +806,10 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             animation: 'slideDown 0.3s ease-out',
                             maxWidth: '400px'
                         }}>
-                            <span>{snackbar.severity === 'success' ? '✅' : 'ℹ️'}</span>
+                            <span>
+                                {snackbar.severity === 'success' ? '✅' : 
+                                 snackbar.severity === 'error' ? '❌' : 'ℹ️'}
+                            </span>
                             {snackbar.message}
                             <button
                                 onClick={handleSnackbarClose}

@@ -66,7 +66,7 @@ export default function MyList() {
   // 모바일용 메뉴 (로그아웃 제외)
   const mobileMenuItems = [
     { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '/MyList' },
-    { label: '지역/테마별 여행', icon: <MdTravelExplore />, link: '/region' },
+    { label: '지역별·테마별 여행지', icon: <MdTravelExplore />, link: '/region' },
     { label: '축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
     { label: '여행후기', icon: <MdReviews />, link: '/review' },
     { label: 'AI 추천', icon: <FaRobot />, link: '/AIChat' },
@@ -81,7 +81,7 @@ export default function MyList() {
   const handleLogOut = () => {
     localStorage.clear();
     alert("로그아웃 완료");
-    window.location.href="/signIn";
+    window.location.href="/";
   }
 
   // 내 정보 페이지로 이동
