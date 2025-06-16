@@ -33,7 +33,7 @@ const Header = () => {
             onClick={() => navigate('/region')}
             style={{ color: '#333', fontSize: '15px', fontWeight: '500' }}
           >
-            지역/테마별 여행
+            지역별·테마별 여행지
           </Button>
           <Button 
             onClick={() => navigate('/festival')}
