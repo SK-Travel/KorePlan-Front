@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageWrapper, BodyWrapper, Main, MainContent } from '../styles/MainPageStyle';
 import Header from '../component/fragments/Header';
 import TravelPlannerModal from '../component/AIChat/TravelPlannerModal';
@@ -9,15 +9,26 @@ const AIChatPage = () => {
     const [planData, setPlanData] = useState([]); // GPT로부터 받은 여행 계획 데이터를 저장
     const [isPlanning, setIsPlanning] = useState(true); // 모달 표시 여부 상태
 
+    // ✅ 뒤로가기 시 복원용: sessionStorage에서 로드
+    useEffect(() => {
+        const saved = sessionStorage.getItem("planData");
+        if (saved) {
+            setPlanData(JSON.parse(saved));
+            setIsPlanning(false);
+        }
+    }, []);
+
     // 계획이 생성되면 지도 보여주기
     const handlePlanGenerated = (data) => {
         setPlanData(data);
+        sessionStorage.setItem("planData", JSON.stringify(data)); // 저장
         setIsPlanning(false); // 모달 닫기
     };
 
     // 다시 추천받기 버튼 클릭 시
     const handleReset = () => {
         setPlanData([]);      // 기존 계획 제거
+        sessionStorage.removeItem("planData"); // 삭제
         setIsPlanning(true);  // 모달 다시 열기
     };
     

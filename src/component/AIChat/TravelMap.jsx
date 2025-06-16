@@ -1,23 +1,20 @@
 import React, { useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-
+import { LockOpen } from 'lucide-react';
 
 const TravelMap = ({ locations }) => {
-    const [selectedDay, setSelectedDay] = useState(1);       // 현재 선택된 일차
+    const [selectedDay, setSelectedDay] = useState(1);
 
-    const mapRef = useRef(null);         // 지도 DOM 참조
-    const mapInstanceRef = useRef(null); // Naver 지도 인스턴스 저장
+    const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
 
-    // Day별 마커, 폴리라인, 애니메이션마커 refs를 저장하기 위해 객체로 관리
     const markersByDay = useRef({});
     const polylinesByDay = useRef({});
 
-    const navigate = useNavigate(); // 네비게이트
-    // 페이지 바로가기용 후버
+    const navigate = useNavigate();
     const [hovered, setHovered] = useState(null);
 
-    // 페이지 바로가기용 스타일
     const getLinkStyle = (idx) => ({
         color: hovered === idx ? 'white' : 'black',
         textDecoration: 'none',
@@ -29,40 +26,35 @@ const TravelMap = ({ locations }) => {
         height: '30px',
     });
 
-    // 기본 색 (Day에 따라)
     const DAY_COLOR_MAP = {
-        1: '#FF4D4D', // 선명한 빨간색
-        2: '#4CAF50', // 선명한 초록색
-        3: '#2196F3', // 선명한 파란색
-        4: '#FFC107', // 진한 노란색 (약간 주황 느낌)
-        5: '#9C27B0', // 진한 보라색
+        1: '#FF4D4D',
+        2: '#4CAF50',
+        3: '#2196F3',
+        4: '#FFC107',
+        5: '#9C27B0',
     };
 
-    // 여행 일차 목록 추출 (중복 제거)
     const dayList = [...new Set(locations.map(loc => Number(loc.day)))].sort((a, b) => a - b);
 
-    // 선택된 일차의 장소만 필터링 및 정렬
     const dayLocations = locations
-        .filter(loc => Number(loc.day) === selectedDay) // 수정된 부분: Number(loc.day)로 통일
+        .filter(loc => Number(loc.day) === selectedDay)
         .sort((a, b) => a.order - b.order);
     
-    
-    // ✅ 지도 및 마커/폴리라인 최초 생성
+    // ✅ 지도 및 마커/폴리라인 최초 생성 (좌표 순서 수정)
     useEffect(() => {
         if (!mapRef.current || !window.naver || locations.length === 0) return;
-
+    
         const naver = window.naver;
-
-        // ✅ 지도 최초 1회 생성
+        
+        // ✅ 지도 최초 1회 생성 - 좌표 순서 수정: LatLng(위도, 경도) = LatLng(mapy, mapx)
         if (!mapInstanceRef.current) {
             const firstLoc = locations[0];
             mapInstanceRef.current = new naver.maps.Map(mapRef.current, {
-                center: new naver.maps.LatLng(firstLoc.lat, firstLoc.lng),
+                center: new naver.maps.LatLng(firstLoc.mapy, firstLoc.mapx), // ✅ 수정: mapy, mapx 순서
                 zoom: 14,
                 disableDoubleClickZoom: true,
             });
 
-           // resize
             requestAnimationFrame(() => {
                 naver.maps.Event.trigger(mapInstanceRef.current, 'resize');
             });
@@ -70,8 +62,9 @@ const TravelMap = ({ locations }) => {
 
         const map = mapInstanceRef.current;
 
+        // ✅ 초기 중심점 설정도 수정
         if (!map._hasCenteredOnce) {
-            map.setCenter(new naver.maps.LatLng(locations[0].lat, locations[0].lng));
+            map.setCenter(new naver.maps.LatLng(locations[0].mapy, locations[0].mapx)); // ✅ 수정
             map._hasCenteredOnce = true;
         }
 
@@ -82,11 +75,12 @@ const TravelMap = ({ locations }) => {
             if (markersByDay.current[day]) markersByDay.current[day].forEach(m => m.setMap(null));
             if (polylinesByDay.current[day]) polylinesByDay.current[day].setMap(null);
 
+            // ✅ 마커 생성 시 좌표 순서 수정
             markersByDay.current[day] = dayLocs.map(loc => {
                 const marker = new naver.maps.Marker({
-                    position: new naver.maps.LatLng(loc.lat, loc.lng),
+                    position: new naver.maps.LatLng(loc.mapy, loc.mapx), // ✅ 이미 올바름
                     map,
-                    title: loc.name,
+                    title: loc.title,
                     icon: {
                         content: `
                             <div style="text-align:center;">
@@ -94,7 +88,7 @@ const TravelMap = ({ locations }) => {
                                 <div style="font-size: 12px; margin-top:2px; color: black; font-weight: bold;">${loc.day}. ${loc.order}</div>
                             </div>
                         `,
-                        anchor: new naver.maps.Point(8, 8), // ✅ 동그라미 중심에 anchor 맞춤 (16px 기준)
+                        anchor: new naver.maps.Point(8, 8),
                     },
                 });
 
@@ -105,7 +99,8 @@ const TravelMap = ({ locations }) => {
                 return marker;
             });
 
-            const path = dayLocs.map(loc => new naver.maps.LatLng(loc.lat, loc.lng));
+            // ✅ 폴리라인 생성 시 좌표 순서 수정
+            const path = dayLocs.map(loc => new naver.maps.LatLng(loc.mapy, loc.mapx)); // ✅ 이미 올바름
             const polyline = new naver.maps.Polyline({
                 path,
                 map,
@@ -123,24 +118,23 @@ const TravelMap = ({ locations }) => {
         });
     }, []);
 
-    // ✅ 선택된 Day의 첫 장소로 지도 중심 이동
+    // ✅ 선택된 Day의 첫 장소로 지도 중심 이동 (좌표 순서 수정)
     useEffect(() => {
         const map = mapInstanceRef.current;
         if (!map) return;
-
+        
         const firstLoc = locations
-            .filter(loc => Number(loc.day) === selectedDay)
-            .sort((a, b) => a.order - b.order)[0];
-
+        .filter(loc => Number(loc.day) === selectedDay)
+        .sort((a, b) => a.order - b.order)[0];
+        
         if (firstLoc) {
-            // ✅ 이 줄 추가됨 (지도 깨짐 방지)
             window.naver.maps.Event.trigger(map, 'resize');
-
-            map.panTo(new window.naver.maps.LatLng(firstLoc.lat, firstLoc.lng));
+            // ✅ 수정: LatLng(위도, 경도) = LatLng(mapy, mapx)
+            map.panTo(new window.naver.maps.LatLng(firstLoc.mapy, firstLoc.mapx));
         }
+        console.log("loc데이터 검사:", {firstLoc});
     }, [selectedDay]);
 
-    // ✅ 선택된 Day에 따라 폴리라인 강조 스타일 변경
     useEffect(() => {
         dayList.forEach(day => {
             const polyline = polylinesByDay.current[day];
@@ -154,11 +148,16 @@ const TravelMap = ({ locations }) => {
         });
     }, [selectedDay, dayList]);
 
-    // myList추가 핸들
+    // ✅ API 호출 방식 수정
     const handleAddToMyPlan = async() => {
         try {
-            const response = await fetch('/api/my-plan/list', locations, {
-                widthCredentials: true
+            const response = await fetch('/api/my-plan/list', {
+                method: 'POST', // ✅ HTTP 메서드 명시
+                headers: {
+                    'Content-Type': 'application/json', // ✅ 헤더 추가
+                },
+                body: JSON.stringify(locations), // ✅ body로 데이터 전송
+                credentials: 'include' // ✅ 오타 수정: widthCredentials -> credentials
             });
 
             if (response.ok) {
@@ -177,13 +176,13 @@ const TravelMap = ({ locations }) => {
         }
     }
 
-    // Data의 ContentId -> Theme의 ContentTypeId으로 ThemeName불러오기
-    const handleCardClick = (item) => {
-        navigate(`/spot/${item.contentId}`, {
+    const handleCardClick = (loc) => {
+        navigate(`/spot/${loc.contentId}`, {
             state: {
-                contentId: item.contentId,
-                selectedTheme: selectedTheme,
-                spotData: item,
+                contentId: loc.contentId,
+                contentTypeId: loc.contentTypeId,
+                spotData: loc,
+                locations, // 여행 일정 전체 정보도 같이 보냄
             }
         });
     };
@@ -236,13 +235,13 @@ return (
                                     이미지가 부재합니다.
                                     </div>
                                 )}
-                                <button onClick={handleCardClick} target="_blank" rel="noopener noreferrer" className="ms-4"
+                                <button  onClick={(e) => { e.stopPropagation(); handleCardClick(loc);}} target="_blank" rel="noopener noreferrer" className="ms-4"
                                         style={getLinkStyle(idx)} onMouseEnter={() => setHovered(idx)} onMouseLeave={() => setHovered(null)}>
                                     상세 페이지 바로가기
                                 </button>
                             </div>
-                            <strong>{loc.name}</strong>
-                            ({loc.region})
+                            <strong>{loc.title}</strong>
+                            ({loc.regionName})
                         </li>
                     ))}
                 </ol>
@@ -264,9 +263,7 @@ return (
             </div>
         </div>
     );
-
 };
-
 
 TravelMap.propTypes = {
     locations: PropTypes.array.isRequired,
