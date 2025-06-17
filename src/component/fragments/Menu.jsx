@@ -16,7 +16,7 @@ import { FaUser, FaHeart, FaChartBar, FaCalendarAlt, FaRobot, FaCog, FaQuestionC
 import { MdTravelExplore, MdReviews, MdNotifications, MdBookmark } from 'react-icons/md';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-export default function MyList() {
+export default function Menu() {
   const [show, setShow] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
