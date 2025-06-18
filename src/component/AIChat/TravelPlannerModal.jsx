@@ -6,7 +6,7 @@ const themes = [
     { key: '관광지', label: '🏛️ 관광지', color: '#e74c3c' },
     { key: '문화시설', label: '🎭 문화시설', color: '#9b59b6' },
     { key: '레포츠', label: '🏃 레포츠', color: '#3498db' },
-    { key: '숙박', label: '🏨 숙박', color: '#34495e' },
+    // { key: '숙박', label: '🏨 숙박', color: '#34495e' },
     { key: '쇼핑', label: '🛍️ 쇼핑', color: '#e67e22' },
     { key: '음식점', label: '🍽️ 음식점', color: '#f1c40f' }
 ];
@@ -28,7 +28,9 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
 
     const companions = ['혼자', '친구', '가족', '연인'];
 
-    const dayOptions = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일', '5박 6일'];
+    const dayOptions = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일',
+        // '5박 6일'
+    ];
 
     const dayValueMap = {
         '당일치기': 1,
@@ -36,7 +38,7 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
         '2박 3일': 3,
         '3박 4일': 4,
         '4박 5일': 5,
-        '5박 6일': 6,
+        // '5박 6일': 6,
     };
 
     const handleToggle = (item) => {
@@ -59,7 +61,7 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                 })
             });
             const plan = await response.json();
-            onPlanGenerated(plan);
+            onPlanGenerated({plan, days, region});
         } catch (error) {
             alert('계획 생성 중 오류 발생:' + error);
         } finally {
