@@ -14,7 +14,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [bookmarkLoading, setBookmarkLoading] = useState(new Set()); // 찜 처리 중인 아이템들
     const navigate = useNavigate();
-    const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
 
     const API_BASE_URL = '/api/region-list';
@@ -24,35 +23,12 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     useEffect(() => {
         loadUserLikes();
     }, []);
-    //선택지 변경시
+
     useEffect(() => {
         if (selectedRegion && selectedTheme) {
             resetAndLoadData();
         }
     }, [selectedRegion, selectedWard, selectedTheme]);
-    //무한 스크롤
-    useEffect(() => {
-        if (!hasMore || loadingMore) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    loadMoreData();
-                }
-            },
-            { threshold: 0.1 }
-        );
-
-        if (observerRef.current) {
-            observer.observe(observerRef.current);
-        }
-
-        return () => {
-            if (observerRef.current) {
-                observer.unobserve(observerRef.current);
-            }
-        };
-    }, [hasMore, loadingMore, displayedData]);
 
     // 토스트 자동 닫기
     useEffect(() => {
@@ -121,13 +97,22 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         loadData();
     };
 
-    const loadMoreData = useCallback(() => {
+    const loadMoreData = () => {
         if (loadingMore || !hasMore) return;
 
         const currentLength = displayedData.length;
         const remainingData = dataList.slice(currentLength, currentLength + ITEMS_PER_PAGE);
 
+        console.log('🔄 더보기 버튼 클릭:', {
+            currentLength,
+            dataListLength: dataList.length,
+            remainingDataLength: remainingData.length,
+            hasMore,
+            loadingMore
+        });
+
         if (remainingData.length === 0) {
+            console.log('❌ 더 이상 로드할 데이터 없음');
             setHasMore(false);
             return;
         }
@@ -135,14 +120,19 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         setLoadingMore(true);
 
         setTimeout(() => {
-            setDisplayedData(prev => [...prev, ...remainingData]);
+            setDisplayedData(prev => {
+                const newData = [...prev, ...remainingData];
+                console.log('✅ 새 데이터 추가됨:', newData.length);
+                return newData;
+            });
             setLoadingMore(false);
 
             if (currentLength + remainingData.length >= dataList.length) {
+                console.log('🏁 모든 데이터 로드 완료');
                 setHasMore(false);
             }
-        }, 500);
-    }, [displayedData, dataList, loadingMore, hasMore]);
+        }, 300);
+    };
 
     const loadData = async () => {
         try {
@@ -180,7 +170,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
 
                 // 데이터 로드 후 찜 상태 확인
                 if (newDataList.length > 0) {
-                    const dataIds = newDataList.map(item => item.contentId).filter(id => id);
+                    const dataIds = newDataList.map(item => item.id).filter(id => id);
                     if (dataIds.length > 0) {
                         await checkLikeStatus(dataIds);
                     }
@@ -216,8 +206,11 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const toggleBookmark = async (item, e) => {
         e.stopPropagation();
         
-        const itemId = item.id;
+        const itemId = item.id; // Primary Key인 id 사용 (Long 타입)
         const itemTitle = item.title || '항목';
+        
+        console.log('🔍 디버그 - id:', itemId, 'type:', typeof itemId);
+        console.log('🔍 현재 bookmarkedItems:', Array.from(bookmarkedItems));
         
         // 이미 처리 중인 아이템이면 중복 요청 방지
         if (bookmarkLoading.has(itemId)) {
@@ -225,12 +218,13 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
 
         const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
+        console.log('🔍 현재 북마크 상태:', isCurrentlyBookmarked);
         
         // 로딩 상태 추가
         setBookmarkLoading(prev => new Set([...prev, itemId]));
         
         try {
-            console.log(`🔄 찜 ${isCurrentlyBookmarked ? '제거' : '추가'} 요청:`, itemId);
+            console.log(`🔄 찜 ${isCurrentlyBookmarked ? '제거' : '추가'} 요청 (id):`, itemId);
             
             const response = await fetch(`${LIKE_API_BASE_URL}/${itemId}`, {
                 method: 'POST',
@@ -248,8 +242,13 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             console.log('📊 찜 API 응답:', result);
 
             if (result.code === 200) {
-                // 서버 응답에 따라 상태 업데이트
-                const newIsBookmarked = result.likeStatus === 1;
+                // 서버 응답에 따라 상태 업데이트 (int 형으로 처리)
+                const newIsBookmarked = result.likeStatus === 1; // 1이면 찜 추가, 0이면 찜 제거
+                
+                // Boolean 버전 (백엔드를 boolean으로 수정했을 때 사용)
+                // const newIsBookmarked = result.likeStatus; // true/false 직접 사용
+                
+                console.log('📊 새로운 북마크 상태:', newIsBookmarked);
                 
                 setBookmarkedItems(prev => {
                     const newSet = new Set(prev);
@@ -258,13 +257,14 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     } else {
                         newSet.delete(itemId);
                     }
+                    console.log('📊 업데이트된 bookmarkedItems:', Array.from(newSet));
                     return newSet;
                 });
                 
                 // 해당 아이템의 likeCount 실시간 업데이트
                 setDataList(prevList => 
                     prevList.map(dataItem => 
-                        (dataItem.contentId === itemId || dataItem.id === itemId) 
+                        dataItem.id === itemId
                             ? { 
                                 ...dataItem, 
                                 likeCount: newIsBookmarked 
@@ -277,7 +277,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                 
                 setDisplayedData(prevList => 
                     prevList.map(dataItem => 
-                        (dataItem.contentId === itemId || dataItem.id === itemId)
+                        dataItem.id === itemId
                             ? { 
                                 ...dataItem, 
                                 likeCount: newIsBookmarked 
@@ -349,6 +349,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     // 받은 데이터 확인용 (개발 중에만 사용)
     const logItemData = (item) => {
         console.log('📊 아이템 데이터:', {
+            id: item.id,
             contentId: item.contentId,
             title: item.title,
             viewCount: item.viewCount,
@@ -527,7 +528,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         justifyContent: 'center',
                     }}>
                         {displayedData.map((item, index) => {
-                            const itemId = item.contentId || item.id;
+                            const itemId = item.id; // Long 타입 ID 그대로 사용
                             const isBookmarked = bookmarkedItems.has(itemId);
                             const isBookmarkLoading = bookmarkLoading.has(itemId);
                             
@@ -538,7 +539,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             
                             return (
                                 <div
-                                    key={item.id || index}
+                                    key={`${item.id || index}-${itemId}`}
                                     style={cardStyle}
                                     onClick={() => handleCardClick(item)}
                                     onMouseEnter={(e) => {
@@ -729,44 +730,67 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         })}
                     </div>
 
-                    {/* 무한 스크롤 트리거 */}
+                    {/* 더보기 버튼 */}
                     {hasMore && (
-                        <div
-                            ref={observerRef}
-                            style={{
-                                height: '50px',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                marginTop: '30px'
-                            }}
-                        >
-                            {loadingMore ? (
-                                <div style={{
+                        <div style={{
+                            textAlign: 'center',
+                            marginTop: '40px',
+                            marginBottom: '20px'
+                        }}>
+                            <button
+                                onClick={loadMoreData}
+                                disabled={loadingMore}
+                                style={{
+                                    padding: '16px 32px',
+                                    backgroundColor: loadingMore ? '#bdc3c7' : '#3498db',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '25px',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    cursor: loadingMore ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '10px',
-                                    color: '#7f8c8d',
-                                    fontSize: '14px'
-                                }}>
-                                    <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        border: '2px solid #e9ecef',
-                                        borderTop: '2px solid #3498db',
-                                        borderRadius: '50%',
-                                        animation: 'spin 1s linear infinite'
-                                    }}></div>
-                                    더 많은 데이터를 불러오는 중...
-                                </div>
-                            ) : (
-                                <div style={{
-                                    color: '#bdc3c7',
-                                    fontSize: '12px'
-                                }}>
-                                    스크롤하여 더 보기
-                                </div>
-                            )}
+                                    gap: '8px',
+                                    margin: '0 auto',
+                                    minWidth: '160px',
+                                    justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!loadingMore) {
+                                        e.target.style.backgroundColor = '#2980b9';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 16px rgba(52, 152, 219, 0.4)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!loadingMore) {
+                                        e.target.style.backgroundColor = '#3498db';
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
+                                    }
+                                }}
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <div style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            border: '2px solid transparent',
+                                            borderTop: '2px solid white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 1s linear infinite'
+                                        }}></div>
+                                        로딩 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        📄 더보기 ({dataList.length - displayedData.length}개 남음)
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
 
