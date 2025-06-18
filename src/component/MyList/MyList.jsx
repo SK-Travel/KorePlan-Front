@@ -8,6 +8,8 @@ const MyList = () => {
     const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('jwtToken');
 
+    const [hasLogged, setHasLogged] = useState(false);
+
     // 전체 저장된 리스트 가져오기
     useEffect(() => {
         const fetchPlans = async () => {
@@ -20,7 +22,9 @@ const MyList = () => {
                 });
                 const data = await response.json();
                 if(data.code === 200) {
-                    setPlans(data.data);
+                    setPlans(data.result);
+                    console.log("data 결과값(JSON):", JSON.stringify(data.result, null, 2)); // 🔥 여기서 찍는다
+                    
                 } else {
                     alert("여행 리스트 조회 실패");
                 }
@@ -31,6 +35,7 @@ const MyList = () => {
             }
         };
         fetchPlans();
+        
     }, [userId]);
 
     // 삭제 로직
@@ -68,14 +73,17 @@ const MyList = () => {
 
     return (
         <div style={{padding: '20px',borderRadius: '12px', border: '1px solid #ddd',boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',backgroundColor: 'white', marginBottom: '20px'}}>
-            <h1>나의 여행 리스트</h1>
+            <h3>나의 여행 리스트</h3>
 
             {plans.length === 0 && <p>저장된 여행 일정이 없습니다.</p>}
-
+        
             {plans.map((plan, planIdx) => (
-                <div key={plan.id} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
+                <div key={plan.id} className="d-flex">
+                <h4 style={{padding:'12px 10px 0px 0px'}}>{planIdx + 1}</h4>
+
+                <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4>{planIdx + 1}. {plan.region} {plan.days - 1}박 {plan.days}일 일정</h4>
+                    <h4> {plan.title} - {plan.startDate && plan.endDate ? `${plan.startDate} ~ ${plan.endDate}` : '날짜 미정'} ({new Set(plan.sendDataDto.map(d => d.day)).size-1}박-{new Set(plan.sendDataDto.map(d => d.day)).size}일)</h4>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button
                                 onClick={() => togglePlan(plan.id)}
@@ -131,13 +139,13 @@ const MyList = () => {
 
                     {expandedPlans[plan.id] && (
                         <div style={{ marginTop: '10px' }}>
-                            {Array.from(new Set(plan.travelLists.map(loc => loc.day)))
+                            {Array.from(new Set(plan.sendDataDto.map(loc => loc.day)))
                             .sort((a, b) => a - b)
                             .map(day => (
                                 <div key={day} style={{ marginTop: '10px' }}>
                                     <strong>Day {day}</strong>
                                     <ul style={{ paddingLeft: '20px', marginTop: '5px' }}>
-                                    {plan.travelLists
+                                    {plan.sendDataDto
                                         .filter(loc => loc.day === day)
                                         .sort((a, b) => a.order - b.order)
                                         .map((loc, idx) => (
@@ -151,6 +159,7 @@ const MyList = () => {
                         </div>
                     )}
                 </div>
+            </div>
             ))}
         </div>
     );
