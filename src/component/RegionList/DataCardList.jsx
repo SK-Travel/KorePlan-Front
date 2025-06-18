@@ -242,8 +242,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             console.log('📊 찜 API 응답:', result);
 
             if (result.code === 200) {
-                // 서버 응답에 따라 상태 업데이트 (int 형으로 처리)
-                //const newIsBookmarked = result.likeStatus === 1; // 1이면 찜 추가, 0이면 찜 제거
                 
                 // Boolean 버전 (백엔드를 boolean으로 수정했을 때 사용)
                 const newIsBookmarked = result.likeStatus; // true/false 직접 사용
