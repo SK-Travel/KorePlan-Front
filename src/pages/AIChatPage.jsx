@@ -6,8 +6,20 @@ import TravelMap from '../component/AIChat/TravelMap';
 import Footer from '../component/fragments/Footer.jsx';
 
 const AIChatPage = () => {
-    const [planData, setPlanData] = useState([]); // GPT로부터 받은 여행 계획 데이터를 저장
+    const [planData, setPlanData] = useState(null); // GPT로부터 받은 여행 계획 데이터를 저장
     const [isPlanning, setIsPlanning] = useState(true); // 모달 표시 여부 상태
+
+    useEffect(() => {
+        if (!planData) return; // planData가 없으면 바로 리턴
+        console.log("PlanData.plan:!!!", planData.plan);
+        console.log("days:!!!", planData.days);
+        console.log("order:!!!", planData.region);
+    
+        return () => {
+            
+        }
+    }, [planData]);
+
 
     // ✅ 뒤로가기 시 복원용: sessionStorage에서 로드
     useEffect(() => {
@@ -27,7 +39,7 @@ const AIChatPage = () => {
 
     // 다시 추천받기 버튼 클릭 시
     const handleReset = () => {
-        setPlanData([]);      // 기존 계획 제거
+        setPlanData(null);  //  기존 계획 제거
         sessionStorage.removeItem("planData"); // 삭제
         setIsPlanning(true);  // 모달 다시 열기
     };
@@ -42,9 +54,10 @@ const AIChatPage = () => {
                         {isPlanning && <TravelPlannerModal onPlanGenerated={handlePlanGenerated} />}
 
                         {/* 여행 계획이 있을 경우 지도 렌더링 */}
-                        {!isPlanning && planData.length > 0 && (
+                        {/* !isPlanning && planData && planData.plan && planData.plan.length > 0 */}
+                        {!isPlanning && planData && planData.plan && planData.plan.length > 0 && (
                             <>
-                                <TravelMap locations={planData} />
+                                <TravelMap locations={planData.plan} days={planData.days} region={planData.region} />
 
                                 {/* 일정 다시 추천받기 버튼 */}
                                 <div style={{ textAlign: 'center', marginTop: '30px' }}>

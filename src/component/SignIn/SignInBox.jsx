@@ -159,6 +159,24 @@ const SignInBox = () => {
                 const data = await response.json();
                 if (data.code === 200) {
                     alert(data.result);
+                    
+                // ✅ userId 저장 추가
+                if (data.userId) {
+                    localStorage.setItem("userId", data.userId);
+                }
+                // ✅ JWT 저장 추가
+                if (data.token) {
+                    localStorage.setItem("jwtToken", data.token);
+                }
+                // ✅ email 저장 추가
+                if (data.email) {
+                    localStorage.setItem("email", data.email);
+                }
+                // ✅ name 저장 추가
+                if (data.name) {
+                    localStorage.setItem("name", data.name);
+                }
+                console.log(data);
                     window.location.href = '/mainPage';
                 } else if (data.code === 400) {
                     alert("로그인 실패: " + data.error_message);

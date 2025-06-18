@@ -42,9 +42,11 @@ export default function MyList() {
       try {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
+        const userId = localStorage.getItem("userId");
         
         console.log('localStorage에서 가져온 name:', name);
         console.log('localStorage에서 가져온 email:', email);
+        console.log('localStorage에서 가져온 userId:', userId);
         
         if (name || email) {
           setUserInfo({

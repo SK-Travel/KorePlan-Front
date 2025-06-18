@@ -11,7 +11,7 @@ import {
 import Header from '../component/fragments/Header';
 import MyList from '../component/MyList/MyList';
 import Like from '../component/MyList/Like';
-import Footer from '../component/fragments/Footer.jsx';
+import Footer from '../component/fragments/Footer.jsx'
 
 const MyListPage = () => {
     return (
