@@ -33,49 +33,66 @@ const SignInBox = () => {
     // validation
     const loginId = formData.loginId.trim();
     const password = formData.password.trim();
-
-    if (!loginId) {
-      alert("아이디를 입력하세요.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!password) {
-      alert("비밀번호를 입력하세요.");
-      setIsLoading(false);
-      return;
-    }
-
-    const userData = {
-      loginId: loginId,
-      password: password,
-    };
-
-    try {
-      const response = await fetch("/api/user/sign-in", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.code === 200) {
-          alert(data.result);
-          window.location.href = "/mainPage";
-        } else if (data.code === 400) {
-          alert("로그인 실패: " + data.error_message);
-        } else {
-          alert("로그인 실패: " + data.error_message);
+        if (!loginId) {
+            alert("아이디를 입력하세요.");
+            setIsLoading(false);
+            return;
         }
-      }
-    } catch (error) {
-      console.log("로그인 실행 중 오류: " + error);
-    } finally {
-      setIsLoading(false);
-    }
+
+        if (!password) {
+            alert("비밀번호를 입력하세요.");
+            setIsLoading(false);
+            return;
+        }
+
+        const userData = {
+            loginId: loginId,
+            password: password
+        }
+
+        try {
+            const response = await fetch('/api/user/sign-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.code === 200) {
+                    alert(data.result);
+                    
+                // ✅ userId 저장 추가
+                if (data.userId) {
+                    localStorage.setItem("userId", data.userId);
+                }
+                // ✅ JWT 저장 추가
+                if (data.token) {
+                    localStorage.setItem("jwtToken", data.token);
+                }
+                // ✅ email 저장 추가
+                if (data.email) {
+                    localStorage.setItem("email", data.email);
+                }
+                // ✅ name 저장 추가
+                if (data.name) {
+                    localStorage.setItem("name", data.name);
+                }
+                console.log(data);
+                    window.location.href = '/mainPage';
+                } else if (data.code === 400) {
+                    alert("로그인 실패: " + data.error_message);
+                } else {
+                    alert("로그인 실패: " + data.error_message);
+                }
+            }
+        } catch (error) {
+            console.log("로그인 실행 중 오류: " + error);
+        } finally {
+            setIsLoading(false);
+        }
   };
 
   const handleInputChange = (e) => {

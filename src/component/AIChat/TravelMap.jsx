@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { LockOpen } from 'lucide-react';
 
-const TravelMap = ({ locations }) => {
+const TravelMap = ({ locations, days, region }) => {
     const [selectedDay, setSelectedDay] = useState(1);
 
     const mapRef = useRef(null);
@@ -14,6 +14,11 @@ const TravelMap = ({ locations }) => {
 
     const navigate = useNavigate();
     const [hovered, setHovered] = useState(null);
+
+    useEffect(() => {
+        console.log("📌 전달받은 locations 데이터:", locations, days, region);
+    }, []); 
+
 
     const getLinkStyle = (idx) => ({
         color: hovered === idx ? 'white' : 'black',
@@ -132,7 +137,7 @@ const TravelMap = ({ locations }) => {
             // ✅ 수정: LatLng(위도, 경도) = LatLng(mapy, mapx)
             map.panTo(new window.naver.maps.LatLng(firstLoc.mapy, firstLoc.mapx));
         }
-        console.log("loc데이터 검사:", {firstLoc});
+        // console.log("loc데이터 검사:", {firstLoc});
     }, [selectedDay]);
 
     useEffect(() => {
@@ -151,22 +156,28 @@ const TravelMap = ({ locations }) => {
     // ✅ API 호출 방식 수정
     const handleAddToMyPlan = async() => {
         try {
-            const response = await fetch('/api/my-plan/list', {
+            const userId = localStorage.getItem('userId');
+
+            const travelPlan = {
+                userId: Number(userId), // 백엔드는 이걸 무시하고 헤더에서 다시 세팅하지만 일단 포함
+                region: region,
+                days: days,
+                travelLists: locations // 배열로
+            };
+            const response = await fetch('/api/my-plan/add', {
                 method: 'POST', // ✅ HTTP 메서드 명시
                 headers: {
                     'Content-Type': 'application/json', // ✅ 헤더 추가
+                    'userId': userId.toString(), // 이렇게 헤더에 넣기
                 },
-                body: JSON.stringify(locations), // ✅ body로 데이터 전송
-                credentials: 'include' // ✅ 오타 수정: widthCredentials -> credentials
+                body: JSON.stringify(travelPlan), // ✅ body로 데이터 전송
             });
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.code === 200) {
                     alert("리스트에 추가되었습니다."); 
-                    window.location.href= 'http://localhost:5173/myplan';
-                } else {
-                    alert(data.error_message);
+                    navigate('/myplan', { state: { locations, region, days } });
                 }
             }
 
@@ -267,6 +278,8 @@ return (
 
 TravelMap.propTypes = {
     locations: PropTypes.array.isRequired,
+    days: PropTypes.string,     
+    region: PropTypes.string, 
 };
 
 export default TravelMap;

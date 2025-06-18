@@ -61,7 +61,7 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                 })
             });
             const plan = await response.json();
-            onPlanGenerated(plan);
+            onPlanGenerated({plan, days, region});
         } catch (error) {
             alert('계획 생성 중 오류 발생:' + error);
         } finally {

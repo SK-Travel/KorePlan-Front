@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 const OAuth2RedirectBox = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
     const email = params.get('email');
     const name = params.get('name');
     const type = params.get('type');  // login / signup
@@ -15,6 +16,7 @@ const OAuth2RedirectBox = () => {
         localStorage.setItem('jwtToken', token);
         localStorage.setItem('email', email);
         localStorage.setItem('name', name);
+        localStorage.setItem('userId', userId);
         window.location.href = '/mainPage';
       } else if (type === 'signup') {
         alert("회원가입 완료! 메인 페이지로 이동합니다.");
@@ -22,6 +24,7 @@ const OAuth2RedirectBox = () => {
         localStorage.setItem('jwtToken', token);
         localStorage.setItem('email', email);
         localStorage.setItem('name', name);
+        localStorage.setItem('userId', userId);
         window.location.href = '/mainPage';
       }
     } else {
