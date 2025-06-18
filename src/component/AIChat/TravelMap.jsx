@@ -160,9 +160,9 @@ const TravelMap = ({ locations, days, region }) => {
 
             const travelPlan = {
                 userId: Number(userId), // 백엔드는 이걸 무시하고 헤더에서 다시 세팅하지만 일단 포함
-                region: region,
-                days: days,
+                title: "제목1",
                 travelLists: locations // 배열로
+                // Date추가해야됨
             };
             const response = await fetch('/api/my-plan/add', {
                 method: 'POST', // ✅ HTTP 메서드 명시
