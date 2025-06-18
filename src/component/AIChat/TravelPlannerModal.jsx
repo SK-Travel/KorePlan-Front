@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaCog } from 'react-icons/fa'; // 추가
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 
 const themes = [
     { key: '관광지', label: '🏛️ 관광지', color: '#e74c3c' },
     { key: '문화시설', label: '🎭 문화시설', color: '#9b59b6' },
     { key: '레포츠', label: '🏃 레포츠', color: '#3498db' },
-    { key: '숙박', label: '🏨 숙박', color: '#34495e' },
+    // { key: '숙박', label: '🏨 숙박', color: '#34495e' },
     { key: '쇼핑', label: '🛍️ 쇼핑', color: '#e67e22' },
     { key: '음식점', label: '🍽️ 음식점', color: '#f1c40f' }
 ];
@@ -16,8 +18,12 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
     const [region, setRegion] = useState('');
     const [preferences, setPreferences] = useState([]);
     const [days, setDays] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [companion, setCompanion] = useState('');
     const [loading, setLoading] = useState(false);
+    const [hoverDate, setHoverDate] = useState(null); // 추가
+
 
     const regions = [
         '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시',
@@ -28,7 +34,9 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
 
     const companions = ['혼자', '친구', '가족', '연인'];
 
-    const dayOptions = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일', '5박 6일'];
+    const dayOptions = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일',
+        // '5박 6일'
+    ];
 
     const dayValueMap = {
         '당일치기': 1,
@@ -36,7 +44,7 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
         '2박 3일': 3,
         '3박 4일': 4,
         '4박 5일': 5,
-        '5박 6일': 6,
+        // '5박 6일': 6,
     };
 
     const handleToggle = (item) => {
@@ -59,7 +67,7 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                 })
             });
             const plan = await response.json();
-            onPlanGenerated(plan);
+            onPlanGenerated({plan, days, region, startDate, endDate});
         } catch (error) {
             alert('계획 생성 중 오류 발생:' + error);
         } finally {
@@ -144,6 +152,25 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
         isTheme
     } = renderStep();
 
+    const getToday = () => {
+    const today = new Date();
+    today.setDate(today.getDate() + 1); // 내일부터 선택 가능
+    return today.toISOString().split("T")[0];
+    };
+
+    const handleStartDateChange = (value) => {
+        setStartDate(value);
+
+        if (days) {
+            const start = new Date(value);
+            const end = new Date(start);
+            end.setDate(start.getDate() + days - 1); // days=2 -> 1박2일이면 하루 뒤
+
+            const formattedEnd = end.toISOString().split("T")[0];
+            setEndDate(formattedEnd);
+        }
+    };
+
     return (
         <div className="modal-container">
             <style>
@@ -213,6 +240,40 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                     background: #eee;
                     color: #333;
                 }
+                .date-inputs {
+                    margin-top: 1rem;
+                    display: flex;
+                    gap: 1.5rem;
+                    justify-content: center;
+                }
+
+                .date-group {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    font-size: 0.9rem;
+                    color: #444;
+                }
+
+                .date-group label {
+                    margin-bottom: 0.4rem;
+                    font-weight: 500;
+                }
+
+                .date-input {
+                    padding: 0.5rem 0.75rem;
+                    border: 1px solid #ccc;
+                    border-radius: 0.75rem;
+                    font-size: 0.9rem;
+                    width: 150px;
+                    transition: border-color 0.2s ease;
+                }
+
+                .date-input:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+                }
                 `}
             </style>
 
@@ -241,6 +302,45 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                     );
                 })}
             </div>
+            
+            {step === 2 && (
+                <div className="date-inputs" style={{ padding: '10px' }}>
+                    <div style={{ margin: 'auto' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>출발일 선택</label>
+                        <DayPicker
+                            mode="single"
+                            selected={startDate ? new Date(startDate) : undefined}
+                            onDayClick={(date) => {
+                                const start = date;
+                                const end = new Date(date);
+                                end.setDate(date.getDate() + days - 1);
+
+                                setStartDate(start.toISOString().split('T')[0]);
+                                setEndDate(end.toISOString().split('T')[0]);
+                            }}
+                            onDayMouseEnter={(date) => setHoverDate(date)}
+                            modifiers={{
+                                hovered: hoverDate ? Array.from({ length: days }, (_, i) => {
+                                    const d = new Date(hoverDate);
+                                    d.setDate(d.getDate() + i);
+                                    return d;
+                                }) : [],
+                                selected: startDate ? Array.from({ length: days }, (_, i) => {
+                                    const d = new Date(startDate);
+                                    d.setDate(d.getDate() + i);
+                                    return d;
+                                }) : [],
+                            }}
+                            modifiersStyles={{
+                                hovered: { backgroundColor: '#e0f2ff' },
+                                selected: { backgroundColor: '#3b82f6', color: 'white' },
+                            }}
+                            disabled={{ before: new Date(Date.now() + 86400000) }} // 내일부터 가능
+                        />
+                    </div>
+                </div>
+            )}
+            
 
             <div style={{ display: 'flex', gap: '1rem' }}>
                 {step > 0 ? (

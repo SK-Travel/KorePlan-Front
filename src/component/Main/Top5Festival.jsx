@@ -102,9 +102,12 @@ function Top5Festival() {
         
         console.log('🎪 인기 축제 API 호출 시작 (/popular)');
         
-        const response = await fetch('http://localhost:8080/api/festival/popular');
-        
+        //const response = await fetch('http://localhost:8080/api/festival/popular');
+        const response = await fetch('/api/festival/popular');
+        console.log("zzzzzz1 ",response.status);
+
         if (!response.ok) {
+          console.log("zzzzzz2 ",response.status);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
@@ -115,8 +118,10 @@ function Top5Festival() {
         
       } catch (error) {
         console.error('❌ 인기 축제 TOP5 로드 실패:', error);
+        console.log("zzzzzz3 ",response.status);
         setError(error.message);
       } finally {
+        
         setLoading(false);
       }
     };

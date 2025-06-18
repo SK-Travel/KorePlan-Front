@@ -29,7 +29,7 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
     }, []);
 
     // API 기본 URL
-    const API_BASE_URL = 'http://localhost:8080/api/region-list';
+    const API_BASE_URL = '/api/region-list';
 
     // 구/군 목록만 API로 로드 
     const loadWards = async (regionName) => {

@@ -12,40 +12,23 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [hasMore, setHasMore] = useState(true);
     const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [bookmarkLoading, setBookmarkLoading] = useState(new Set()); // 찜 처리 중인 아이템들
     const navigate = useNavigate();
-    const observerRef = useRef();
     const ITEMS_PER_PAGE = 12;
 
-    const API_BASE_URL = 'http://localhost:8080/api/region-list';
+    const API_BASE_URL = '/api/region-list';
+    const LIKE_API_BASE_URL = '/api/like';
+
+    // 컴포넌트 마운트 시 사용자의 찜 목록 로드
+    useEffect(() => {
+        loadUserLikes();
+    }, []);
 
     useEffect(() => {
         if (selectedRegion && selectedTheme) {
             resetAndLoadData();
         }
     }, [selectedRegion, selectedWard, selectedTheme]);
-
-    useEffect(() => {
-        if (!hasMore || loadingMore) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    loadMoreData();
-                }
-            },
-            { threshold: 0.1 }
-        );
-
-        if (observerRef.current) {
-            observer.observe(observerRef.current);
-        }
-
-        return () => {
-            if (observerRef.current) {
-                observer.unobserve(observerRef.current);
-            }
-        };
-    }, [hasMore, loadingMore, displayedData]);
 
     // 토스트 자동 닫기
     useEffect(() => {
@@ -58,6 +41,55 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
     }, [snackbar.open]);
 
+    // 사용자의 찜 목록 불러오기
+    const loadUserLikes = async () => {
+        try {
+            const response = await fetch(`${LIKE_API_BASE_URL}/my-likes`, {
+                method: 'GET',
+                credentials: 'include', // 세션 쿠키 포함
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 && result.likedDataIds) {
+                    setBookmarkedItems(new Set(result.likedDataIds));
+                    console.log('✅ 사용자 찜 목록 로드 성공:', result.likedDataIds);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 찜 목록 로드 실패:', error);
+        }
+    };
+
+    // 여러 데이터의 찜 상태 확인
+    const checkLikeStatus = async (dataIds) => {
+        try {
+            const response = await fetch(`${LIKE_API_BASE_URL}/check-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ dataIds }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 && result.likeStatusMap) {
+                    // likeStatusMap에서 true인 항목들만 찜 목록에 추가
+                    const likedIds = Object.entries(result.likeStatusMap)
+                        .filter(([id, isLiked]) => isLiked)
+                        .map(([id]) => parseInt(id));
+                    
+                    setBookmarkedItems(new Set(likedIds));
+                    console.log('✅ 찜 상태 확인 성공:', result.likeStatusMap);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 찜 상태 확인 실패:', error);
+        }
+    };
+
     const resetAndLoadData = () => {
         setDataList([]);
         setDisplayedData([]);
@@ -65,13 +97,22 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         loadData();
     };
 
-    const loadMoreData = useCallback(() => {
+    const loadMoreData = () => {
         if (loadingMore || !hasMore) return;
 
         const currentLength = displayedData.length;
         const remainingData = dataList.slice(currentLength, currentLength + ITEMS_PER_PAGE);
 
+        console.log('🔄 더보기 버튼 클릭:', {
+            currentLength,
+            dataListLength: dataList.length,
+            remainingDataLength: remainingData.length,
+            hasMore,
+            loadingMore
+        });
+
         if (remainingData.length === 0) {
+            console.log('❌ 더 이상 로드할 데이터 없음');
             setHasMore(false);
             return;
         }
@@ -79,14 +120,19 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         setLoadingMore(true);
 
         setTimeout(() => {
-            setDisplayedData(prev => [...prev, ...remainingData]);
+            setDisplayedData(prev => {
+                const newData = [...prev, ...remainingData];
+                console.log('✅ 새 데이터 추가됨:', newData.length);
+                return newData;
+            });
             setLoadingMore(false);
 
             if (currentLength + remainingData.length >= dataList.length) {
+                console.log('🏁 모든 데이터 로드 완료');
                 setHasMore(false);
             }
-        }, 500);
-    }, [displayedData, dataList, loadingMore, hasMore]);
+        }, 300);
+    };
 
     const loadData = async () => {
         try {
@@ -114,13 +160,21 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
 
             if (data.success !== false) {
                 const newDataList = data.dataList || [];
-                console.log('📝 받은 데이터 샘플:', newDataList[0]); // 첫 번째 아이템 로그 확인
+                console.log('📝 받은 데이터 샘플:', newDataList[0]);
                 
                 setDataList(newDataList);
                 setDisplayedData(newDataList.slice(0, ITEMS_PER_PAGE));
                 setTotalCount(data.totalCount || 0);
                 setMessage(data.message || '데이터를 불러왔습니다.');
                 setHasMore(newDataList.length > ITEMS_PER_PAGE);
+
+                // 데이터 로드 후 찜 상태 확인
+                if (newDataList.length > 0) {
+                    const dataIds = newDataList.map(item => item.id).filter(id => id);
+                    if (dataIds.length > 0) {
+                        await checkLikeStatus(dataIds);
+                    }
+                }
             } else {
                 throw new Error(data.message || '데이터 조회에 실패했습니다.');
             }
@@ -148,36 +202,130 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         });
     };
 
-    // 찜 버튼 토글
-    const toggleBookmark = (item, e) => {
+    // DB와 연동된 찜 버튼 토글
+    const toggleBookmark = async (item, e) => {
         e.stopPropagation();
-        const itemId = item.contentId || item.id;
+        
+        const itemId = item.id; // Primary Key인 id 사용 (Long 타입)
         const itemTitle = item.title || '항목';
         
+        console.log('🔍 디버그 - id:', itemId, 'type:', typeof itemId);
+        console.log('🔍 현재 bookmarkedItems:', Array.from(bookmarkedItems));
+        
+        // 이미 처리 중인 아이템이면 중복 요청 방지
+        if (bookmarkLoading.has(itemId)) {
+            return;
+        }
+
         const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
+        console.log('🔍 현재 북마크 상태:', isCurrentlyBookmarked);
         
-        setBookmarkedItems(prev => {
-            const newSet = new Set(prev);
-            if (isCurrentlyBookmarked) {
-                newSet.delete(itemId);
-            } else {
-                newSet.add(itemId);
-            }
-            return newSet;
-        });
+        // 로딩 상태 추가
+        setBookmarkLoading(prev => new Set([...prev, itemId]));
         
-        // 토스트 메시지 표시
-        if (isCurrentlyBookmarked) {
-            setSnackbar({
-                open: true,
-                message: `"${itemTitle}"이(가) 찜 목록에서 제거되었습니다`,
-                severity: 'info'
+        try {
+            console.log(`🔄 찜 ${isCurrentlyBookmarked ? '제거' : '추가'} 요청 (id):`, itemId);
+            
+            const response = await fetch(`${LIKE_API_BASE_URL}/${itemId}`, {
+                method: 'POST',
+                credentials: 'include', // 세션 쿠키 포함
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
-        } else {
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('📊 찜 API 응답:', result);
+
+            if (result.code === 200) {
+                
+                // Boolean 버전 (백엔드를 boolean으로 수정했을 때 사용)
+                const newIsBookmarked = result.likeStatus; // true/false 직접 사용
+                
+                console.log('📊 새로운 북마크 상태:', newIsBookmarked);
+                
+                setBookmarkedItems(prev => {
+                    const newSet = new Set(prev);
+                    if (newIsBookmarked) {
+                        newSet.add(itemId);
+                    } else {
+                        newSet.delete(itemId);
+                    }
+                    console.log('📊 업데이트된 bookmarkedItems:', Array.from(newSet));
+                    return newSet;
+                });
+                
+                // 해당 아이템의 likeCount 실시간 업데이트
+                setDataList(prevList => 
+                    prevList.map(dataItem => 
+                        dataItem.id === itemId
+                            ? { 
+                                ...dataItem, 
+                                likeCount: newIsBookmarked 
+                                    ? (dataItem.likeCount || 0) + 1 
+                                    : Math.max((dataItem.likeCount || 0) - 1, 0)
+                            }
+                            : dataItem
+                    )
+                );
+                
+                setDisplayedData(prevList => 
+                    prevList.map(dataItem => 
+                        dataItem.id === itemId
+                            ? { 
+                                ...dataItem, 
+                                likeCount: newIsBookmarked 
+                                    ? (dataItem.likeCount || 0) + 1 
+                                    : Math.max((dataItem.likeCount || 0) - 1, 0)
+                            }
+                            : dataItem
+                    )
+                );
+                
+                // 성공 토스트 메시지
+                setSnackbar({
+                    open: true,
+                    message: result.message || (newIsBookmarked ? 
+                        `"${itemTitle}"이(가) 찜 목록에 추가되었습니다` : 
+                        `"${itemTitle}"이(가) 찜 목록에서 제거되었습니다`),
+                    severity: 'success'
+                });
+                
+                console.log(`✅ 찜 ${newIsBookmarked ? '추가' : '제거'} 성공, likeCount 업데이트됨`);
+                
+            } else if (result.code === 401) {
+                // 로그인 필요
+                setSnackbar({
+                    open: true,
+                    message: '로그인이 필요한 서비스입니다',
+                    severity: 'info'
+                });
+                console.log('⚠️ 로그인 필요');
+                
+            } else {
+                throw new Error(result.error_message || '찜 처리 중 오류가 발생했습니다');
+            }
+            
+        } catch (error) {
+            console.error('❌ 찜 처리 실패:', error);
+            
+            // 에러 토스트 메시지
             setSnackbar({
                 open: true,
-                message: `"${itemTitle}"이(가) 찜 목록에 추가되었습니다`,
-                severity: 'success'
+                message: '찜 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
+                severity: 'error'
+            });
+            
+        } finally {
+            // 로딩 상태 제거
+            setBookmarkLoading(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(itemId);
+                return newSet;
             });
         }
     };
@@ -199,6 +347,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     // 받은 데이터 확인용 (개발 중에만 사용)
     const logItemData = (item) => {
         console.log('📊 아이템 데이터:', {
+            id: item.id,
             contentId: item.contentId,
             title: item.title,
             viewCount: item.viewCount,
@@ -377,8 +526,9 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         justifyContent: 'center',
                     }}>
                         {displayedData.map((item, index) => {
-                            const itemId = item.contentId || item.id;
+                            const itemId = item.id; // Long 타입 ID 그대로 사용
                             const isBookmarked = bookmarkedItems.has(itemId);
+                            const isBookmarkLoading = bookmarkLoading.has(itemId);
                             
                             // 개발 중 데이터 확인 (첫 번째 아이템만)
                             if (index === 0) {
@@ -387,7 +537,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             
                             return (
                                 <div
-                                    key={item.id || index}
+                                    key={`${item.id || index}-${itemId}`}
                                     style={cardStyle}
                                     onClick={() => handleCardClick(item)}
                                     onMouseEnter={(e) => {
@@ -441,6 +591,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                         {/* 찜 버튼 */}
                                         <button
                                             onClick={(e) => toggleBookmark(item, e)}
+                                            disabled={isBookmarkLoading}
                                             style={{
                                                 position: 'absolute',
                                                 top: '12px',
@@ -449,25 +600,32 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                                 height: '36px',
                                                 borderRadius: '50%',
                                                 border: 'none',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                                cursor: 'pointer',
+                                                backgroundColor: isBookmarkLoading ? 
+                                                    'rgba(255, 255, 255, 0.7)' : 
+                                                    'rgba(255, 255, 255, 0.9)',
+                                                cursor: isBookmarkLoading ? 'not-allowed' : 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 fontSize: '16px',
                                                 transition: 'all 0.2s ease',
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                opacity: isBookmarkLoading ? 0.7 : 1
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.transform = 'scale(1.1)';
-                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                                                if (!isBookmarkLoading) {
+                                                    e.target.style.transform = 'scale(1.1)';
+                                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                                                }
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.transform = 'scale(1)';
-                                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                                                if (!isBookmarkLoading) {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                                                }
                                             }}
                                         >
-                                            {isBookmarked ? '❤️' : '🤍'}
+                                            {isBookmarkLoading ? '⏳' : (isBookmarked ? '❤️' : '🤍')}
                                         </button>
                                     </div>
 
@@ -570,44 +728,67 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         })}
                     </div>
 
-                    {/* 무한 스크롤 트리거 */}
+                    {/* 더보기 버튼 */}
                     {hasMore && (
-                        <div
-                            ref={observerRef}
-                            style={{
-                                height: '50px',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                marginTop: '30px'
-                            }}
-                        >
-                            {loadingMore ? (
-                                <div style={{
+                        <div style={{
+                            textAlign: 'center',
+                            marginTop: '40px',
+                            marginBottom: '20px'
+                        }}>
+                            <button
+                                onClick={loadMoreData}
+                                disabled={loadingMore}
+                                style={{
+                                    padding: '16px 32px',
+                                    backgroundColor: loadingMore ? '#bdc3c7' : '#3498db',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '25px',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    cursor: loadingMore ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '10px',
-                                    color: '#7f8c8d',
-                                    fontSize: '14px'
-                                }}>
-                                    <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        border: '2px solid #e9ecef',
-                                        borderTop: '2px solid #3498db',
-                                        borderRadius: '50%',
-                                        animation: 'spin 1s linear infinite'
-                                    }}></div>
-                                    더 많은 데이터를 불러오는 중...
-                                </div>
-                            ) : (
-                                <div style={{
-                                    color: '#bdc3c7',
-                                    fontSize: '12px'
-                                }}>
-                                    스크롤하여 더 보기
-                                </div>
-                            )}
+                                    gap: '8px',
+                                    margin: '0 auto',
+                                    minWidth: '160px',
+                                    justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!loadingMore) {
+                                        e.target.style.backgroundColor = '#2980b9';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 16px rgba(52, 152, 219, 0.4)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!loadingMore) {
+                                        e.target.style.backgroundColor = '#3498db';
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
+                                    }
+                                }}
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <div style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            border: '2px solid transparent',
+                                            borderTop: '2px solid white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 1s linear infinite'
+                                        }}></div>
+                                        로딩 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        📄 더보기 ({dataList.length - displayedData.length}개 남음)
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
 
@@ -625,7 +806,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         </div>
                     )}
 
-                    {/* 커스텀 토스트 */}
+                    {/* 향상된 토스트 메시지 */}
                     {snackbar.open && (
                         <div style={{
                             position: 'fixed',
@@ -633,7 +814,8 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             left: '50%',
                             transform: 'translateX(-50%)',
                             zIndex: 9999,
-                            backgroundColor: snackbar.severity === 'success' ? '#4caf50' : '#2196f3',
+                            backgroundColor: snackbar.severity === 'success' ? '#4caf50' : 
+                                           snackbar.severity === 'error' ? '#f44336' : '#2196f3',
                             color: 'white',
                             padding: '12px 24px',
                             borderRadius: '8px',
@@ -646,7 +828,10 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             animation: 'slideDown 0.3s ease-out',
                             maxWidth: '400px'
                         }}>
-                            <span>{snackbar.severity === 'success' ? '✅' : 'ℹ️'}</span>
+                            <span>
+                                {snackbar.severity === 'success' ? '✅' : 
+                                 snackbar.severity === 'error' ? '❌' : 'ℹ️'}
+                            </span>
                             {snackbar.message}
                             <button
                                 onClick={handleSnackbarClose}

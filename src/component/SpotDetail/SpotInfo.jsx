@@ -106,7 +106,7 @@ const SpotInfo = ({ spotData }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:8080/api/detail/${contentId}/intro?contentTypeId=${contentTypeId}`
+          `/api/detail/${contentId}/intro?contentTypeId=${contentTypeId}`
         );
         
         if (!response.ok) {

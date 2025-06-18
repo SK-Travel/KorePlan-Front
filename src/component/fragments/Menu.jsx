@@ -16,7 +16,7 @@ import { FaUser, FaHeart, FaChartBar, FaCalendarAlt, FaRobot, FaCog, FaQuestionC
 import { MdTravelExplore, MdReviews, MdNotifications, MdBookmark } from 'react-icons/md';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-export default function MyList() {
+export default function Menu() {
   const [show, setShow] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -42,9 +42,11 @@ export default function MyList() {
       try {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
+        const userId = localStorage.getItem("userId");
         
         console.log('localStorage에서 가져온 name:', name);
         console.log('localStorage에서 가져온 email:', email);
+        console.log('localStorage에서 가져온 userId:', userId);
         
         if (name || email) {
           setUserInfo({
@@ -66,7 +68,7 @@ export default function MyList() {
   // 모바일용 메뉴 (로그아웃 제외)
   const mobileMenuItems = [
     { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '/MyList' },
-    { label: '지역/테마별 여행', icon: <MdTravelExplore />, link: '/region' },
+    { label: '지역별·테마별 여행지', icon: <MdTravelExplore />, link: '/region' },
     { label: '축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
     { label: '여행후기', icon: <MdReviews />, link: '/review' },
     { label: 'AI 추천', icon: <FaRobot />, link: '/AIChat' },
@@ -81,7 +83,7 @@ export default function MyList() {
   const handleLogOut = () => {
     localStorage.clear();
     alert("로그아웃 완료");
-    window.location.href="/signIn";
+    window.location.href="/";
   }
 
   // 내 정보 페이지로 이동
