@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import Button from "@mui/material/Button";
 import { TbMapSearch } from "react-icons/tb";
-import MyList from "./MyList";
+import Menu from "./Menu";
 import React from "react";
 
 import {
@@ -69,8 +69,8 @@ const Header = () => {
           <TbMapSearch style={{ fontSize: 45, color: "#000" }} />
         </Button>
         
-        {/* MyList 컴포넌트 */}
-        <MyList />
+        {/* Menu 컴포넌트 */}
+        <Menu />
       </UserSection>
     </HeaderWrapper>
   );
