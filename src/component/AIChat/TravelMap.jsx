@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { LockOpen } from 'lucide-react';
 
-const TravelMap = ({ locations, days, region }) => {
+const TravelMap = ({ locations, days, region, startDate, endDate }) => {
     const [selectedDay, setSelectedDay] = useState(1);
 
     const mapRef = useRef(null);
@@ -15,8 +15,12 @@ const TravelMap = ({ locations, days, region }) => {
     const navigate = useNavigate();
     const [hovered, setHovered] = useState(null);
 
+    //title 짓기
+    const [showModal, setShowModal] = useState(false);
+    const [planTitle, setPlanTitle] = useState('');
+
     useEffect(() => {
-        console.log("📌 전달받은 locations 데이터:", locations, days, region);
+        console.log("📌 전달받은 locations 데이터:", locations, days, region, startDate, endDate);
     }, []); 
 
 
@@ -154,38 +158,47 @@ const TravelMap = ({ locations, days, region }) => {
     }, [selectedDay, dayList]);
 
     // ✅ API 호출 방식 수정
-    const handleAddToMyPlan = async() => {
+    const handleSubmitPlan = async () => {
+        if (!planTitle.trim()) {
+            alert("제목을 입력해주세요.");
+            return;
+        }
+
         try {
             const userId = localStorage.getItem('userId');
-
             const travelPlan = {
-                userId: Number(userId), // 백엔드는 이걸 무시하고 헤더에서 다시 세팅하지만 일단 포함
-                title: "제목1",
-                travelLists: locations // 배열로
-                // Date추가해야됨
+                userId: Number(userId),
+                title: planTitle,
+                travelLists: locations,
+                startDate: startDate,
+                endDate: endDate,
             };
+
             const response = await fetch('/api/my-plan/add', {
-                method: 'POST', // ✅ HTTP 메서드 명시
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // ✅ 헤더 추가
-                    'userId': userId.toString(), // 이렇게 헤더에 넣기
+                    'Content-Type': 'application/json',
+                    'userId': userId.toString(),
                 },
-                body: JSON.stringify(travelPlan), // ✅ body로 데이터 전송
+                body: JSON.stringify(travelPlan),
             });
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.code === 200) {
-                    alert("리스트에 추가되었습니다."); 
-                    navigate('/myplan', { state: { locations, region, days } });
+                    alert("리스트에 추가되었습니다.");
+                    setShowModal(false); // 모달 닫기
+                    navigate('/myplan', { state: { locations, region, days, title, startDate, endDate } });
                 }
+            } else {
+                alert("서버 응답 오류");
             }
-
         } catch (error) {
             console.log("리스트 저장 실패: ", error);
-            alert("리스트 저장 중 오류가 발생했습니다.")
+            alert("리스트 저장 중 오류가 발생했습니다.");
         }
-    }
+    };
+
 
     const handleCardClick = (loc) => {
         navigate(`/spot/${loc.contentId}`, {
@@ -200,6 +213,46 @@ const TravelMap = ({ locations, days, region }) => {
 
 return (
         <div style={{ width: '900px', minHeight: '800px' }}>
+            {showModal && (
+                <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white', padding: '30px', borderRadius: '10px',
+                        display: 'flex', flexDirection: 'column', gap: '15px', width: '400px'
+                    }}>
+                        <h2>📝 여행 제목 입력</h2>
+                        <input
+                        type="text"
+                        placeholder="예: 2025 여름 서울 여행"
+                        value={planTitle}
+                        onChange={(e) => setPlanTitle(e.target.value)}
+                        style={{
+                            padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px'
+                        }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button onClick={() => setShowModal(false)}
+                            style={{
+                            padding: '10px 20px', backgroundColor: '#ccc',
+                            border: 'none', borderRadius: '6px', cursor: 'pointer'
+                            }}>
+                            취소
+                        </button>
+                        <button onClick={handleSubmitPlan}
+                            style={{
+                            padding: '10px 20px', backgroundColor: '#007BFF', color: '#fff',
+                            border: 'none', borderRadius: '6px', cursor: 'pointer'
+                            }}>
+                            저장
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             <div style={{ marginBottom: 20, display: 'flex', gap: 8 }}>
                 {dayList.map(day => (
                     <button
@@ -219,6 +272,9 @@ return (
                     </button>
                 ))}
             </div>
+                <h4 style={{ marginBottom: 10, fontWeight: 'bold' }}>
+                    📅 여행 기간: {startDate} ~ {endDate}
+                </h4>
 
             <div>
                 <div
@@ -259,7 +315,7 @@ return (
             </div>
 
             <div style={{ marginTop: '30px' }}>
-                <button onClick={handleAddToMyPlan}
+                <button onClick={() => setShowModal(true)}
                     style={{
                         padding: '10px 20px',
                         fontSize: '16px',
