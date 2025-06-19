@@ -11,6 +11,7 @@ import {
     Main,
     MainContent,
 } from '../styles/MainPageStyle.js'
+import UserReviewList from '../component/Review/UserReviewList.jsx';
 
 const MyReviewPage = () => {
     
@@ -24,7 +25,7 @@ const MyReviewPage = () => {
                 <Main>
 
                     <MainContent>
-
+                        <UserReviewList/>
                     </MainContent>
                         
                 </Main>

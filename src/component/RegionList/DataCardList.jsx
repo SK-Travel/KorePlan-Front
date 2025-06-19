@@ -513,86 +513,60 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
             {/* 결과 헤더 + 정렬 셀렉터 */}
-            <div style={{
-                marginBottom: '25px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '20px',
-                flexWrap: 'wrap'
-            }}>
-                {/* 결과 정보 */}
-                <div style={{
-                    padding: '20px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '12px',
-                    border: '1px solid #e9ecef',
-                    flex: '1',
-                    minWidth: '300px'
-                }}>
-                    <div style={{
-                        fontSize: '20px',
-                        fontWeight: '600',
-                        color: '#2c3e50',
-                        marginBottom: '8px'
-                    }}>
-                        📊 검색 결과
-                    </div>
-                    <div style={{
-                        fontSize: '16px',
-                        color: '#34495e'
-                    }}>
-                        선택된 지역의 <strong style={{ color: '#3498db' }}>{selectedTheme}</strong> <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>를 <strong style={{ color: '#f39c12' }}>{getSortDisplayName(selectedSort)} 순</strong>으로 조회하였습니다.
-                    </div>
-                </div>
+            
 
-                {/* ✅ 정렬 셀렉터 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    minWidth: '200px'
-                }}>
-                    <label style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#2c3e50'
-                    }}>
-                        📊 정렬 기준
-                    </label>
-                    <select
-                        value={selectedSort}
-                        onChange={(e) => handleSortChange(e.target.value)}
-                        style={{
-                            padding: '12px 16px',
-                            borderRadius: '8px',
-                            border: '2px solid #e9ecef',
-                            backgroundColor: 'white',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            color: '#2c3e50',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            outline: 'none',
-                            fontFamily: 'inherit'
-                        }}
-                        onFocus={(e) => {
-                            e.target.style.borderColor = '#3498db';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(52, 152, 219, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                            e.target.style.borderColor = '#e9ecef';
-                            e.target.style.boxShadow = 'none';
-                        }}
-                    >
-                        <option value="SCORE">🏆 종합점수 순</option>
-                        <option value="VIEW_COUNT">👁️ 조회수 순</option>
-                        <option value="LIKE_COUNT">❤️ 찜수 순</option>
-                        <option value="RATING">⭐ 평점 순</option>
-                        <option value="REVIEW_COUNT">💬 리뷰수 순</option>
-                    </select>
-                </div>
-            </div>
+{/* 결과 헤더 */}
+<div style={{
+    marginBottom: '25px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+    gap: '20px'
+}}>
+    {/* 결과 정보 */}
+    <div style={{
+        padding: '20px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '12px',
+        border: '1px solid #e9ecef',
+        textAlign: 'center',
+        maxWidth: '600px'
+    }}>
+        <div style={{
+            fontSize: '18px',
+            color: '#34495e',
+            lineHeight: '1.5'
+        }}>
+            선택된 지역의 <span style={{ color: '#3498db', fontWeight: 'bold' }}>{selectedTheme}</span>{' '}
+            <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>{totalCount.toLocaleString()}개</span>를{' '}
+            <select
+                value={selectedSort}
+                onChange={(e) => handleSortChange(e.target.value)}
+                style={{
+                    display: 'inline-block',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    backgroundColor: 'white',
+                    color: '#f39c12',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    margin: '0 4px'
+                }}
+            >
+                <option value="SCORE">종합점수 순</option>
+                <option value="VIEW_COUNT">조회수 순</option>
+                <option value="LIKE_COUNT">찜수 순</option>
+                <option value="RATING">평점 순</option>
+                <option value="REVIEW_COUNT">리뷰수 순</option>
+            </select>
+            으로 조회하였습니다.
+        </div>
+    </div>
+</div>
 
             {/* 데이터 카드 목록 */}
             {displayedData.length > 0 ? (
