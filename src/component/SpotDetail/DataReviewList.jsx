@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, User, Calendar, Send } from 'lucide-react';
-
+//백엔드 컨트롤러 만들고 갖고오기.
 const DataReviewList = ({ dataId, onReviewUpdate }) => {
   const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
