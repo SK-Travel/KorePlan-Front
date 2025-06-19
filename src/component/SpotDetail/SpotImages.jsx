@@ -176,33 +176,42 @@ const SpotImages = ({ contentId }) => {
  // 로딩 상태
  if (loading) {
    return (
+     // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
      <div style={{
-       display: 'flex',
-       justifyContent: 'center',
-       alignItems: 'center',
-       height: '300px',
-       flexDirection: 'column',
-       gap: '16px',
-       backgroundColor: '#f8fafc',
-       borderRadius: '12px'
+       width: '100%',
+       padding: '20px 0',
+       backgroundColor: 'white'
      }}>
-       <div style={{
-         width: '32px',
-         height: '32px',
-         border: '3px solid #e5e7eb',
-         borderTop: '3px solid #3b82f6',
-         borderRadius: '50%',
-         animation: 'spin 1s linear infinite'
-       }}></div>
-       <p style={{ color: '#6b7280', fontSize: '14px' }}>이미지를 불러오는 중...</p>
-       <style>
-         {`
-           @keyframes spin {
-             0% { transform: rotate(0deg); }
-             100% { transform: rotate(360deg); }
-           }
-         `}
-       </style>
+       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+         <div style={{
+           display: 'flex',
+           justifyContent: 'center',
+           alignItems: 'center',
+           height: '300px',
+           flexDirection: 'column',
+           gap: '16px',
+           backgroundColor: '#f8fafc',
+           borderRadius: '12px'
+         }}>
+           <div style={{
+             width: '32px',
+             height: '32px',
+             border: '3px solid #e5e7eb',
+             borderTop: '3px solid #3b82f6',
+             borderRadius: '50%',
+             animation: 'spin 1s linear infinite'
+           }}></div>
+           <p style={{ color: '#6b7280', fontSize: '14px' }}>이미지를 불러오는 중...</p>
+           <style>
+             {`
+               @keyframes spin {
+                 0% { transform: rotate(0deg); }
+                 100% { transform: rotate(360deg); }
+               }
+             `}
+           </style>
+         </div>
+       </div>
      </div>
    );
  }
@@ -261,62 +270,71 @@ const SpotImages = ({ contentId }) => {
    }
 
    return (
+     // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
      <div style={{
-       display: 'flex',
-       flexDirection: 'column',
-       alignItems: 'center',
-       justifyContent: 'center',
-       height: '300px',
-       padding: '24px',
-       textAlign: 'center',
-       backgroundColor: bgColor,
-       borderRadius: '12px',
-       border: responseType === 'NO_IMAGES' ? '2px dashed #d1d5db' : `1px solid ${borderColor}`
+       width: '100%',
+       padding: '20px 0',
+       backgroundColor: 'white'
      }}>
-       <div style={{ marginBottom: '16px' }}>
-         {icon}
-       </div>
-       <p style={{ 
-         color: textColor, 
-         fontSize: '16px', 
-         fontWeight: '500',
-         marginBottom: '16px'
-       }}>
-         {title}
-       </p>
-       
-       <div style={{
-         padding: '8px 12px',
-         backgroundColor: 'rgba(107, 114, 128, 0.1)',
-         borderRadius: '6px',
-         fontSize: '12px',
-         color: '#6b7280',
-         fontFamily: 'monospace'
-       }}>
-         ContentId: {contentId}
-       </div>
-       
-       {responseType !== 'NO_IMAGES' && (
-         <button
-           onClick={() => window.location.reload()}
-           style={{
-             marginTop: '16px',
-             padding: '8px 16px',
-             backgroundColor: '#3b82f6',
-             color: 'white',
-             border: 'none',
-             borderRadius: '6px',
-             fontSize: '14px',
-             cursor: 'pointer',
+       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+         <div style={{
+           display: 'flex',
+           flexDirection: 'column',
+           alignItems: 'center',
+           justifyContent: 'center',
+           height: '300px',
+           padding: '24px',
+           textAlign: 'center',
+           backgroundColor: bgColor,
+           borderRadius: '12px',
+           border: responseType === 'NO_IMAGES' ? '2px dashed #d1d5db' : `1px solid ${borderColor}`
+         }}>
+           <div style={{ marginBottom: '16px' }}>
+             {icon}
+           </div>
+           <p style={{ 
+             color: textColor, 
+             fontSize: '16px', 
              fontWeight: '500',
-             transition: 'background-color 0.2s'
-           }}
-           onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-           onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-         >
-           다시 시도
-         </button>
-       )}
+             marginBottom: '16px'
+           }}>
+             {title}
+           </p>
+           
+           <div style={{
+             padding: '8px 12px',
+             backgroundColor: 'rgba(107, 114, 128, 0.1)',
+             borderRadius: '6px',
+             fontSize: '12px',
+             color: '#6b7280',
+             fontFamily: 'monospace'
+           }}>
+             ContentId: {contentId}
+           </div>
+           
+           {responseType !== 'NO_IMAGES' && (
+             <button
+               onClick={() => window.location.reload()}
+               style={{
+                 marginTop: '16px',
+                 padding: '8px 16px',
+                 backgroundColor: '#3b82f6',
+                 color: 'white',
+                 border: 'none',
+                 borderRadius: '6px',
+                 fontSize: '14px',
+                 cursor: 'pointer',
+                 fontWeight: '500',
+                 transition: 'background-color 0.2s'
+               }}
+               onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+               onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+             >
+               다시 시도
+             </button>
+           )}
+         </div>
+       </div>
      </div>
    );
  };
@@ -328,179 +346,186 @@ const SpotImages = ({ contentId }) => {
 
  // 슬라이더 모드 (정상적인 이미지가 있는 경우)
  return (
-   <>
-     <div style={{
-       position: 'relative',
-       width: '100%',
-       height: '400px',
-       borderRadius: '16px',
-       overflow: 'hidden',
-       backgroundColor: '#000',
-       boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-     }}>
-       {/* 메인 이미지 */}
-       <img
-         key={`slide-${currentSlide}`}
-         src={
-           imageLoadStatus[`origin_${currentSlide}`] 
-             ? currentImage?.originimgurl 
-             : currentImage?.smallimageurl || currentImage?.originimgurl
-         }
-         alt={currentImage?.imgname || `이미지 ${currentSlide + 1}`}
-         style={{
-           width: '100%',
-           height: '100%',
-           objectFit: 'cover',
-           cursor: 'pointer',
-           transition: 'opacity 0.2s ease-in-out'
-         }}
-         onClick={() => openModal(currentSlide)}
-         onError={(e) => handleImageError(e, currentImage, 'smallimageurl')}
-         onLoad={() => console.log(`✅ 슬라이드 ${currentSlide} 이미지 로드 완료`)}
-       />
+   // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
+   <div style={{
+     width: '100%',
+     padding: '20px 0',
+     backgroundColor: 'white'
+   }}>
+     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+       <div style={{
+         position: 'relative',
+         width: '100%',
+         height: '400px',
+         borderRadius: '16px',
+         overflow: 'hidden',
+         backgroundColor: '#000',
+         boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+       }}>
+         {/* 메인 이미지 */}
+         <img
+           key={`slide-${currentSlide}`}
+           src={
+             imageLoadStatus[`origin_${currentSlide}`] 
+               ? currentImage?.originimgurl 
+               : currentImage?.smallimageurl || currentImage?.originimgurl
+           }
+           alt={currentImage?.imgname || `이미지 ${currentSlide + 1}`}
+           style={{
+             width: '100%',
+             height: '100%',
+             objectFit: 'cover',
+             cursor: 'pointer',
+             transition: 'opacity 0.2s ease-in-out'
+           }}
+           onClick={() => openModal(currentSlide)}
+           onError={(e) => handleImageError(e, currentImage, 'smallimageurl')}
+           onLoad={() => console.log(`✅ 슬라이드 ${currentSlide} 이미지 로드 완료`)}
+         />
 
-       {/* 슬라이더 컨트롤 */}
-       {images.length > 1 && (
-         <>
-           <button
-             onClick={(e) => {
-               e.stopPropagation();
-               prevSlide();
-             }}
-             style={{
-               position: 'absolute',
-               left: '16px',
-               top: '50%',
-               transform: 'translateY(-50%)',
-               width: '48px',
-               height: '48px',
-               borderRadius: '50%',
-               backgroundColor: 'rgba(0,0,0,0.7)',
-               color: 'white',
-               border: 'none',
-               cursor: 'pointer',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               transition: 'all 0.2s',
-               zIndex: 10
-             }}
-             onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.9)'}
-             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.7)'}
-           >
-             <ChevronLeft size={24} />
-           </button>
-
-           <button
-             onClick={(e) => {
-               e.stopPropagation();
-               nextSlide();
-             }}
-             style={{
-               position: 'absolute',
-               right: '16px',
-               top: '50%',
-               transform: 'translateY(-50%)',
-               width: '48px',
-               height: '48px',
-               borderRadius: '50%',
-               backgroundColor: 'rgba(0,0,0,0.7)',
-               color: 'white',
-               border: 'none',
-               cursor: 'pointer',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               transition: 'all 0.2s',
-               zIndex: 10
-             }}
-             onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.9)'}
-             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.7)'}
-           >
-             <ChevronRight size={24} />
-           </button>
-         </>
-       )}
-
-       {/* 인디케이터 */}
-       {images.length > 1 && (
-         <div style={{
-           position: 'absolute',
-           bottom: '20px',
-           left: '50%',
-           transform: 'translateX(-50%)',
-           display: 'flex',
-           gap: '8px',
-           zIndex: 10
-         }}>
-           {images.map((_, index) => (
+         {/* 슬라이더 컨트롤 */}
+         {images.length > 1 && (
+           <>
              <button
-               key={index}
                onClick={(e) => {
                  e.stopPropagation();
-                 setCurrentSlide(index);
+                 prevSlide();
                }}
                style={{
-                 width: '10px',
-                 height: '10px',
+                 position: 'absolute',
+                 left: '16px',
+                 top: '50%',
+                 transform: 'translateY(-50%)',
+                 width: '48px',
+                 height: '48px',
                  borderRadius: '50%',
+                 backgroundColor: 'rgba(0,0,0,0.7)',
+                 color: 'white',
                  border: 'none',
-                 backgroundColor: index === currentSlide ? '#3b82f6' : 'rgba(255,255,255,0.5)',
                  cursor: 'pointer',
-                 transition: 'all 0.2s'
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 transition: 'all 0.2s',
+                 zIndex: 10
                }}
+               onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.9)'}
+               onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.7)'}
+             >
+               <ChevronLeft size={24} />
+             </button>
+
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 nextSlide();
+               }}
+               style={{
+                 position: 'absolute',
+                 right: '16px',
+                 top: '50%',
+                 transform: 'translateY(-50%)',
+                 width: '48px',
+                 height: '48px',
+                 borderRadius: '50%',
+                 backgroundColor: 'rgba(0,0,0,0.7)',
+                 color: 'white',
+                 border: 'none',
+                 cursor: 'pointer',
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 transition: 'all 0.2s',
+                 zIndex: 10
+               }}
+               onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.9)'}
+               onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.7)'}
+             >
+               <ChevronRight size={24} />
+             </button>
+           </>
+         )}
+
+         {/* 인디케이터 */}
+         {images.length > 1 && (
+           <div style={{
+             position: 'absolute',
+             bottom: '20px',
+             left: '50%',
+             transform: 'translateX(-50%)',
+             display: 'flex',
+             gap: '8px',
+             zIndex: 10
+           }}>
+             {images.map((_, index) => (
+               <button
+                 key={index}
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   setCurrentSlide(index);
+                 }}
+                 style={{
+                   width: '10px',
+                   height: '10px',
+                   borderRadius: '50%',
+                   border: 'none',
+                   backgroundColor: index === currentSlide ? '#3b82f6' : 'rgba(255,255,255,0.5)',
+                   cursor: 'pointer',
+                   transition: 'all 0.2s'
+                 }}
+               />
+             ))}
+           </div>
+         )}
+
+         {/* 이미지 카운터 */}
+         <div style={{
+           position: 'absolute',
+           top: '20px',
+           right: '20px',
+           backgroundColor: 'rgba(0,0,0,0.7)',
+           color: 'white',
+           padding: '8px 12px',
+           borderRadius: '20px',
+           fontSize: '14px',
+           fontWeight: '500',
+           zIndex: 10
+         }}>
+           {currentSlide + 1} / {images.length}
+         </div>
+       </div>
+
+       {/* 썸네일 */}
+       {images.length > 1 && (
+         <div style={{
+           display: 'flex',
+           gap: '12px',
+           marginTop: '16px',
+           overflowX: 'auto',
+           padding: '8px 0'
+         }}>
+           {images.map((image, index) => (
+             <img
+               key={index}
+               src={image.smallimageurl || image.originimgurl}
+               alt={image.imgname || `썸네일 ${index + 1}`}
+               style={{
+                 width: '80px',
+                 height: '60px',
+                 objectFit: 'cover',
+                 borderRadius: '8px',
+                 cursor: 'pointer',
+                 border: index === currentSlide ? '3px solid #3b82f6' : '3px solid transparent',
+                 transition: 'all 0.2s',
+                 flexShrink: 0
+               }}
+               onClick={() => setCurrentSlide(index)}
+               onError={(e) => handleImageError(e, image, 'originimgurl')}
              />
            ))}
          </div>
        )}
-
-       {/* 이미지 카운터 */}
-       <div style={{
-         position: 'absolute',
-         top: '20px',
-         right: '20px',
-         backgroundColor: 'rgba(0,0,0,0.7)',
-         color: 'white',
-         padding: '8px 12px',
-         borderRadius: '20px',
-         fontSize: '14px',
-         fontWeight: '500',
-         zIndex: 10
-       }}>
-         {currentSlide + 1} / {images.length}
-       </div>
      </div>
-
-     {/* 썸네일 */}
-     {images.length > 1 && (
-       <div style={{
-         display: 'flex',
-         gap: '12px',
-         marginTop: '16px',
-         overflowX: 'auto',
-         padding: '8px 0'
-       }}>
-         {images.map((image, index) => (
-           <img
-             key={index}
-             src={image.smallimageurl || image.originimgurl}
-             alt={image.imgname || `썸네일 ${index + 1}`}
-             style={{
-               width: '80px',
-               height: '60px',
-               objectFit: 'cover',
-               borderRadius: '8px',
-               cursor: 'pointer',
-               border: index === currentSlide ? '3px solid #3b82f6' : '3px solid transparent',
-               transition: 'all 0.2s',
-               flexShrink: 0
-             }}
-             onClick={() => setCurrentSlide(index)}
-             onError={(e) => handleImageError(e, image, 'originimgurl')}
-           />
-         ))}
-       </div>
-     )}
 
      {/* 모달 */}
      {showModal && (
@@ -603,7 +628,7 @@ const SpotImages = ({ contentId }) => {
          </div>
        </div>
      )}
-   </>
+   </div>
  );
 };
 

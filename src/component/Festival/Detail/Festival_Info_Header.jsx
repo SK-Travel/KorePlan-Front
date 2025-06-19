@@ -225,9 +225,6 @@ const Festival_Info_Header = ({ festivalData, stats }) => {
         <div style={getStatusBadgeStyle(festivalData.status)}>
           {festivalData.status || "정보없음"}
         </div>
-        <div>
-          <img src={festivalData.firstimage} />
-        </div>
         {/* 축제명 */}
         <h1
           style={{

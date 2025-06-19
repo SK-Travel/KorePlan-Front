@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
+const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => { 
     const [dataList, setDataList] = useState([]);
     const [displayedData, setDisplayedData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -13,6 +13,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
     const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [bookmarkLoading, setBookmarkLoading] = useState(new Set()); // 찜 처리 중인 아이템들
+    const [selectedSort, setSelectedSort] = useState('SCORE'); // ✅ 내부에서 관리
     const navigate = useNavigate();
     const ITEMS_PER_PAGE = 12;
 
@@ -24,11 +25,18 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         loadUserLikes();
     }, []);
 
+    // ✅ selectedSort 의존성 추가
     useEffect(() => {
         if (selectedRegion && selectedTheme) {
             resetAndLoadData();
         }
-    }, [selectedRegion, selectedWard, selectedTheme]);
+    }, [selectedRegion, selectedWard, selectedTheme, selectedSort]);
+
+    // ✅ 정렬 변경 핸들러 추가
+    const handleSortChange = (sortType) => {
+        console.log('📊 정렬 변경:', sortType);
+        setSelectedSort(sortType);
+    };
 
     // 토스트 자동 닫기
     useEffect(() => {
@@ -142,6 +150,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             const params = new URLSearchParams();
             params.append('region', selectedRegion || '전국');
             params.append('theme', selectedTheme || '관광지');
+            params.append('sort', selectedSort || 'SCORE'); // ✅ 정렬 파라미터 추가
 
             if (selectedWard && selectedWard !== '전체' && selectedWard !== '') {
                 params.append('ward', selectedWard);
@@ -344,6 +353,18 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         return num.toLocaleString();
     };
 
+    // ✅ 정렬 타입별 표시명 반환 함수 추가
+    const getSortDisplayName = (sortType) => {
+        switch (sortType) {
+            case 'SCORE': return '종합점수';
+            case 'VIEW_COUNT': return '조회수';
+            case 'LIKE_COUNT': return '찜수';
+            case 'RATING': return '평점';
+            case 'REVIEW_COUNT': return '리뷰수';
+            default: return '종합점수';
+        }
+    };
+
     // 받은 데이터 확인용 (개발 중에만 사용)
     const logItemData = (item) => {
         console.log('📊 아이템 데이터:', {
@@ -428,7 +449,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     fontSize: '14px',
                     color: '#bdc3c7'
                 }}>
-                    {selectedRegion} {selectedWard && selectedWard !== '전체' ? `> ${selectedWard}` : ''}  {selectedTheme}
+                    {selectedRegion} {selectedWard && selectedWard !== '전체' ? `> ${selectedWard}` : ''}  {selectedTheme} ({getSortDisplayName(selectedSort)} 순)
                 </div>
             </div>
         );
@@ -491,28 +512,85 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
-            {/* 결과 헤더 */}
+            {/* 결과 헤더 + 정렬 셀렉터 */}
             <div style={{
                 marginBottom: '25px',
-                textAlign: 'center',
-                padding: '20px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '12px',
-                border: '1px solid #e9ecef'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '20px',
+                flexWrap: 'wrap'
             }}>
+                {/* 결과 정보 */}
                 <div style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
-                    marginBottom: '8px'
+                    padding: '20px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '12px',
+                    border: '1px solid #e9ecef',
+                    flex: '1',
+                    minWidth: '300px'
                 }}>
-                    📊 검색 결과
+                    <div style={{
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        color: '#2c3e50',
+                        marginBottom: '8px'
+                    }}>
+                        📊 검색 결과
+                    </div>
+                    <div style={{
+                        fontSize: '16px',
+                        color: '#34495e'
+                    }}>
+                        선택된 지역의 <strong style={{ color: '#3498db' }}>{selectedTheme}</strong> <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>를 <strong style={{ color: '#f39c12' }}>{getSortDisplayName(selectedSort)} 순</strong>으로 조회하였습니다.
+                    </div>
                 </div>
+
+                {/* ✅ 정렬 셀렉터 */}
                 <div style={{
-                    fontSize: '16px',
-                    color: '#34495e'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    minWidth: '200px'
                 }}>
-                    선택된 지역의 <strong style={{ color: '#3498db' }}>{selectedTheme}</strong> <strong style={{ color: '#e74c3c' }}>{totalCount.toLocaleString()}개</strong>를 조회하였습니다.
+                    <label style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#2c3e50'
+                    }}>
+                        📊 정렬 기준
+                    </label>
+                    <select
+                        value={selectedSort}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        style={{
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid #e9ecef',
+                            backgroundColor: 'white',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#2c3e50',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            outline: 'none',
+                            fontFamily: 'inherit'
+                        }}
+                        onFocus={(e) => {
+                            e.target.style.borderColor = '#3498db';
+                            e.target.style.boxShadow = '0 0 0 3px rgba(52, 152, 219, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = '#e9ecef';
+                            e.target.style.boxShadow = 'none';
+                        }}
+                    >
+                        <option value="SCORE">🏆 종합점수 순</option>
+                        <option value="VIEW_COUNT">👁️ 조회수 순</option>
+                        <option value="LIKE_COUNT">❤️ 찜수 순</option>
+                        <option value="RATING">⭐ 평점 순</option>
+                        <option value="REVIEW_COUNT">💬 리뷰수 순</option>
+                    </select>
                 </div>
             </div>
 
@@ -887,7 +965,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     <div style={{ fontSize: '14px', color: '#bdc3c7' }}>
                         현재 조건: {selectedRegion}
                         {selectedWard && selectedWard !== '전체' ? ` > ${selectedWard}` : ''}
-                        {` > ${selectedTheme}`}
+                        {` > ${selectedTheme} (${getSortDisplayName(selectedSort)} 순)`}
                     </div>
                 </div>
             )}
