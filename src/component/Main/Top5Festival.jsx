@@ -1,127 +1,113 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Slider from "react-slick";
-import { MdArrowCircleRight, MdArrowCircleLeft, MdVisibility } from "react-icons/md";
-import { Wrapper, TitleBox, SliderContainer, SlideItem, SlideImage, Overlay } from "../../styles/RolingSlideStyle";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// 화살표 컴포넌트 (함수형으로 onClick 받음)
-const PrevArrow = (props) => {
-  const { onClick, style } = props;
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        ...style,
-        position: "absolute",
-        top: "50%",
-        left: "10px",
-        transform: "translateY(-50%)",
-        zIndex: 2,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-      }}
-    >
-      <MdArrowCircleLeft size={36} color="#333" />
-    </button>
-  );
+// 순위별 배지 스타일 및 이모지 함수
+const getRankStyle = (rank) => {
+  let backgroundColor, emoji, text;
+  
+  switch (rank) {
+    case 1:
+      backgroundColor = '#ffd700'; // 금색
+      emoji = '🥇';
+      text = '1위';
+      break;
+    case 2:
+      backgroundColor = '#c0c0c0'; // 은색
+      emoji = '🥈';
+      text = '2위';
+      break;
+    case 3:
+      backgroundColor = '#cd7f32'; // 동색
+      emoji = '🥉';
+      text = '3위';
+      break;
+    case 4:
+      backgroundColor = '#4ade80'; // 초록색
+      emoji = '🏅';
+      text = '4위';
+      break;
+    case 5:
+      backgroundColor = '#60a5fa'; // 파란색
+      emoji = '🏅';
+      text = '5위';
+      break;
+    default:
+      backgroundColor = '#9ca3af'; // 회색
+      emoji = '🏷️';
+      text = `${rank}위`;
+  }
+  
+  return { backgroundColor, emoji, text };
 };
 
-const NextArrow = (props) => {
-  const { onClick, style } = props;
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        ...style,
-        position: "absolute",
-        top: "50%",
-        right: "10px",
-        transform: "translateY(-50%)",
-        zIndex: 2,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-      }}
-    >
-      <MdArrowCircleRight size={36} color="#333" />
-    </button>
-  );
+// 숫자 포맷팅 함수
+const formatNumber = (num) => {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
 };
 
-function Top5Festival() {
-  const navigate = useNavigate();
-  const [festivals, setFestivals] = useState([]);
-  const [loading, setLoading] = useState(true);
+// 플레이스홀더 이미지 생성 함수
+const createPlaceholderImage = () => {
+  const svg = `
+    <svg width="320" height="200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f8f9fa"/>
+      <rect x="10" y="10" width="300" height="180" fill="#e9ecef" stroke="#dee2e6" stroke-width="2" rx="8"/>
+      <circle cx="160" cy="80" r="20" fill="#6c757d"/>
+      <rect x="100" y="110" width="120" height="8" fill="#6c757d" rx="4"/>
+      <rect x="120" y="125" width="80" height="6" fill="#adb5bd" rx="3"/>
+      <text x="160" y="155" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="12">대표 이미지 없음</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+};
+
+// 이미지 URL 처리 함수
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return createPlaceholderImage();
+  }
+  return imageUrl;
+};
+
+// 이미지 에러 핸들러
+const handleImageError = (e) => {
+  e.target.src = createPlaceholderImage();
+};
+
+// Top5Festival 컴포넌트 (조회수만)
+const Top5Festival = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 순위별 뱃지 스타일 함수
-  const getRankBadge = (index) => {
-    const rank = index + 1;
-    let backgroundColor, emoji;
-
-    switch (rank) {
-      case 1:
-        backgroundColor = '#ffd700'; // 금색
-        emoji = '🥇';
-        break;
-      case 2:
-        backgroundColor = '#c0c0c0'; // 은색
-        emoji = '🥈';
-        break;
-      case 3:
-        backgroundColor = '#cd7f32'; // 동색
-        emoji = '🥉';
-        break;
-      case 4:
-        backgroundColor = '#4ade80'; // 초록색
-        emoji = '4️⃣';
-        break;
-      case 5:
-        backgroundColor = '#60a5fa'; // 파란색
-        emoji = '5️⃣';
-        break;
-      default:
-        backgroundColor = '#9ca3af'; // 회색
-        emoji = '🏷️';
-    }
-
-    return {
-      backgroundColor,
-      emoji,
-      rank
-    };
-  };
-
-  // 백엔드에서 조회수 상위 5개 축제 가져오기
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchTop5Festivals = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        console.log('🎪 인기 축제 API 호출 시작 (/popular)');
+        console.log('🎪 인기 축제 API 호출 시작 (/api/festival/popular)');
         
-        //const response = await fetch('http://localhost:8080/api/festival/popular');
         const response = await fetch('/api/festival/popular');
-        console.log("zzzzzz1 ",response.status);
-
+        
         if (!response.ok) {
-          console.log("zzzzzz2 ",response.status);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('✅ 인기 축제 TOP5 데이터 로드 완료:', data);
+        const festivals = await response.json();
+        console.log('✅ 인기 축제 TOP5 데이터 로드 완료:', festivals);
         
-        setFestivals(data);
+        setData(festivals);
         
       } catch (error) {
         console.error('❌ 인기 축제 TOP5 로드 실패:', error);
-        console.log("zzzzzz3 ",response.status);
-        setError(error.message);
+        setError('축제 데이터를 불러오는데 실패했습니다.');
+        setData([]);
       } finally {
-        
         setLoading(false);
       }
     };
@@ -129,233 +115,344 @@ function Top5Festival() {
     fetchTop5Festivals();
   }, []);
 
-  // 축제 클릭 핸들러
-  const handleFestivalClick = (festival) => {
-    console.log('🎯 축제 클릭:', festival.title);
+  const handleCardClick = (item) => {
+    const itemId = item.contentId;
+    console.log('🎯 축제 상세페이지로 이동:', itemId, item.title);
     
-    // 축제 상세페이지로 이동 (state로 festivalData 전달)
-    navigate(`/festival/${festival.contentId}`, {
+    
+    navigate(`/festival/${itemId}`, {
       state: {
         contentTypeId: 15,
-        festivalData: festival
+        festivalData: item
       }
     });
   };
 
-  // 이미지 에러 처리
-  const handleImageError = (e) => {
-    e.target.src = '/images/default-festival.jpg'; // 기본 이미지로 대체
+  // 슬라이드 이동 함수
+  const goToSlide = (direction) => {
+    if (direction === 'prev' && currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    } else if (direction === 'next' && currentSlide < data.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    }
   };
 
-  const settings = {
-    className: "center",
-    centerMode: true,
-    infinite: festivals.length > 1, // 데이터가 1개 이하면 infinite 비활성화
-    centerPadding: "100px",
-    slidesToShow: Math.min(3, festivals.length), // 데이터 개수에 따라 조정
-    slidesToScroll: 1,
-    autoplay: festivals.length > 1, // 데이터가 1개 이하면 autoplay 비활성화
-    autoplaySpeed: 3000,
-    speed: 500,
-    arrows: festivals.length > 1, // 데이터가 1개 이하면 화살표 비활성화
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    responsive: [
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-          centerPadding: "50px",
-        },
-      },
-    ],
-  };
-
-  // 로딩 상태
   if (loading) {
     return (
-      <Wrapper>
-        <TitleBox>조회수 높은 축제/행사/공연</TitleBox>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '300px',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            border: '3px solid #e5e7eb',
-            borderTop: '3px solid #3b82f6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>인기 축제를 불러오는 중...</p>
-          <style>
-            {`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}
-          </style>
+      <div className="top5-container">
+        <div className="top5-cards-wrapper">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="top5-card" style={{
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}>
+              <div style={{
+                backgroundColor: '#e5e7eb',
+                borderRadius: '12px',
+                height: '224px',
+                marginBottom: '12px'
+              }}></div>
+              <div style={{
+                height: '16px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '4px',
+                marginBottom: '8px'
+              }}></div>
+              <div style={{
+                height: '12px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '4px',
+                width: '75%'
+              }}></div>
+            </div>
+          ))}
         </div>
-      </Wrapper>
+      </div>
     );
   }
 
-  // 에러 상태
   if (error) {
     return (
-      <Wrapper>
-        <TitleBox>조회수 높은 축제/행사/공연</TitleBox>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '300px',
-          padding: '40px',
-          textAlign: 'center',
-          backgroundColor: '#fef2f2',
-          borderRadius: '12px',
-          border: '1px solid #fecaca',
-          margin: '20px'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            backgroundColor: '#ef4444',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px'
-          }}>
-            <span style={{ color: 'white', fontSize: '24px' }}>!</span>
-          </div>
-          <p style={{ color: '#dc2626', fontWeight: '500', marginBottom: '8px' }}>
-            인기 축제를 불러올 수 없습니다
-          </p>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>
-            {error}
-          </p>
-        </div>
-      </Wrapper>
+      <div style={{
+        textAlign: 'center',
+        padding: '60px 20px',
+        color: '#666'
+      }}>
+        <h3 style={{ color: '#e74c3c', marginBottom: '10px' }}>⚠️ 오류 발생</h3>
+        <p>{error}</p>
+      </div>
     );
   }
 
-  // 데이터가 없는 경우
-  if (!festivals || festivals.length === 0) {
+  if (!data || data.length === 0) {
     return (
-      <Wrapper>
-        <TitleBox>조회수 높은 축제/행사/공연</TitleBox>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '300px',
-          padding: '40px',
-          textAlign: 'center',
-          backgroundColor: '#f9fafb',
-          borderRadius: '12px',
-          border: '1px solid #e5e7eb',
-          margin: '20px'
-        }}>
-          <p style={{ color: '#6b7280', fontSize: '16px' }}>
-            현재 표시할 인기 축제가 없습니다
-          </p>
-        </div>
-      </Wrapper>
+      <div style={{
+        textAlign: 'center',
+        padding: '60px 20px',
+        color: '#666'
+      }}>
+        <p>현재 표시할 인기 축제가 없습니다</p>
+      </div>
     );
   }
 
   return (
-    <Wrapper>
-      <TitleBox>조회수 높은 축제/행사/공연</TitleBox>
-      <SliderContainer>
-        <Slider {...settings}>
-          {festivals.map((festival, index) => {
-            const rankBadge = getRankBadge(index);
+    <div style={{
+      width: '100%',
+      maxWidth: '1400px',
+      margin: '0 auto',
+      paddingTop: '20px',
+      paddingBottom: '20px',
+      borderBottom: '1px solid #e5e7eb'
+    }}>
+      {/* 데스크탑: 5개 카드 한 줄, 모바일: 스와이프 */}
+      <div className="top5-container">
+        <div className="top5-cards-wrapper">
+          {data.map((item, index) => {
+            const rank = index + 1;
+            const itemId = item.contentId || item.id;
+            const rankStyle = getRankStyle(rank);
             
             return (
-              <SlideItem 
-                key={festival.contentId} 
-                onClick={() => handleFestivalClick(festival)}
-                style={{ cursor: 'pointer' }}
+              <div
+                key={itemId}
+                className="top5-card"
+                onClick={() => handleCardClick(item)}
               >
-                <SlideImage 
-                  src={festival.firstimage || '/images/default-festival.jpg'} 
-                  alt={festival.title}
-                  onError={handleImageError}
-                />
-                {/* 제목과 순위 뱃지 영역 (상단) - 기존 Overlay 영역 */}
-                <Overlay>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    width: '100%'
-                  }}>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      textAlign: 'center',
-                      lineHeight: '1.4'
-                    }}>
-                      {festival.title}
-                    </div>
-                    
-                    {/* 순위 뱃지 (제목 옆) */}
-                    <div style={{
-                      fontSize: '10px',
-                      backgroundColor: rankBadge.backgroundColor,
-                      color: '#333',
-                      padding: '3px 6px',
-                      borderRadius: '10px',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                      minWidth: 'fit-content',
-                      flexShrink: 0
-                    }}>
-                      <span>{rankBadge.emoji}</span>
-                      <span>{rankBadge.rank}위</span>
-                    </div>
-                  </div>
-                </Overlay>
-                
-                {/* 조회수 (오른쪽 하단) - 별도 절대 위치 */}
+                {/* 순위 배지 */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '12px',
-                  right: '12px',
+                  top: '8px',
+                  left: '8px',
+                  zIndex: 20,
+                  minWidth: '50px',
+                  height: '28px',
+                  background: rankStyle.backgroundColor,
+                  borderRadius: '14px',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '4px',
-                  fontSize: '12px',
-                  backgroundColor: 'rgba(0,0,0,0.7)',
-                  color: 'white',
-                  padding: '6px 10px',
-                  borderRadius: '16px',
-                  backdropFilter: 'blur(4px)',
-                  zIndex: 2
+                  color: rank <= 3 ? '#000000' : '#ffffff',
+                  fontWeight: 'bold',
+                  fontSize: '11px',
+                  padding: '0 8px',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                  border: rank <= 3 ? '1px solid rgba(0,0,0,0.1)' : 'none'
                 }}>
-                  <MdVisibility size={14} />
-                  <span>{festival.viewCount.toLocaleString()}</span>
+                  <span style={{ fontSize: '14px' }}>{rankStyle.emoji}</span>
+                  <span>{rankStyle.text}</span>
                 </div>
-              </SlideItem>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  overflow: 'hidden',
+                  height: '100%',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}>
+                  {/* 이미지 섹션 */}
+                  <div style={{
+                    position: 'relative',
+                    aspectRatio: '1',
+                    overflow: 'hidden'
+                  }}>
+                    <img
+                      src={getImageUrl(item.firstimage || item.firstImage)}
+                      alt={item.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease'
+                      }}
+                      onError={handleImageError}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                    />
+                    
+                    {/* 축제 배지 */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      backgroundColor: 'rgba(147, 51, 234, 0.9)',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: '600'
+                    }}>
+                      🎪 축제
+                    </div>
+                  </div>
+
+                  {/* 콘텐츠 섹션 */}
+                  <div style={{ padding: '12px' }}>
+                    {/* 제목 */}
+                    <h3 style={{
+                      fontWeight: '600',
+                      fontSize: '16px',
+                      color: '#1f2937',
+                      marginBottom: '4px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      transition: 'color 0.3s ease'
+                    }}>
+                      {item.title || '제목 없음'}
+                    </h3>
+                    
+                    {/* 위치 */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#6b7280',
+                      marginBottom: '8px'
+                    }}>
+                      <MapPin style={{ width: '12px', height: '12px', marginRight: '4px', flexShrink: 0 }} />
+                      <span style={{
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {item.addr1 || item.regionName || '위치 정보 없음'}
+                      </span>
+                    </div>
+
+                    {/* 축제 기간 (있는 경우) */}
+                    {(item.eventstartdate || item.eventenddate) && (
+                      <div style={{
+                        fontSize: '11px',
+                        color: '#8b5cf6',
+                        marginBottom: '8px',
+                        backgroundColor: '#f3f4f6',
+                        padding: '4px 8px',
+                        borderRadius: '8px',
+                        textAlign: 'center'
+                      }}>
+                        📅 {item.eventstartdate && item.eventstartdate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3')}
+                        {item.eventstartdate && item.eventenddate && ' ~ '}
+                        {item.eventenddate && item.eventenddate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3')}
+                      </div>
+                    )}
+
+                    {/* 통계 정보 - 조회수만 */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#6b7280',
+                      backgroundColor: '#f9fafb',
+                      padding: '8px',
+                      borderRadius: '8px'
+                    }}>
+                      <Eye style={{ width: '14px', height: '14px', marginRight: '6px' }} />
+                      <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                        {item.viewCount ? formatNumber(item.viewCount) : '0'} views
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             );
           })}
-        </Slider>
-      </SliderContainer>
-    </Wrapper>
+        </div>
+      </div>
+
+      {/* 반응형 스타일 */}
+      <style>
+        {`
+          .top5-container {
+            position: relative;
+            width: 100%;
+          }
+
+          .top5-cards-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .top5-card {
+            flex: 1;
+            min-width: 200px;
+            max-width: 240px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+          }
+
+          .top5-card:hover {
+            transform: translateY(-4px);
+            z-index: 10;
+          }
+
+          /* 모바일 스타일 */
+          @media (max-width: 768px) {
+            .top5-cards-wrapper {
+              overflow-x: auto;
+              scroll-snap-type: x mandatory;
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+              justify-content: flex-start;
+              padding: 0 20px;
+              gap: 16px;
+            }
+
+            .top5-cards-wrapper::-webkit-scrollbar {
+              display: none;
+            }
+
+            .top5-card {
+              flex: none;
+              min-width: 280px;
+              max-width: 280px;
+              scroll-snap-align: start;
+            }
+
+            .top5-card:hover {
+              transform: none;
+            }
+          }
+
+          /* 더 작은 모바일 */
+          @media (max-width: 480px) {
+            .top5-cards-wrapper {
+              padding: 0 16px;
+              gap: 12px;
+            }
+            
+            .top5-card {
+              min-width: 260px;
+              max-width: 260px;
+            }
+          }
+
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: .5;
+            }
+          }
+        `}
+      </style>
+    </div>
   );
-}
+};
 
 export default Top5Festival;

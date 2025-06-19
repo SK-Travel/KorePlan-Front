@@ -11,7 +11,7 @@ node_modules
 dist
 dist-ssr
 
-# Environment Variables 
+# Environment Variables (紐⑤뱺 env �뚯씪 �쒖쇅)
 .env*
 
 # Editor directories and files

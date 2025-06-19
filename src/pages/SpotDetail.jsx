@@ -192,20 +192,20 @@ const SpotDetail = () => {
             <BodyWrapper>
                 <Main>
                     <MainContent>
-                        {/* SpotHeader에 spotData만 전달 (통계 데이터 포함) */}
+                       
                         <SpotHeader 
                             spotData={localSpotData}
                             onLikeToggle={handleLikeToggle}
-                        />
+                        /> 
                         
-                        {/* SpotImages에 contentId 전달 */}
+                        
                         <SpotImages 
                             contentId={contentId} 
                         />
                         
                         <SpotInfo spotData={localSpotData} />
 
-                        {/* 리뷰 섹션 추가 - spotData.id 사용 */}
+                        
                         {localSpotData?.id && (
                             <DataReviewList 
                                 dataId={localSpotData.id}

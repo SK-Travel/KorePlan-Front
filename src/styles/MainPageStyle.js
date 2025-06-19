@@ -60,13 +60,13 @@ export const RightSide = styled.div`
 
 export const MainContent = styled.div`
   width: 100%;
-  max-width: 1500px;           // 더 넓게 설정
-  margin: 30px auto 0 auto;    // 중앙 정렬로 수정
+  max-width: 1600px;           // 1500px → 1600px로 확장!
+  margin: 30px auto 0 auto;    
   display: flex;
   flex-direction: column;
   gap: 40px;
   padding: 0 16px;
-  align-items: center;         // 중앙 배치로 변경
+  align-items: center;         
 
   @media (max-width: 768px) {
     padding: 0 8px;
