@@ -79,7 +79,11 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
         switch (step) {
             case 0: return region !== '';
             case 1: return preferences.length > 0;
-            case 2: return days !== null;
+            case 2: return (
+                days !== null &&
+                typeof startDate === 'string' && startDate.length > 0 &&
+                typeof endDate === 'string' && endDate.length > 0
+            );
             case 3: return companion !== '';
             default: return false;
         }
@@ -152,24 +156,21 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
         isTheme
     } = renderStep();
 
-    const getToday = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + 1); // 내일부터 선택 가능
-    return today.toISOString().split("T")[0];
+    // 헬퍼 함수 추가
+    const formatDateToYYYYMMDD = (date) => {
+        const y = date.getFullYear(); // 로컬 기준
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`; // 로컬 날짜 문자열 반환
+    };
+    
+    // 시간 초기화해서 날짜만 유지하는 보정 함수
+    const normalizeDate = (d) => {
+        // 한국 시간으로 고정 (UTC +9), 날짜만 유지
+        const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        return new Date(localDate.getTime() + (9 * 60 * 60 * 1000)); // KST 보정
     };
 
-    const handleStartDateChange = (value) => {
-        setStartDate(value);
-
-        if (days) {
-            const start = new Date(value);
-            const end = new Date(start);
-            end.setDate(start.getDate() + days - 1); // days=2 -> 1박2일이면 하루 뒤
-
-            const formattedEnd = end.toISOString().split("T")[0];
-            setEndDate(formattedEnd);
-        }
-    };
 
     return (
         <div className="modal-container">
@@ -310,23 +311,33 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                         <DayPicker
                             mode="single"
                             selected={startDate ? new Date(startDate) : undefined}
-                            onDayClick={(date) => {
-                                const start = date;
-                                const end = new Date(date);
-                                end.setDate(date.getDate() + days - 1);
+                            onDayClick={(date, modifiers, e) => {
 
-                                setStartDate(start.toISOString().split('T')[0]);
-                                setEndDate(end.toISOString().split('T')[0]);
+                                if(!days) {
+                                    alert("여행 기간을 먼저 선택해주세요.");
+                                }
+
+                                const start = normalizeDate(date);
+                                const end = new Date(start);
+                                end.setDate(start.getDate() + days - 1);
+
+                                setStartDate(formatDateToYYYYMMDD(start));
+                                setEndDate(formatDateToYYYYMMDD(end));
+                                setHoverDate(null);
                             }}
-                            onDayMouseEnter={(date) => setHoverDate(date)}
+                            onDayMouseEnter={(date) => {
+                                if (days) setHoverDate(date);
+                            }}
                             modifiers={{
-                                hovered: hoverDate ? Array.from({ length: days }, (_, i) => {
-                                    const d = new Date(hoverDate);
+                                hovered: hoverDate && days 
+                                    ? Array.from({ length: days }, (_, i) => {
+                                    const d = normalizeDate(hoverDate);
                                     d.setDate(d.getDate() + i);
                                     return d;
                                 }) : [],
-                                selected: startDate ? Array.from({ length: days }, (_, i) => {
-                                    const d = new Date(startDate);
+                                selected: startDate && days 
+                                    ? Array.from({ length: days }, (_, i) => {
+                                    const d = normalizeDate(new Date(startDate));
                                     d.setDate(d.getDate() + i);
                                     return d;
                                 }) : [],
@@ -335,7 +346,11 @@ const TravelPlannerModal = ({ onPlanGenerated }) => {
                                 hovered: { backgroundColor: '#e0f2ff' },
                                 selected: { backgroundColor: '#3b82f6', color: 'white' },
                             }}
-                            disabled={{ before: new Date(Date.now() + 86400000) }} // 내일부터 가능
+                            disabled={(date) => {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                return !days || date < tomorrow;
+                            }}
                         />
                     </div>
                 </div>
