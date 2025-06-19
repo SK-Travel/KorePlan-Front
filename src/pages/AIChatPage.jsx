@@ -57,7 +57,8 @@ const AIChatPage = () => {
                         {/* !isPlanning && planData && planData.plan && planData.plan.length > 0 */}
                         {!isPlanning && planData && planData.plan && planData.plan.length > 0 && (
                             <>
-                                <TravelMap locations={planData.plan} days={planData.days} region={planData.region} />
+                                <TravelMap locations={planData.plan} days={planData.days} region={planData.region} 
+                                startDate={planData.startDate} endDate={planData.endDate}/>
 
                                 {/* 일정 다시 추천받기 버튼 */}
                                 <div style={{ textAlign: 'center', marginTop: '30px' }}>
