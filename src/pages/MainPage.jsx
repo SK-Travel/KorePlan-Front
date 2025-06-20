@@ -8,11 +8,9 @@ import SearchFilterBar from '../component/Main/SearchFilterBar';
 import {
     PageWrapper,
     BodyWrapper,
-    LeftSide,
     Main,
     MainContent,
-    Row,
-    RightSide,
+    
 } from '../styles/MainPageStyle.js'
 
 import ScrollToTop from '../component/Button/ScrollToTop.jsx';

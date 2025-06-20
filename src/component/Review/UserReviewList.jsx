@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Calendar, MapPin, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-
+import { useNavigate } from 'react-router-dom';
 const UserReviewList = () => {
   const [reviews, setReviews] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const navigate = useNavigate();
+
   // 정렬 옵션 (클라이언트 사이드)
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -75,7 +76,7 @@ const UserReviewList = () => {
 
       if (result.code === 200) {
         alert('리뷰가 삭제되었습니다.');
-        
+
         // 리뷰 삭제 후 목록 새로고침
         if (reviews.length === 1) {
           setReviews([]);
@@ -122,9 +123,31 @@ const UserReviewList = () => {
     }
   };
 
-  // 장소 상세페이지로 이동
-  const handlePlaceClick = (contentId) => {
-    window.location.href = `/detail/${contentId}`;
+  const handlePlaceClick = async (contentId) => {
+    try {
+      const response = await fetch(`/api/region-list/${contentId}/one-data`);
+
+      if (response.ok) {
+        const detailData = await response.json();
+        navigate(`/spot/${contentId}`, {
+          state: {
+            contentId: contentId,
+            contentTypeId: detailData.theme,
+            spotData: detailData,
+          }
+        });
+        return;
+      } else {
+        // 401, 404 등 다른 에러 상황 로깅
+        console.warn(`API 호출 실패: ${response.status} - ${response.statusText}`);
+      }
+
+    } catch (error) {
+      console.error('데이터 조회 실패:', error);
+    }
+
+    // 실패시 데이터 없이 이동
+    navigate(`/spot/${contentId}`);
   };
 
   // 별점 렌더링
@@ -146,23 +169,19 @@ const UserReviewList = () => {
     );
   };
 
-  // 페이지 변경 (사용 안 함 - 제거 예정)
-  const handlePageChange = (page) => {
-    // 페이징 없으므로 주석 처리
-  };
 
   // 정렬 변경 (클라이언트 사이드 정렬)
   const handleSortChange = (newSortBy) => {
-    const newDirection = 
+    const newDirection =
       sortBy === newSortBy && sortDirection === 'desc' ? 'asc' : 'desc';
-    
+
     setSortBy(newSortBy);
     setSortDirection(newDirection);
-    
+
     // 클라이언트에서 정렬
     const sortedReviews = [...reviews].sort((a, b) => {
       let aValue, bValue;
-      
+
       if (newSortBy === 'createdAt') {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
@@ -170,14 +189,14 @@ const UserReviewList = () => {
         aValue = a.rating;
         bValue = b.rating;
       }
-      
+
       if (newDirection === 'desc') {
         return bValue > aValue ? 1 : -1;
       } else {
         return aValue > bValue ? 1 : -1;
       }
     });
-    
+
     setReviews(sortedReviews);
   };
 
@@ -342,7 +361,7 @@ const UserReviewList = () => {
                         marginBottom: '8px'
                       }}>
                         <MapPin style={{ width: '16px', height: '16px', color: '#6b7280' }} />
-                        <h3 
+                        <h3
                           style={{
                             margin: 0,
                             fontSize: 'clamp(16px, 3vw, 18px)',
@@ -519,7 +538,7 @@ const UserReviewList = () => {
               }}>
                 리뷰 수정
               </h3>
-              
+
               <div style={{ marginBottom: '16px' }}>
                 <p style={{
                   margin: '0 0 8px 0',
