@@ -79,88 +79,101 @@ const MyList = () => {
         
             {plans.map((plan, planIdx) => (
                 <div key={plan.id} className="d-flex">
-                <h4 style={{padding:'12px 10px 0px 0px'}}>{planIdx + 1}</h4>
+                    <h4 style={{padding:'12px 10px 0px 0px'}}>{planIdx + 1}</h4>
 
-                <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4> {plan.title} - {plan.startDate && plan.endDate ? `${plan.startDate} ~ ${plan.endDate}` : '날짜 미정'} ({new Set(plan.sendDataDto.map(d => d.day)).size-1}박-{new Set(plan.sendDataDto.map(d => d.day)).size}일)</h4>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button
-                                onClick={() => togglePlan(plan.id)}
-                                style={{
-                                padding: '4px 15px',
-                                backgroundColor: '#007BFF',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                boxShadow: '0 2px 6px rgba(0, 123, 255, 0.4)',
-                                transition: 'background-color 0.3s, box-shadow 0.3s',
-                                }}
-                                onMouseEnter={e => {
-                                e.currentTarget.style.backgroundColor = '#0056b3';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 86, 179, 0.6)';
-                                }}
-                                onMouseLeave={e => {
-                                e.currentTarget.style.backgroundColor = '#007BFF';
-                                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 123, 255, 0.4)';
-                                }}
-                            >
-                                {expandedPlans[plan.id] ? '▲ 접기' : '▼ 펼치기'}
-                            </button>
-                            <button
-                                onClick={() => deletePlanById(plan.id)}
-                                style={{
-                                    padding: '4px 10px',
-                                    backgroundColor: '#dc3545',
+                    <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4> {plan.title} - {plan.startDate && plan.endDate ? `${plan.startDate} ~ ${plan.endDate}` : '날짜 미정'} ({new Set(plan.sendDataDto.map(d => d.day)).size-1}박-{new Set(plan.sendDataDto.map(d => d.day)).size}일)</h4>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    onClick={() => togglePlan(plan.id)}
+                                    style={{
+                                    padding: '4px 15px',
+                                    backgroundColor: '#007BFF',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '6px',
                                     cursor: 'pointer',
                                     fontWeight: 'bold',
-                                    marginLeft: '10px',
-                                    boxShadow: '0 2px 6px rgba(220, 53, 69, 0.4)',
+                                    boxShadow: '0 2px 6px rgba(0, 123, 255, 0.4)',
                                     transition: 'background-color 0.3s, box-shadow 0.3s',
-                                }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.backgroundColor = '#a71d2a';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(167, 29, 42, 0.6)';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.backgroundColor = '#dc3545';
-                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(220, 53, 69, 0.4)';
-                                }}
-                            >
-                                삭제
-                            </button>
+                                    }}
+                                    onMouseEnter={e => {
+                                    e.currentTarget.style.backgroundColor = '#0056b3';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 86, 179, 0.6)';
+                                    }}
+                                    onMouseLeave={e => {
+                                    e.currentTarget.style.backgroundColor = '#007BFF';
+                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 123, 255, 0.4)';
+                                    }}
+                                >
+                                    {expandedPlans[plan.id] ? '▲ 접기' : '▼ 펼치기'}
+                                </button>
+                                <button
+                                    onClick={() => deletePlanById(plan.id)}
+                                    style={{
+                                        padding: '4px 10px',
+                                        backgroundColor: '#dc3545',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        marginLeft: '10px',
+                                        boxShadow: '0 2px 6px rgba(220, 53, 69, 0.4)',
+                                        transition: 'background-color 0.3s, box-shadow 0.3s',
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.backgroundColor = '#a71d2a';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(167, 29, 42, 0.6)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.backgroundColor = '#dc3545';
+                                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(220, 53, 69, 0.4)';
+                                    }}
+                                >
+                                    삭제
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    {expandedPlans[plan.id] && (
-                        <div style={{ marginTop: '10px' }}>
-                            {Array.from(new Set(plan.sendDataDto.map(loc => loc.day)))
-                            .sort((a, b) => a - b)
-                            .map(day => (
-                                <div key={day} style={{ marginTop: '10px' }}>
-                                    <strong>Day {day}</strong>
-                                    <ul style={{ paddingLeft: '20px', marginTop: '5px' }}>
-                                    {plan.sendDataDto
-                                        .filter(loc => loc.day === day)
-                                        .sort((a, b) => a.order - b.order)
-                                        .map((loc, idx) => (
-                                        <li key={idx}>
-                                            {loc.order}번째 일정 - {loc.title}
-                                        </li>
-                                    ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                        {expandedPlans[plan.id] && (
+                            <div style={{ marginTop: '10px' }}>
+                                {Array.from(new Set(plan.sendDataDto.map(loc => loc.day)))
+                                .sort((a, b) => a - b)
+                                .map(day => (
+                                    <div key={day} style={{ marginTop: '10px' }}>
+                                        <strong>Day {day}</strong>
+                                        <ul style={{ paddingLeft: '20px', marginTop: '5px' }}>
+                                        {plan.sendDataDto
+                                            .filter(loc => loc.day === day)
+                                            .sort((a, b) => a.order - b.order)
+                                            .map((loc, idx) => (
+                                            <li key={idx}>
+                                                {loc.order}번째 일정 - {loc.title}
+                                            </li>
+                                        ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
             </div>
             ))}
+
+
+            {/* 나만의 리스트 짜기 */}
+            <button style={{ padding: '4px 15px',  backgroundColor: '#007BFF', color: 'white',   border: 'none',  borderRadius: '6px',   cursor: 'pointer', fontWeight: 'bold',
+                boxShadow: '0 2px 6px rgba(0, 123, 255, 0.4)',
+                transition: 'background-color 0.3s, box-shadow 0.3s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#0056b3'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 86, 179, 0.6)';}}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#007BFF'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 123, 255, 0.4)'; }}
+            >
+                나만의 리스트 생성하기
+            </button>
+
         </div>
     );
 };

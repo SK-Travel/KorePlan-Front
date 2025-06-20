@@ -185,13 +185,14 @@ const TravelMap = ({ locations, days, region, startDate, endDate }) => {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log(data);
                 if (data.code === 200) {
                     alert("리스트에 추가되었습니다.");
                     setShowModal(false); // 모달 닫기
-                    navigate('/myplan', { state: { locations, region, days, title, startDate, endDate } });
+                    navigate('/myplan', { state: { locations, region, days, title: planTitle, startDate, endDate } });
                 }
             } else {
-                alert("서버 응답 오류");
+                alert("서버로부터 오류 응답을 받았습니다. 코드: " + data.code);
             }
         } catch (error) {
             console.log("리스트 저장 실패: ", error);
