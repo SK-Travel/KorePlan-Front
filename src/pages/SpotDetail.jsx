@@ -18,6 +18,7 @@ import SpotHeader from '../component/SpotDetail/SpotHeader.jsx';
 import SpotComment from '../component/SpotDetail/SpotComment.jsx';
 import SpotInfo from '../component/SpotDetail/SpotInfo.jsx';
 import ScrollToTop from '../component/Button/ScrollToTop.jsx';
+import DataReviewList from '../component/SpotDetail/DataReviewList.jsx'; // 새로 추가
 //-------------------------------------------
 
 const SpotDetail = () => {
@@ -93,6 +94,15 @@ const SpotDetail = () => {
         }
     };
 
+    // 리뷰 작성 후 spotData의 reviewCount 업데이트를 위한 콜백
+    const handleReviewUpdate = (newReviewCount, newAverageRating) => {
+        setLocalSpotData(prev => ({
+            ...prev,
+            reviewCount: newReviewCount,
+            rating: newAverageRating
+        }));
+    };
+
     // spotData가 없는 경우 처리
     if (!spotData || !contentId) {
         return (
@@ -165,6 +175,7 @@ const SpotDetail = () => {
 
     // 디버깅용 로그
     console.log('🎯 SpotDetail에서 사용할 spotData:', {
+        id: localSpotData?.id,  // 리뷰에서 사용할 ID
         title: localSpotData?.title,
         contentId,
         viewCount: localSpotData?.viewCount,
@@ -181,18 +192,26 @@ const SpotDetail = () => {
             <BodyWrapper>
                 <Main>
                     <MainContent>
-                        {/* SpotHeader에 spotData만 전달 (통계 데이터 포함) */}
+                       
                         <SpotHeader 
                             spotData={localSpotData}
                             onLikeToggle={handleLikeToggle}
-                        />
+                        /> 
                         
-                        {/* SpotImages에 contentId 전달 */}
+                        
                         <SpotImages 
                             contentId={contentId} 
                         />
                         
                         <SpotInfo spotData={localSpotData} />
+
+                        
+                        {localSpotData?.id && (
+                            <DataReviewList 
+                                dataId={localSpotData.id}
+                                onReviewUpdate={handleReviewUpdate}
+                            />
+                        )}
 
                         <ScrollToTop/>
                     </MainContent>

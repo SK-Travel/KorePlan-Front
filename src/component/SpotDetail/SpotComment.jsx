@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SpotComment = ({ contentId }) => {
   const [spotData, setSpotData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // 모바일 체크
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // API 호출
   useEffect(() => {
@@ -40,6 +54,17 @@ const SpotComment = ({ contentId }) => {
     
     fetchSpotData();
   }, [contentId]);
+  
+  // 텍스트 자르기 함수
+  const truncateText = (text, maxLength = 150) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength);
+  };
+
+  // 더보기/접기 토글
+  const toggleExpansion = () => {
+    setIsExpanded(prev => !prev);
+  };
   
   // 로딩 상태
   if (loading) {
@@ -182,7 +207,7 @@ const SpotComment = ({ contentId }) => {
   
   const overview = spotData?.overview;
   const homepage = spotData?.homepage;
-  
+
   // homepage URL 정리 (HTML 태그 제거)
   const cleanHomepage = homepage?.replace(/<[^>]*>/g, '').trim();
   const hasHomepage = cleanHomepage && cleanHomepage !== '';
@@ -192,6 +217,19 @@ const SpotComment = ({ contentId }) => {
       window.open(cleanHomepage, '_blank', 'noopener,noreferrer');
     }
   };
+
+  // 텍스트가 있을 때 더보기/접기 로직
+  const shouldTruncate = isMobile && overview && overview.length > 150;
+  const displayText = shouldTruncate && !isExpanded ? truncateText(overview) : overview;
+
+  const formattedOverview = displayText
+    ? displayText.split(/(?<=\.)\s+/).map((sentence, index) => (
+        <span key={index}>
+          {sentence}
+          <br />
+        </span>
+      ))
+    : null;
 
   return (
     <div style={{
@@ -278,18 +316,103 @@ const SpotComment = ({ contentId }) => {
             backgroundColor: '#f8f9fa',
             borderRadius: '12px',
             padding: '30px',
-            border: '1px solid #e9ecef'
+            border: '1px solid #e9ecef',
+            position: 'relative'
           }}>
             <p style={{ 
               color: '#374151', 
               lineHeight: '1.7', 
-              fontSize: 'clamp(16px, 2.5vw, 18px)', 
+              fontSize: 'clamp(12px, 2.5vw, 18px)', 
               fontWeight: '400',
               margin: 0,
-              wordBreak: 'keep-all'
+              wordBreak: 'keep-all',
+              whiteSpace: 'pre-wrap',
             }}>
-              {overview}
+              {formattedOverview}
             </p>
+            
+            {/* 더보기 버튼 - 텍스트가 잘려서 표시될 때 */}
+            {shouldTruncate && !isExpanded && (
+              <div style={{
+                position: 'absolute',
+                bottom: '30px',
+                left: '30px',
+                right: '30px',
+                height: '60px',
+                background: 'linear-gradient(transparent, #f8f9fa)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={toggleExpansion}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#2563eb';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#3b82f6';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  더보기
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+            )}
+            
+            {/* 접기 버튼 - 전체 텍스트가 표시될 때 */}
+            {shouldTruncate && isExpanded && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '16px'
+              }}>
+                <button
+                  onClick={toggleExpansion}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#4b5563';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#6b7280';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  접기
+                  <ChevronUp size={16} />
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* 데이터가 없을 때 */

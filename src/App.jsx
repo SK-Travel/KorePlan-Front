@@ -17,6 +17,7 @@ import RegionSearchPage from './pages/RegionSearchPage.jsx';
 import MyListPage from './pages/MyListPage.jsx';
 import RegionSelector from './component/RegionList/RegionSelector.jsx';
 import DataCardList from './component/RegionList/DataCardList.jsx';
+import MyReviewPage from './pages/MyReviewPage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -35,6 +36,7 @@ export function App() {
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     //{ path: "/category", element: <RegionSearchPage /> }, // 카테고리 기반 여행지 리스트 페이지
     { path: "/myplan", element: <MyListPage />}, // MyList & 찜 페이지
+    { path: "/review", element: <MyReviewPage/>}, // MyList & 찜 페이지
 
   ]);
   return <RouterProvider router={router} />;

@@ -5,37 +5,45 @@ const SpotHeader = ({ spotData }) => {
   // spotData가 없으면 로딩 상태 표시
   if (!spotData) {
     return (
+      // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
       <div style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        backgroundColor: '#f8fafc',
-        borderRadius: '12px',
-        margin: '20px 0'
+        width: '100%',
+        padding: '40px 0',
+        backgroundColor: 'white'
       }}>
-        <div style={{
-          width: '200px',
-          height: '24px',
-          backgroundColor: '#e5e7eb',
-          borderRadius: '4px',
-          margin: '0 auto 16px',
-          animation: 'shimmer 1.5s infinite'
-        }}></div>
-        <div style={{
-          width: '120px',
-          height: '16px',
-          backgroundColor: '#e5e7eb',
-          borderRadius: '4px',
-          margin: '0 auto'
-        }}></div>
-        <style>
-          {`
-            @keyframes shimmer {
-              0% { opacity: 1; }
-              50% { opacity: 0.5; }
-              100% { opacity: 1; }
-            }
-          `}
-        </style>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            backgroundColor: '#f8fafc',
+            borderRadius: '12px'
+          }}>
+            <div style={{
+              width: '200px',
+              height: '24px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '4px',
+              margin: '0 auto 16px',
+              animation: 'shimmer 1.5s infinite'
+            }}></div>
+            <div style={{
+              width: '120px',
+              height: '16px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '4px',
+              margin: '0 auto'
+            }}></div>
+            <style>
+              {`
+                @keyframes shimmer {
+                  0% { opacity: 1; }
+                  50% { opacity: 0.5; }
+                  100% { opacity: 1; }
+                }
+              `}
+            </style>
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,127 +110,181 @@ const SpotHeader = ({ spotData }) => {
   });
 
   return (
+    // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
     <div style={{
       width: '100%',
       padding: '60px 0',
-      textAlign: 'center',
       backgroundColor: 'white',
-      color: '#333',
       borderBottom: '1px solid #e5e7eb'
     }}>
       {/* 메인 컨텐츠 */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-        {/* 카테고리 뱃지 */}
         <div style={{
-          display: 'inline-block',
-          backgroundColor: '#f3f4f6',
-          color: '#6b7280',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          fontSize: '14px',
-          fontWeight: '500',
-          marginBottom: '20px'
+          textAlign: 'center',
+          color: '#333'
         }}>
-          {getThemeName(spotData.theme)}
-        </div>
-
-        {/* 장소명 */}
-        <h1 style={{
-          fontSize: '42px',
-          fontWeight: '700',
-          margin: '0 0 16px 0',
-          lineHeight: '1.2',
-          color: '#1f2937'
-        }}>
-          {spotData.title || '장소명 없음'}
-        </h1>
-
-        {/* 지역 정보 */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          fontSize: '18px',
-          color: '#6b7280',
-          marginBottom: '8px'
-        }}>
-          <MapPin size={20} color="#9ca3af" />
-          <span>{formatLocation()}</span>
-        </div>
-
-        {/* 상세 주소 */}
-        {formatAddress() && (
+          {/* 카테고리 뱃지 */}
           <div style={{
-            fontSize: '16px',
-            color: '#9ca3af',
-            marginBottom: '40px',
-            lineHeight: '1.5'
+            display: 'inline-block',
+            backgroundColor: '#f3f4f6',
+            color: '#6b7280',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: '500',
+            marginBottom: '20px'
           }}>
-            {formatAddress()}
+            {getThemeName(spotData.theme)}
           </div>
-        )}
 
-        {/* 통계 및 액션 버튼 */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '24px',
-          flexWrap: 'wrap'
-        }}>
-          {/* 좋아요 */}
+          {/* 장소명 */}
+          <h1 style={{
+            fontSize: 'clamp(28px, 6vw, 42px)', // 🔥 수정: 반응형 폰트 크기
+            fontWeight: '700',
+            margin: '0 0 16px 0',
+            lineHeight: '1.2',
+            color: '#1f2937',
+            wordBreak: 'keep-all' // 🔥 추가: 한글 줄바꿈 최적화
+          }}>
+            {spotData.title || '장소명 없음'}
+          </h1>
+
+          {/* 지역 정보 */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
-            padding: '12px 20px',
-            backgroundColor: '#f9fafb',
-            border: '1px solid #e5e7eb',
-            borderRadius: '30px',
-            ...buttonHoverStyle
+            fontSize: '18px',
+            color: '#6b7280',
+            marginBottom: '8px',
+            flexWrap: 'wrap' // 🔥 추가: 모바일에서 줄바꿈 허용
           }}>
-            <Heart size={18} color="#ef4444" />
-            <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {formatNumber(spotData.likeCount || 0)}
-            </span>
+            <MapPin size={20} color="#9ca3af" />
+            <span style={{ wordBreak: 'keep-all' }}>{formatLocation()}</span>
           </div>
 
-          {/* 조회수 */}
+          {/* 상세 주소 */}
+          {formatAddress() && (
+            <div style={{
+              fontSize: '16px',
+              color: '#9ca3af',
+              marginBottom: '40px',
+              lineHeight: '1.5',
+              wordBreak: 'break-all', // 🔥 추가: 긴 주소 줄바꿈
+              padding: '0 10px' // 🔥 추가: 모바일에서 여백
+            }}>
+              {formatAddress()}
+            </div>
+          )}
+
+          {/* 통계 및 액션 버튼 */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '12px 20px',
-            backgroundColor: '#f9fafb',
-            border: '1px solid #e5e7eb',
-            borderRadius: '30px',
-            ...buttonHoverStyle
+            justifyContent: 'center',
+            gap: 'clamp(12px, 3vw, 24px)', // 🔥 수정: 반응형 간격
+            flexWrap: 'wrap'
           }}>
-            <Eye size={18} color="#3b82f6" />
-            <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {formatNumber(spotData.viewCount || 0)}
-            </span>
-          </div>
+            {/* 좋아요 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: 'clamp(10px 16px, 2.5vw, 12px 20px)', // 🔥 수정: 반응형 패딩
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '30px',
+              minWidth: 'fit-content', // 🔥 추가: 최소 너비 보장
+              ...buttonHoverStyle
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <Heart size={18} color="#ef4444" />
+              <span style={{ 
+                fontSize: 'clamp(14px, 2.5vw, 16px)', // 🔥 수정: 반응형 폰트
+                fontWeight: '600', 
+                color: '#374151' 
+              }}>
+                {formatNumber(spotData.likeCount || 0)}
+              </span>
+            </div>
 
-          {/* 별점 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 20px',
-            backgroundColor: '#f9fafb',
-            border: '1px solid #e5e7eb',
-            borderRadius: '30px',
-            ...buttonHoverStyle
-          }}>
-            <Star size={18} color="#fbbf24" fill="#fbbf24" />
-            <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-              {spotData.rating ? spotData.rating.toFixed(1) : '0.0'}
-            </span>
-            <span style={{ fontSize: '14px', color: '#9ca3af', marginLeft: '4px' }}>
-              ({formatNumber(spotData.reviewCount || 0)})
-            </span>
+            {/* 조회수 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: 'clamp(10px 16px, 2.5vw, 12px 20px)', // 🔥 수정: 반응형 패딩
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '30px',
+              minWidth: 'fit-content', // 🔥 추가: 최소 너비 보장
+              ...buttonHoverStyle
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <Eye size={18} color="#3b82f6" />
+              <span style={{ 
+                fontSize: 'clamp(14px, 2.5vw, 16px)', // 🔥 수정: 반응형 폰트
+                fontWeight: '600', 
+                color: '#374151' 
+              }}>
+                {formatNumber(spotData.viewCount || 0)}
+              </span>
+            </div>
+
+            {/* 별점 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: 'clamp(10px 16px, 2.5vw, 12px 20px)', // 🔥 수정: 반응형 패딩
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '30px',
+              minWidth: 'fit-content', // 🔥 추가: 최소 너비 보장
+              ...buttonHoverStyle
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <Star size={18} color="#fbbf24" fill="#fbbf24" />
+              <span style={{ 
+                fontSize: 'clamp(14px, 2.5vw, 16px)', // 🔥 수정: 반응형 폰트
+                fontWeight: '600', 
+                color: '#374151' 
+              }}>
+                {spotData.rating ? spotData.rating.toFixed(1) : '0.0'}
+              </span>
+              <span style={{ 
+                fontSize: 'clamp(12px, 2vw, 14px)', // 🔥 수정: 반응형 폰트
+                color: '#9ca3af', 
+                marginLeft: '4px' 
+              }}>
+                ({formatNumber(spotData.reviewCount || 0)})
+              </span>
+            </div>
           </div>
         </div>
       </div>

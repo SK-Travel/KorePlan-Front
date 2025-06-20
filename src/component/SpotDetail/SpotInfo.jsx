@@ -22,63 +22,71 @@ const SpotInfo = ({ spotData }) => {
   // SpotData가 없으면 로딩 상태 표시
   if (!spotData) {
     return (
+      // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
       <div style={{
-        backgroundColor: 'white',
-        margin: '20px 0',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        width: '100%',
+        padding: '20px 0',
+        backgroundColor: 'white'
       }}>
-        {/* 제목 바 */}
-        <div style={{
-          backgroundColor: 'white',
-          borderBottom: '2px solid #000',
-          padding: '16px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTopLeftRadius: '8px',
-          borderTopRightRadius: '8px'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            margin: 0,
-            color: '#000'
-          }}>상세정보</h2>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
-            🖊 관련정보 수정요청
-          </button>
-        </div>
-        
-        <div style={{
-          padding: '40px 20px',
-          textAlign: 'center'
-        }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #3b82f6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }}></div>
-          <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>상세 정보를 불러오는 중...</p>
-          <style>
-            {`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}
-          </style>
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            {/* 제목 바 */}
+            <div style={{
+              backgroundColor: 'white',
+              borderBottom: '2px solid #000',
+              padding: '16px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTopLeftRadius: '8px',
+              borderTopRightRadius: '8px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                margin: 0,
+                color: '#000'
+              }}>상세정보</h2>
+              <button style={{
+                padding: '8px 16px',
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}>
+                🖊 관련정보 수정요청
+              </button>
+            </div>
+            
+            <div style={{
+              padding: '40px 20px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                border: '4px solid #e5e7eb',
+                borderTop: '4px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px'
+              }}></div>
+              <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>상세 정보를 불러오는 중...</p>
+              <style>
+                {`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}
+              </style>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -239,64 +247,72 @@ const SpotInfo = ({ spotData }) => {
 
   if (loading) {
     return (
+      // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
       <div style={{
-        backgroundColor: 'white',
-        margin: '20px 0',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        width: '100%',
+        padding: '20px 0',
+        backgroundColor: 'white'
       }}>
-        {/* 제목 바 */}
-        <div style={{
-          backgroundColor: 'white',
-          borderBottom: '2px solid #000',
-          padding: '16px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTopLeftRadius: '8px',
-          borderTopRightRadius: '8px'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            margin: 0,
-            color: '#000'
-          }}>상세정보</h2>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
-            🖊 관련정보 수정요청
-          </button>
-        </div>
-        
-        <div style={{
-          padding: '40px 20px',
-          textAlign: 'center'
-        }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #3b82f6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }}></div>
-          <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>상세 정보를 불러오는 중...</p>
-          <style>
-            {`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}
-          </style>
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            {/* 제목 바 */}
+            <div style={{
+              backgroundColor: 'white',
+              borderBottom: '2px solid #000',
+              padding: '16px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTopLeftRadius: '8px',
+              borderTopRightRadius: '8px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                margin: 0,
+                color: '#000'
+              }}>상세정보</h2>
+              <button style={{
+                padding: '8px 16px',
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}>
+                🖊 관련정보 수정요청
+              </button>
+            </div>
+            
+            <div style={{
+              padding: '40px 20px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                border: '4px solid #e5e7eb',
+                borderTop: '4px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px'
+              }}></div>
+              <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>상세 정보를 불러오는 중...</p>
+              <style>
+                {`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}
+              </style>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -304,194 +320,211 @@ const SpotInfo = ({ spotData }) => {
 
   if (error) {
     return (
+      // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
       <div style={{
-        backgroundColor: 'white',
-        margin: '20px 0',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        width: '100%',
+        padding: '20px 0',
+        backgroundColor: 'white'
       }}>
-        {/* 제목 바 */}
-        <div style={{
-          backgroundColor: 'white',
-          borderBottom: '2px solid #000',
-          padding: '16px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTopLeftRadius: '8px',
-          borderTopRightRadius: '8px'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            margin: 0,
-            color: '#000'
-          }}>상세정보</h2>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
-            🖊 관련정보 수정요청
-          </button>
-        </div>
-        
-        <div style={{
-          padding: '40px 20px',
-          textAlign: 'center'
-        }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <div style={{
-            color: '#ef4444',
-            fontSize: '48px',
-            marginBottom: '16px'
-          }}>⚠️</div>
-          <h3 style={{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '8px',
-            margin: '0 0 8px 0'
-          }}>오류 발생</h3>
-          <p style={{
-            color: '#6b7280',
-            marginBottom: '16px',
-            margin: '0 0 16px 0'
-          }}>{error}</p>
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            {/* 제목 바 */}
+            <div style={{
+              backgroundColor: 'white',
+              borderBottom: '2px solid #000',
+              padding: '16px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTopLeftRadius: '8px',
+              borderTopRightRadius: '8px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                margin: 0,
+                color: '#000'
+              }}>상세정보</h2>
+              <button style={{
+                padding: '8px 16px',
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}>
+                🖊 관련정보 수정요청
+              </button>
+            </div>
+            
+            <div style={{
+              padding: '40px 20px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                color: '#ef4444',
+                fontSize: '48px',
+                marginBottom: '16px'
+              }}>⚠️</div>
+              <h3 style={{
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                marginBottom: '8px',
+                margin: '0 0 8px 0'
+              }}>오류 발생</h3>
+              <p style={{
+                color: '#6b7280',
+                marginBottom: '16px',
+                margin: '0 0 16px 0'
+              }}>{error}</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
+    // 🔥 수정: 다른 컴포넌트와 동일한 레이아웃 구조 적용
     <div style={{
-      backgroundColor: 'white',
-      margin: '20px 0',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      width: '100%',
+      padding: '20px 0',
+      backgroundColor: 'white'
     }}>
-      {/* 제목 바 */}
-      <div style={{
-        backgroundColor: 'white',
-        borderBottom: '2px solid #000',
-        padding: '16px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderTopLeftRadius: '8px',
-        borderTopRightRadius: '8px'
-      }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          margin: 0,
-          color: '#000'
-        }}>상세정보</h2>
-        <button style={{
-          padding: '8px 16px',
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        <div style={{
           backgroundColor: 'white',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          fontSize: '14px',
-          cursor: 'pointer'
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
-          🖊 관련정보 수정요청
-        </button>
-      </div>
-
-      {/* 콘텐츠 영역 */}
-      <div style={{
-        padding: '30px'
-      }}>
-        {/* 장소 설명 - SpotComment 컴포넌트 사용 */}
-        <div style={{
-          marginBottom: '30px'
-        }}>
-          <SpotComment contentId={spotData?.contentId} />
-        </div>
-
-        {/* 지도 영역 - SpotMap 컴포넌트 사용 */}
-        <div style={{
-          marginBottom: '30px'
-        }}>
-          <SpotMap spotData={spotData} />
-        </div>
-
-        {/* 세부 정보 그리드 */}
-        {detailData?.data && Object.keys(detailData.data).length > 0 ? (
+          {/* 제목 바 */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            gap: '20px'
+            backgroundColor: 'white',
+            borderBottom: '2px solid #000',
+            padding: '16px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px'
           }}>
-            {Object.entries(detailData.data).map(([key, value], index) => (
-              <div key={key} style={{
-                padding: '0',
-                borderBottom: index < Object.keys(detailData.data).length - 2 ? '1px solid #eee' : 'none',
-                paddingBottom: '15px',
-                marginBottom: '15px'
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              margin: 0,
+              color: '#000'
+            }}>상세정보</h2>
+            <button style={{
+              padding: '8px 16px',
+              backgroundColor: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}>
+              🖊 관련정보 수정요청
+            </button>
+          </div>
+
+          {/* 콘텐츠 영역 */}
+          <div style={{
+            padding: '30px'
+          }}>
+            {/* 장소 설명 - SpotComment 컴포넌트 사용 */}
+            <div style={{
+              marginBottom: '30px'
+            }}>
+              <SpotComment contentId={spotData?.contentId} />
+            </div>
+
+            {/* 지도 영역 - SpotMap 컴포넌트 사용 */}
+            <div style={{
+              marginBottom: '30px'
+            }}>
+              <SpotMap spotData={spotData} />
+            </div>
+
+            {/* 세부 정보 그리드 */}
+            {detailData?.data && Object.keys(detailData.data).length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', // 🔥 수정: 모바일 대응을 위해 최소 너비 줄임
+                gap: '20px'
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px'
-                }}>
-                  <div style={{
-                    minWidth: '8px',
-                    height: '8px',
-                    backgroundColor: '#dc3545',
-                    borderRadius: '50%',
-                    marginTop: '8px',
-                    flexShrink: 0
-                  }}></div>
-                  <div style={{ flex: 1 }}>
+                {Object.entries(detailData.data).map(([key, value], index) => (
+                  <div key={key} style={{
+                    padding: '0',
+                    borderBottom: index < Object.keys(detailData.data).length - 2 ? '1px solid #eee' : 'none',
+                    paddingBottom: '15px',
+                    marginBottom: '15px'
+                  }}>
                     <div style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#333',
-                      marginBottom: '8px'
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px'
                     }}>
-                      {key}
-                    </div>
-                    <div style={{
-                      fontSize: '15px',
-                      color: '#666',
-                      lineHeight: '1.5'
-                    }}>
-                      {removeHtmlTags(value)}
+                      <div style={{
+                        minWidth: '8px',
+                        height: '8px',
+                        backgroundColor: '#dc3545',
+                        borderRadius: '50%',
+                        marginTop: '8px',
+                        flexShrink: 0
+                      }}></div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          marginBottom: '8px'
+                        }}>
+                          {key}
+                        </div>
+                        <div style={{
+                          fontSize: '15px',
+                          color: '#666',
+                          lineHeight: '1.5',
+                          wordBreak: 'break-word' // 🔥 수정: 긴 텍스트 줄바꿈 처리
+                        }}>
+                          {removeHtmlTags(value)}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div style={{
+                padding: '60px 20px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '48px',
+                  marginBottom: '16px'
+                }}>📭</div>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px',
+                  margin: '0 0 8px 0'
+                }}>상세 정보가 없습니다</h3>
+                <p style={{
+                  color: '#6b7280',
+                  margin: 0,
+                  fontSize: '14px'
+                }}>해당 콘텐츠의 상세 정보를 찾을 수 없습니다.</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{
-            padding: '60px 20px',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '16px'
-            }}>📭</div>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '8px',
-              margin: '0 0 8px 0'
-            }}>상세 정보가 없습니다</h3>
-            <p style={{
-              color: '#6b7280',
-              margin: 0,
-              fontSize: '14px'
-            }}>해당 콘텐츠의 상세 정보를 찾을 수 없습니다.</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
