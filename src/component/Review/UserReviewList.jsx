@@ -124,7 +124,7 @@ const UserReviewList = () => {
 
   // 장소 상세페이지로 이동
   const handlePlaceClick = (contentId) => {
-    window.location.href = `/detail/${contentId}`;
+    window.location.href = `/spot/${contentId}`;
   };
 
   // 별점 렌더링
