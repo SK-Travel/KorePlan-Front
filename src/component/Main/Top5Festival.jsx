@@ -202,7 +202,6 @@ const Top5Festival = () => {
       margin: '0 auto',
       paddingTop: '20px',
       paddingBottom: '20px',
-      borderBottom: '1px solid #e5e7eb'
     }}>
       {/* 데스크탑: 5개 카드 한 줄, 모바일: 스와이프 */}
       <div className="top5-container">

@@ -1,44 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Eye, Star, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Eye, Star, MapPin, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// 순위별 배지 스타일 및 이모지 함수
-const getRankStyle = (rank) => {
-  let backgroundColor, emoji, text;
-
-  switch (rank) {
-    case 1:
-      backgroundColor = '#ffd700'; // 금색
-      emoji = '🥇';
-      text = '1위';
-      break;
-    case 2:
-      backgroundColor = '#c0c0c0'; // 은색
-      emoji = '🥈';
-      text = '2위';
-      break;
-    case 3:
-      backgroundColor = '#cd7f32'; // 동색
-      emoji = '🥉';
-      text = '3위';
-      break;
-    case 4:
-      backgroundColor = '#4ade80'; // 초록색
-      emoji = '🏆';
-      text = '4위';
-      break;
-    case 5:
-      backgroundColor = '#60a5fa'; // 파란색
-      emoji = '⭐';
-      text = '5위';
-      break;
-    default:
-      backgroundColor = '#9ca3af'; // 회색
-      emoji = '🏷️';
-      text = `${rank}위`;
-  }
-
-  return { backgroundColor, emoji, text };
-};
 
 // 숫자 포맷팅 함수
 const formatNumber = (num) => {
@@ -76,86 +38,81 @@ const handleImageError = (e) => {
   e.target.src = createPlaceholderImage();
 };
 
-// Top5Hotel 컴포넌트 (숙소 - 아직 API 미구현, 임시 데이터)
-const Top5Hotel = () => {
+// RecentLikedPlaces 컴포넌트
+const RecentLikedPlaces = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
   const [bookmarkLoading, setBookmarkLoading] = useState(new Set());
-  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+
   useEffect(() => {
-    const fetchTop5Hotels = async () => {
+    const loadRecentLikedData = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        console.log('🏨 인기 숙박 API 호출 시작 (/api/region-list/top5-hotels)');
-
-        const response = await fetch('/api/region-list/top5-hotels');
+        
+        // 새로운 API 호출 - 최근 찜한 여행지 5개 직접 조회
+        const response = await fetch('/api/like/recent-liked-places', {
+          method: 'GET',
+          credentials: 'include',
+        });
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log('✅ 인기 숙박 TOP5 API 응답:', result);
-
-        if (result.success && result.dataList) {
-          setData(result.dataList);
-          console.log('✅ 인기 숙박 TOP5 데이터 로드 완료:', result.dataList);
-
-          // 찜 상태 확인
-          if (result.dataList.length > 0) {
-            await loadUserLikes();
+          if (response.status === 401) {
+            setError('로그인이 필요한 서비스입니다.');
+            setData([]);
+            return;
           }
-        } else {
-          throw new Error(result.message || '숙박 데이터를 불러오는데 실패했습니다.');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
+        const result = await response.json();
+        console.log('최근 찜한 여행지 API 응답:', result);
+        
+        if (result.code === 200 && result.recentLikedPlaces) {
+          const places = result.recentLikedPlaces.map(item => ({
+            ...item,
+            // 기존 코드와 호환을 위한 필드 매핑
+            firstImage: item.firstimage,
+            contentId: item.contentId
+          }));
+          
+          setData(places);
+          
+          // 찜한 데이터 ID 설정 (모든 데이터가 찜한 상태)
+          const likedIds = places.map(place => place.id);
+          setBookmarkedItems(new Set(likedIds.map(id => Number(id))));
+          
+        } else if (result.code === 401) {
+          setError('로그인이 필요한 서비스입니다.');
+          setData([]);
+        } else {
+          setData([]);
+        }
+        
       } catch (error) {
-        console.error('❌ 인기 숙박 TOP5 로드 실패:', error);
-        setError('숙박 데이터를 불러오는데 실패했습니다.');
+        console.error('최근 찜한 데이터 로딩 실패:', error);
+        setError('데이터를 불러오는데 실패했습니다.');
         setData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTop5Hotels();
+    loadRecentLikedData();
   }, []);
-
-  // 사용자의 찜 목록 불러오기
-  const loadUserLikes = async () => {
-    try {
-      const response = await fetch('/api/like/my-likes', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.code === 200 && result.likedDataIds) {
-          const likedIds = new Set(result.likedDataIds.map(id => Number(id)));
-          setBookmarkedItems(likedIds);
-          console.log('✅ 숙소 찜 목록 로드 성공:', result.likedDataIds);
-        }
-      }
-    } catch (error) {
-      console.error('❌ 숙소 찜 목록 로드 실패:', error);
-    }
-  };
 
   // 찜 토글 함수
   const toggleBookmark = async (item, e) => {
     e.stopPropagation();
     const itemId = item.id || item.contentId;
-
+    
     if (bookmarkLoading.has(itemId)) return;
 
     setBookmarkLoading(prev => new Set([...prev, itemId]));
-
+    
     try {
       const response = await fetch(`/api/like/${itemId}`, {
         method: 'POST',
@@ -164,53 +121,58 @@ const Top5Hotel = () => {
           'Content-Type': 'application/json',
         }
       });
-
+      
       if (!response.ok) {
         throw new Error(`찜 처리 실패: ${response.status}`);
       }
-
+      
       const result = await response.json();
-      console.log('📊 숙소 찜 API 응답:', result);
-
+      console.log('📊 찜 API 응답:', result);
+      
       if (result.code === 200) {
         const newIsBookmarked = result.likeStatus;
-
+        
         setBookmarkedItems(prev => {
           const newSet = new Set(prev);
           if (newIsBookmarked) {
             newSet.add(itemId);
           } else {
             newSet.delete(itemId);
+            // 찜 해제시 목록에서 제거
+            setData(prevData => prevData.filter(dataItem => {
+              const dataItemId = dataItem.id || dataItem.contentId;
+              return dataItemId !== itemId;
+            }));
           }
           return newSet;
         });
-
+        
         // likeCount 실시간 업데이트
-        setData(prevList =>
-          prevList.map(dataItem => {
-            const dataItemId = dataItem.id || dataItem.contentId;
-            return dataItemId === itemId
-              ? {
-                ...dataItem,
-                likeCount: newIsBookmarked
-                  ? (dataItem.likeCount || 0) + 1
-                  : Math.max((dataItem.likeCount || 0) - 1, 0)
-              }
-              : dataItem;
-          })
-        );
-
-        console.log(`✅ 숙소 찜 ${newIsBookmarked ? '추가' : '제거'} 성공: ${item.title}`);
-
+        if (newIsBookmarked) {
+          setData(prevList => 
+            prevList.map(dataItem => {
+              const dataItemId = dataItem.id || dataItem.contentId;
+              return dataItemId === itemId
+                ? { 
+                    ...dataItem, 
+                    likeCount: (dataItem.likeCount || 0) + 1
+                  }
+                : dataItem;
+            })
+          );
+        }
+        
+        console.log(`✅ 찜 ${newIsBookmarked ? '추가' : '제거'} 성공: ${item.title}`);
+        
       } else if (result.code === 401) {
         console.log('⚠️ 로그인 필요');
         alert('로그인이 필요한 서비스입니다.');
       } else {
         throw new Error(result.error_message || '찜 처리 중 오류가 발생했습니다');
       }
-
+      
     } catch (error) {
-      console.error('❌ 숙소 찜 처리 실패:', error);
+      console.error('❌ 찜 처리 실패:', error);
       alert('찜 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setBookmarkLoading(prev => {
@@ -223,67 +185,52 @@ const Top5Hotel = () => {
 
   const handleCardClick = (item) => {
     const itemId = item.contentId;
-    console.log('🏨 숙소 상세페이지로 이동:', itemId, item.title);
-
-
+    console.log('여행지 상세페이지로 이동:', itemId);
+    
     navigate(`/spot/${itemId}`, {
-      state:
-      {
+      state: {
         contentId: item.contentId,
         contentTypeId: item.theme,
         spotData: item,
       }
-
     });
   };
 
-  // 슬라이드 이동 함수
-  const goToSlide = (direction) => {
-    if (direction === 'prev' && currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
-    } else if (direction === 'next' && currentSlide < data.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    }
-  };
-
+  // 로딩 상태
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        gap: '24px',
-        overflowX: 'auto',
-        paddingBottom: '16px'
-      }}>
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} style={{
-            flexShrink: 0,
-            width: '240px',
-            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-          }}>
-            <div style={{
-              backgroundColor: '#e5e7eb',
-              borderRadius: '12px',
-              height: '224px',
-              marginBottom: '12px'
-            }}></div>
-            <div style={{
-              height: '16px',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
-              marginBottom: '8px'
-            }}></div>
-            <div style={{
-              height: '12px',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
-              width: '75%'
-            }}></div>
-          </div>
-        ))}
+      <div className="recent-liked-container">
+        <div className="recent-liked-cards-wrapper">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="recent-liked-card" style={{
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}>
+              <div style={{
+                backgroundColor: '#e5e7eb',
+                borderRadius: '12px',
+                height: '224px',
+                marginBottom: '12px'
+              }}></div>
+              <div style={{
+                height: '16px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '4px',
+                marginBottom: '8px'
+              }}></div>
+              <div style={{
+                height: '12px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '4px',
+                width: '75%'
+              }}></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  // 에러 상태
   if (error) {
     return (
       <div style={{
@@ -291,8 +238,27 @@ const Top5Hotel = () => {
         padding: '60px 20px',
         color: '#666'
       }}>
-        <h3 style={{ color: '#e74c3c', marginBottom: '10px' }}>⚠️ 오류 발생</h3>
-        <p>{error}</p>
+        <h3 style={{ color: '#e74c3c', marginBottom: '10px' }}>⚠️ {error}</h3>
+        {error.includes('로그인') ? (
+          <p>로그인 후 찜한 여행지를 확인해보세요!</p>
+        ) : (
+          <p>다시 시도해주세요.</p>
+        )}
+      </div>
+    );
+  }
+
+  // 데이터가 없는 경우
+  if (data.length === 0) {
+    return (
+      <div style={{
+        textAlign: 'center',
+        padding: '60px 20px',
+        color: '#666'
+      }}>
+        <Heart style={{ width: '48px', height: '48px', color: '#d1d5db', margin: '0 auto 16px' }} />
+        <h3 style={{ color: '#6b7280', marginBottom: '8px' }}>아직 찜한 여행지가 없어요</h3>
+        <p style={{ color: '#9ca3af', fontSize: '14px' }}>마음에 드는 여행지를 찜해보세요!</p>
       </div>
     );
   }
@@ -304,24 +270,22 @@ const Top5Hotel = () => {
       margin: '0 auto',
       paddingTop: '20px',
       paddingBottom: '20px',
+      borderBottom: '1px solid #e5e7eb'
     }}>
-      {/* 데스크탑: 5개 카드 한 줄, 모바일: 스와이프 */}
-      <div className="top5-container">
-        <div className="top5-cards-wrapper">
+      <div className="recent-liked-container">
+        <div className="recent-liked-cards-wrapper">
           {data.map((item, index) => {
-            const rank = index + 1;
             const itemId = item.id || item.contentId;
             const isBookmarked = bookmarkedItems.has(itemId);
             const isBookmarkLoading = bookmarkLoading.has(itemId);
-            const rankStyle = getRankStyle(rank);
-
+            
             return (
               <div
                 key={itemId}
-                className="top5-card"
+                className="recent-liked-card"
                 onClick={() => handleCardClick(item)}
               >
-
+                
 
                 <div style={{
                   backgroundColor: 'white',
@@ -331,19 +295,18 @@ const Top5Hotel = () => {
                   height: '100%',
                   transition: 'all 0.3s ease'
                 }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                  }}>
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}>
                   {/* 이미지 섹션 */}
                   <div style={{
                     position: 'relative',
                     aspectRatio: '1',
                     overflow: 'hidden'
                   }}>
-
                     <img
                       src={getImageUrl(item.firstImage || item.firstimage)}
                       alt={item.title}
@@ -361,31 +324,7 @@ const Top5Hotel = () => {
                         e.target.style.transform = 'scale(1)';
                       }}
                     />
-                    {/* 순위 배지 */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      left: '8px',
-                      zIndex: 20,
-                      minWidth: '50px',
-                      height: '28px',
-                      background: rankStyle.backgroundColor,
-                      borderRadius: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      color: rank <= 3 ? '#000000' : '#ffffff',
-                      fontWeight: 'bold',
-                      fontSize: '11px',
-                      padding: '0 8px',
-                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                      border: rank <= 3 ? '1px solid rgba(0,0,0,0.1)' : 'none'
-                    }}>
-                      <span style={{ fontSize: '14px' }}>{rankStyle.emoji}</span>
-                      <span>{rankStyle.text}</span>
-                    </div>
-
+                    
                     {/* 찜 버튼 */}
                     <button
                       onClick={(e) => toggleBookmark(item, e)}
@@ -396,8 +335,8 @@ const Top5Hotel = () => {
                         right: '8px',
                         width: '32px',
                         height: '32px',
-                        backgroundColor: isBookmarkLoading ?
-                          'rgba(255, 255, 255, 0.7)' :
+                        backgroundColor: isBookmarkLoading ? 
+                          'rgba(255, 255, 255, 0.7)' : 
                           'rgba(255, 255, 255, 0.9)',
                         borderRadius: '50%',
                         border: 'none',
@@ -424,17 +363,16 @@ const Top5Hotel = () => {
                       {isBookmarkLoading ? (
                         <span style={{ fontSize: '14px' }}>⏳</span>
                       ) : (
-                        <Heart
-                          style={{
-                            width: '16px',
-                            height: '16px',
+                        <Heart 
+                          style={{ 
+                            width: '16px', 
+                            height: '16px', 
                             color: isBookmarked ? '#ef4444' : '#6b7280',
                             fill: isBookmarked ? '#ef4444' : 'none'
-                          }}
+                          }} 
                         />
                       )}
                     </button>
-
                   </div>
 
                   {/* 콘텐츠 섹션 */}
@@ -452,7 +390,7 @@ const Top5Hotel = () => {
                     }}>
                       {item.title || '제목 없음'}
                     </h3>
-
+                    
                     {/* 위치 */}
                     <div style={{
                       display: 'flex',
@@ -504,7 +442,7 @@ const Top5Hotel = () => {
                           <span style={{ fontSize: '12px' }}>{formatNumber(item.likeCount || 0)}</span>
                         </div>
                       </div>
-
+                      
                       {/* 조회수 */}
                       <div style={{
                         display: 'flex',
@@ -528,19 +466,19 @@ const Top5Hotel = () => {
       {/* 반응형 스타일 */}
       <style>
         {`
-          .top5-container {
+          .recent-liked-container {
             position: relative;
             width: 100%;
           }
 
-          .top5-cards-wrapper {
+          .recent-liked-cards-wrapper {
             display: flex;
             gap: 20px;
             width: 100%;
-            justify-content: space-between;
+            justify-content: flex-start;
           }
 
-          .top5-card {
+          .recent-liked-card {
             flex: 1;
             min-width: 200px;
             max-width: 240px;
@@ -549,14 +487,14 @@ const Top5Hotel = () => {
             transition: all 0.3s ease;
           }
 
-          .top5-card:hover {
+          .recent-liked-card:hover {
             transform: translateY(-4px);
             z-index: 10;
           }
 
           /* 모바일 스타일 */
           @media (max-width: 768px) {
-            .top5-cards-wrapper {
+            .recent-liked-cards-wrapper {
               overflow-x: auto;
               scroll-snap-type: x mandatory;
               scrollbar-width: none;
@@ -566,30 +504,30 @@ const Top5Hotel = () => {
               gap: 16px;
             }
 
-            .top5-cards-wrapper::-webkit-scrollbar {
+            .recent-liked-cards-wrapper::-webkit-scrollbar {
               display: none;
             }
 
-            .top5-card {
+            .recent-liked-card {
               flex: none;
               min-width: 280px;
               max-width: 280px;
               scroll-snap-align: start;
             }
 
-            .top5-card:hover {
+            .recent-liked-card:hover {
               transform: none;
             }
           }
 
           /* 더 작은 모바일 */
           @media (max-width: 480px) {
-            .top5-cards-wrapper {
+            .recent-liked-cards-wrapper {
               padding: 0 16px;
               gap: 12px;
             }
             
-            .top5-card {
+            .recent-liked-card {
               min-width: 260px;
               max-width: 260px;
             }
@@ -609,4 +547,4 @@ const Top5Hotel = () => {
   );
 };
 
-export default Top5Hotel;
+export default RecentLikedPlaces;

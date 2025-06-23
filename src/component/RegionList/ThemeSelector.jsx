@@ -176,8 +176,6 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 }}>
                     {selectedTheme === '관광지' && '명소, 유적지, 자연경관 등의 관광 명소'}
                     {selectedTheme === '문화시설' && '박물관, 미술관, 공연장 등의 문화 공간'}
-                    {selectedTheme === '축제공연행사' && '지역 축제, 공연, 이벤트 정보'}
-                    {selectedTheme === '여행코스' && '추천 여행 경로 및 코스 정보'}
                     {selectedTheme === '레포츠' && '스포츠, 레저 활동 시설'}
                     {selectedTheme === '숙박' && '호텔, 펜션, 게스트하우스 등 숙박 시설'}
                     {selectedTheme === '쇼핑' && '쇼핑몰, 시장, 특산품 판매점'}

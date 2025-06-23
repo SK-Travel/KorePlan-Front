@@ -56,9 +56,10 @@ const Top5Section = () => {
         <p style={{
           color: '#6b7280'
         }}>
-          빅데이터 기반 AI 추천 {activeTab} 및 코스를 알려드려요.
+          사용자 데이터 기반 추천 {activeTab} 를 알려드려요.
         </p>
       </div>
+
 
       {/* 탭 네비게이션 */}
       <div style={{
@@ -70,7 +71,9 @@ const Top5Section = () => {
           backgroundColor: '#3b82f6',
           borderRadius: '50px',
           padding: '8px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          display: 'flex',
+          gap: '8px' // 버튼들 사이 간격 추가
         }}>
           {tabs.map((tab, index) => (
             <button
@@ -79,7 +82,7 @@ const Top5Section = () => {
               style={{
                 padding: '12px 32px',
                 borderRadius: '50px',
-                fontWeight: '500',
+                fontWeight: '400',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
@@ -117,7 +120,7 @@ const Top5Section = () => {
         {renderCurrentTab()}
       </div>
 
-      
+
     </div>
   );
 };

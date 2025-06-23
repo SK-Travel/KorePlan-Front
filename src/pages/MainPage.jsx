@@ -14,7 +14,8 @@ import {
 } from '../styles/MainPageStyle.js'
 
 import ScrollToTop from '../component/Button/ScrollToTop.jsx';
-import Top5Section from '../component/Main/Top5Section.jsx';   // 이것만 있으면 됨!
+import Top5Section from '../component/Main/Top5Section.jsx';  
+import LikedPlacesSection from '../component/Main/LikedPlacesSection.jsx';
 
 const MainPage = () => {
     return (
@@ -24,6 +25,7 @@ const MainPage = () => {
                 <Main>
                     <MainContent>
                         <Top5Section/>
+                        <LikedPlacesSection></LikedPlacesSection>
                         <Calendar />
                         <ScrollToTop/>
                     </MainContent>
