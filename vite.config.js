@@ -13,7 +13,7 @@ export default defineConfig(({ command, mode }) => {
           target: apiBaseUrl,
           changeOrigin: true,
         },
-        '/oauth2/authorization': {  // 로그인 시작만 프록시
+        '/oauth2/authorization': {
           target: apiBaseUrl,
           changeOrigin: true,
         },
