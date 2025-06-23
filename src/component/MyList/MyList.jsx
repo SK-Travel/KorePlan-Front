@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DayPicker } from 'react-day-picker';
 
 const MyList = () => {
@@ -17,6 +17,25 @@ const MyList = () => {
     const [endDate, setEndDate] = useState('');
     const [hoverDate, setHoverDate] = useState(null);
     const [placeCountsPerDay, setPlaceCountsPerDay] = useState([]); // index: day-1, value: 몇 개 장소
+
+    // 검색 로직
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [visibleCount, setVisibleCount] = useState(3); // 초기에 3개
+    const loadMoreRef = useRef(null);
+
+
+    // 1) 장소 추가 모달
+    const [showAddLocationModal, setShowAddLocationModal] = useState(false);
+    const [selectedSearchItem, setSelectedSearchItem] = useState(null);
+
+    // 장소+day+order 임시 저장
+    const [selectedLocations, setSelectedLocations] = useState([]); // 배열로 저장 (dataId, order, day)
+    const [selectedDay, setSelectedDay] = useState(null); //
+    const [selectedOrder, setSelectedOrder] = useState(null); 
+
+
+
 
     // 전체 저장된 리스트 가져오기
     useEffect(() => {
@@ -88,19 +107,14 @@ const MyList = () => {
             alert("출발일을 선택해주세요.");
             return;
         }
-
-
-        // ===== [추가] placeCountsPerDay 입력 검증 및 travelLists 생성
+        // placeCountsPerDay 입력 검증 및 travelLists 생성
         if (placeCountsPerDay.length !== days || placeCountsPerDay.some(c => c <= 0)) {
             alert("각 날짜마다 1개 이상의 장소 수를 입력해주세요.");
             return;
         }
-        const travelLists = [];
-        placeCountsPerDay.forEach((count, dayIdx) => {
-            for (let i = 1; i <= count; i++) {
-                travelLists.push({ day: dayIdx + 1, order: i});
-            }
-        });
+
+        // travelLists를 selectedLocations 사용
+        const travelLists = selectedLocations;
 
         try {
             const userId = localStorage.getItem('userId');
@@ -157,6 +171,57 @@ const MyList = () => {
             [planId]: !prev[planId]
         }));
     };
+    
+    // 스크롤 감지 로직
+    // IntersectionObserver root 옵션 추가 및 container 할당
+    useEffect(() => {
+        const container = document.getElementById('search-results-container');
+        const observer = new IntersectionObserver(
+        (entries) => {
+            if (entries[0].isIntersecting) {
+            setVisibleCount((prev) => prev + 3);
+            }
+        },
+        {
+            root: container, // 여기 root 지정
+            threshold: 1.0,
+        }
+    );
+
+        if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+
+        return () => {
+        if (loadMoreRef.current) observer.unobserve(loadMoreRef.current);
+        };
+    }, []);
+
+    // 검색어에 반응해서 자동 검색
+    useEffect(() => {
+        if (!searchKeyword.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const fetchSearch = async () => {
+            try {
+                const response = await fetch(`/api/my-plan/search?keyword=${encodeURIComponent(searchKeyword)}`, {
+                    headers: {
+                        userId
+                    }
+                });
+                const data = await response.json();
+                console.log("검색 API 응답:", data); // 🔍 이거 추가해보세요
+                if (data.code === 200) {
+                    setSearchResults(data.result); // [{id, title, ...}]
+                }
+            } catch (err) {
+                console.error("검색 실패", err);
+            }
+        };
+
+        const delayDebounce = setTimeout(() => fetchSearch(), 300); // debounce 300ms
+        return () => clearTimeout(delayDebounce);
+    }, [searchKeyword]);
 
     return (
         <div style={{padding: '20px',borderRadius: '12px', border: '1px solid #ddd',boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',backgroundColor: 'white', marginBottom: '20px'}}>
@@ -238,17 +303,125 @@ const MyList = () => {
                                             style={{ width: '60px', marginLeft: '10px', borderRadius: '10px', border: '1px solid #ccc'}}
                                         />
                                         <span style={{ marginLeft: '4px'}}>개</span>
+                                        {/* 추가된 장소들을 나열 */}
+                                        {selectedLocations.length > 0 && (
+                                            <ul style={{ marginLeft: '20px', marginTop: '4px' }}>
+                                                {selectedLocations.map((loc, i) => {
+                                                    const searchItem = searchResults.find(item => item.id === loc.dataId) || {};
+                                                    return (
+                                                        <li key={i} style={{ fontSize: '14px' }}>
+                                                            {loc.order}번째 - {searchItem.title || '선택된 장소'} ({searchItem.regionName || '지역'})
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
                                     </div>
                                 ))}
                             
                             </div>
                         )}
+                        <br />
+                        {/*  검색창 */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4>여행지 검색하기</h4>
+                            <input type="text" value={searchKeyword} onChange={e => setSearchKeyword(e.target.value)} placeholder="여행지 검색" style={{ padding: '8px', borderRadius: '6px', width: '300px', marginRight: '10px' }}
+                            />
+                            <button onClick={() => setSearchKeyword(searchKeyword)} style={{ padding: '8px 14px', borderRadius: '6px', backgroundColor: '#007bff',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                검색
+                            </button>
+                        </div>
+
+                        
+                        <div id="search-results-container" style={{
+                                height: '300px', // 원하는 높이
+                                overflowY: 'scroll',
+                                border: '1px solid #eee',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                marginBottom: '10px'
+                            }}
+                            >
+                            {/*검색 결과 */}
+                            {searchResults.slice(0, visibleCount).map((item) => (
+                                <div key={item.id} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '10px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                    <div><strong>{item.title} - {item.regionName}</strong></div>
+                                    <button onClick={() => {setSelectedSearchItem(item); setShowAddLocationModal(true);}}
+                                    style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'blue', color: 'white', border: 'none', cursor: 'pointer' }}
+                                    >
+                                    추가하기
+                                    </button>
+                                </div>
+                            ))}
+                            {/* 감시할 요소 */}
+                            <div ref={loadMoreRef} style={{ height: '20px' }} />
+                        </div>
 
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                             <button onClick={() => setShowModal(false)} style={{  padding: '10px 20px', backgroundColor: '#ccc',border: 'none', borderRadius: '6px', cursor: 'pointer'  }}>취소</button>
                             <button onClick={addMyOwnPlan} style={{ padding: '6px 12px', backgroundColor: '#0f4', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>생성</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {showAddLocationModal && selectedSearchItem && (
+                <div style={{  position: 'fixed',  top: '40%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', padding: '20px',
+                    borderRadius: '10px',
+                    zIndex: 10000,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                    }}
+                >
+                    <h4>이 장소를 리스트에 추가하시겠습니까?</h4>
+                    <p><strong>{selectedSearchItem?.title} - {selectedSearchItem.regionName}</strong></p>
+
+                    {/* ★ 추가됨: Day 선택 */}
+                    <select onChange={(e) => setSelectedDay(Number(e.target.value))} value={selectedDay || ''} style={{ padding: '8px', marginBottom: '10px', width: '100%' }}>
+                        <option value="">날짜 선택</option>
+                        {[...Array(days)].map((_, idx) => (
+                            <option key={idx + 1} value={idx + 1}>{`Day ${idx + 1}`}</option>
+                        ))}
+                    </select>
+
+                    {/* ★ 추가됨: Order 선택 */}
+                    <select onChange={(e) => setSelectedOrder(Number(e.target.value))} value={selectedOrder || ''} style={{ padding: '8px', marginBottom: '10px', width: '100%' }}>
+                        <option value="">순서 선택</option>
+                        {/* 선택한 Day의 placeCountsPerDay 개수에 따라 순서 옵션 생성 */}
+                        {selectedDay && [...Array(placeCountsPerDay[selectedDay - 1] || 0)].map((_, idx) => (
+                            <option key={idx + 1} value={idx + 1}>{`${idx + 1}번째`}</option>
+                        ))}
+                    </select>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <button onClick={() => setShowAddLocationModal(false)} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '6px' }}>
+                            취소
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!selectedSearchItem || !selectedDay || !selectedOrder) {
+                                    alert("모든 항목을 선택해주세요.");
+                                    return;
+                                }
+
+                                // ★ 추가됨: 선택된 장소를 배열에 저장
+                                setSelectedLocations(prev => [...prev, {
+                                    dataId: selectedSearchItem.id,
+                                    day: selectedDay,
+                                    order: selectedOrder,
+                                }]);
+                                
+                                setShowAddLocationModal(false);
+                            }}
+                            style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '6px' }}
+                        >
+                            추가
+                        </button>
                     </div>
                 </div>
             )}
