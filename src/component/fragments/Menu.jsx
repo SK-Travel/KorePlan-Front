@@ -67,7 +67,7 @@ export default function Menu() {
 
   // 모바일용 메뉴 (로그아웃 제외)
   const mobileMenuItems = [
-    { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '/MyList' },
+    { label: 'My 찜 & 리스트', icon: <FaHeart />, link: '/myplan' },
     { label: '지역별·테마별 여행지', icon: <MdTravelExplore />, link: '/region' },
     { label: '축제/행사', icon: <FaCalendarAlt />, link: '/festival' },
     { label: '여행후기', icon: <MdReviews />, link: '/review' },

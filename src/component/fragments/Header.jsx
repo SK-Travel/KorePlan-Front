@@ -45,7 +45,7 @@ const Header = () => {
             onClick={() => navigate('/myplan')}
             style={{ color: '#333', fontSize: '15px', fontWeight: '500' }}
           >
-            My 찜 & 리스트
+            My 찜 & Plan
           </Button>
           <Button 
             onClick={() => navigate('/review')}
