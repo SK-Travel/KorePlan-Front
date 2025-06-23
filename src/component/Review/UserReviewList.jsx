@@ -9,7 +9,7 @@ const UserReviewList = () => {
   const navigate = useNavigate();
 
   // 정렬 옵션 (클라이언트 사이드)
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('updatedAt'); // createdAt에서 updatedAt으로 변경
   const [sortDirection, setSortDirection] = useState('desc');
 
   // 모달 상태
@@ -185,6 +185,9 @@ const UserReviewList = () => {
       if (newSortBy === 'createdAt') {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
+      } else if (newSortBy === 'updatedAt') { // updatedAt 정렬 추가
+        aValue = new Date(a.updatedAt || a.createdAt); // updatedAt이 없으면 createdAt 사용
+        bValue = new Date(b.updatedAt || b.createdAt);
       } else if (newSortBy === 'rating') {
         aValue = a.rating;
         bValue = b.rating;
@@ -258,6 +261,7 @@ const UserReviewList = () => {
                 flexWrap: 'wrap'
               }}>
                 {[
+                  { key: 'updatedAt', label: '수정일순' }, // 수정일순으로 변경
                   { key: 'createdAt', label: '작성일순' },
                   { key: 'rating', label: '별점순' }
                 ].map((sort) => (
@@ -384,7 +388,7 @@ const UserReviewList = () => {
                         </h3>
                       </div>
 
-                      {/* 별점과 작성일 */}
+                      {/* 별점과 작성일/수정일 */}
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -400,7 +404,11 @@ const UserReviewList = () => {
                           gap: '4px'
                         }}>
                           <Calendar style={{ width: '14px', height: '14px' }} />
-                          {new Date(review.createdAt).toLocaleDateString()}
+                          {/* updatedAt이 있고 createdAt과 다르면 수정일 표시, 아니면 작성일 표시 */}
+                          {review.updatedAt && new Date(review.updatedAt).getTime() !== new Date(review.createdAt).getTime() 
+                            ? `${new Date(review.updatedAt).toLocaleDateString()} (수정됨)`
+                            : new Date(review.createdAt).toLocaleDateString()
+                          }
                         </span>
                       </div>
                     </div>

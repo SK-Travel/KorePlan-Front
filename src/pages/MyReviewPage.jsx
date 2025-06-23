@@ -26,6 +26,7 @@ const MyReviewPage = () => {
 
                     <MainContent>
                         <UserReviewList/>
+                        <ScrollToTop/>
                     </MainContent>
                         
                 </Main>
