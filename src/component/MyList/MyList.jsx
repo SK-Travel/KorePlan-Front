@@ -16,6 +16,7 @@ const MyList = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [hoverDate, setHoverDate] = useState(null);
+    const [placeCountsPerDay, setPlaceCountsPerDay] = useState([]); // index: day-1, value: 몇 개 장소
 
     // 전체 저장된 리스트 가져오기
     useEffect(() => {
@@ -88,6 +89,19 @@ const MyList = () => {
             return;
         }
 
+
+        // ===== [추가] placeCountsPerDay 입력 검증 및 travelLists 생성
+        if (placeCountsPerDay.length !== days || placeCountsPerDay.some(c => c <= 0)) {
+            alert("각 날짜마다 1개 이상의 장소 수를 입력해주세요.");
+            return;
+        }
+        const travelLists = [];
+        placeCountsPerDay.forEach((count, dayIdx) => {
+            for (let i = 1; i <= count; i++) {
+                travelLists.push({ day: dayIdx + 1, order: i});
+            }
+        });
+
         try {
             const userId = localStorage.getItem('userId');
             const addMyOwnPlan = {
@@ -95,10 +109,11 @@ const MyList = () => {
                 title: planTitle,
                 startDate,
                 endDate,
-                days
+                days,
+                travelLists,
             }
 
-            const response = await fetch('/api/my-plan/add-own-plan', {
+            const response = await fetch('/api/my-plan/add-my-plan', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -211,6 +226,25 @@ const MyList = () => {
                         <input type="text" value={startDate} readOnly placeholder="출발일" style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '5px', border: '1px solid #ccc' }} />
                         <input type="text" value={endDate} readOnly placeholder="도착일" style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} />
                         
+                        {/* Day별 장소 수 입력 UI */}
+                        {startDate && days >0 && (
+                            <div style={{ marginTop: '10px' }}>
+                                <h4>각 날짜의 여행지 개수</h4>
+                                {[...Array(days)].map((_, idx)=> (
+                                    <div key={idx} style={{ marginBottom: '8px' }}>
+                                        <label style= {{ width: '80px', display: 'inline-block' }}>Day {idx + 1}</label>
+                                        <input type="number" min="1"value={placeCountsPerDay[idx] ?? ''}
+                                            onChange={(e) => { const counts = [...placeCountsPerDay]; counts[idx] = Number(e.target.value); setPlaceCountsPerDay(counts);}} 
+                                            style={{ width: '60px', marginLeft: '10px', borderRadius: '10px', border: '1px solid #ccc'}}
+                                        />
+                                        <span style={{ marginLeft: '4px'}}>개</span>
+                                    </div>
+                                ))}
+                            
+                            </div>
+                        )}
+
+
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                             <button onClick={() => setShowModal(false)} style={{  padding: '10px 20px', backgroundColor: '#ccc',border: 'none', borderRadius: '6px', cursor: 'pointer'  }}>취소</button>
                             <button onClick={addMyOwnPlan} style={{ padding: '6px 12px', backgroundColor: '#0f4', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>생성</button>

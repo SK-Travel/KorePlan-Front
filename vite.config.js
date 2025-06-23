@@ -14,7 +14,7 @@ export default defineConfig(({ command, mode }) => {
           target: apiBaseUrl,
           changeOrigin: true,
         },
-        '/oauth2': {
+        '/oauth2/authorization': {
           target: apiBaseUrl,
           changeOrigin: true,
         },
