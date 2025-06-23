@@ -50,6 +50,8 @@ const EditMyList = ({
         endDate: null,
         locations: []
     });
+    // 삭제 장소 저장
+    const [deletedLocations, setDeletedLocations] = useState([]);
 
     const DAY_COLOR_MAP = {
         1: '#FF6B6B',
@@ -104,6 +106,7 @@ const EditMyList = ({
                 };
                 
                 setPlanData(newPlanData);
+                console.log(newPlanData);
 
                 if (locations.length > 0) {
                     setSelectedDay(locations[0].day || 1);
@@ -118,6 +121,7 @@ const EditMyList = ({
             setLoading(false);
         }
     };
+
 
     // 새 여행 계획 초기화
     const initializeNewPlan = () => {
@@ -244,12 +248,21 @@ const EditMyList = ({
         .filter(loc => Number(loc.day) === selectedDay)
         .sort((a, b) => a.order - b.order);
 
+
+
     // 장소 삭제
     const handleDeleteLocation = (locationIndex) => {
-        if (confirm('이 장소를 삭제하시겠습니까?')) {
-            const updatedLocations = planData.locations.filter((_, index) => index !== locationIndex);
-            setPlanData(prev => ({ ...prev, locations: updatedLocations }));
-        }
+        const confirmDelete = confirm('이 장소를 삭제하시겠습니까?');
+        if (!confirmDelete) return;
+
+        const target = planData.locations[locationIndex];
+
+        // 삭제된 장소 따로 저장
+        setDeletedLocations(prev => [...prev, target]);
+
+        // UI에서만 제거
+        const updatedLocations = planData.locations.filter((_, index) => index !== locationIndex);
+        setPlanData(prev => ({ ...prev, locations: updatedLocations }));
     };
 
     // 제목 수정 (인라인 편집)
@@ -284,10 +297,12 @@ const EditMyList = ({
     };
 
     const handleOpenDateModal = () => {
-        onOpenDateModal({
-            startDate: planData.startDate,
-            endDate: planData.endDate
-        });
+        setTempDateRange([{
+            startDate: planData.startDate?.toDate() || new Date(),
+            endDate: planData.endDate?.toDate() || new Date(),
+            key: 'selection'
+        }]);
+        setDateModalOpen(true);
     };
 
     // 외부에서 호출되는 장소 추가 함수
@@ -341,31 +356,41 @@ const EditMyList = ({
 
         setSaving(true);
         setError(null);
+        console.log(planData.startDate);
+        console.log(planData.endDate);
 
         try {
             const userId = localStorage.getItem('userId') || 1;
+            const token = localStorage.getItem('jwtToken');  // 토큰 꺼내기
             const payload = {
+                id: planData.id,
                 userId: Number(userId),
                 title: planData.title,
-                travelLists: planData.locations,
+                sendDataDto: planData.locations,
+                deletedLocations: deletedLocations,
                 startDate: planData.startDate.format('YYYY-MM-DD'),
                 endDate: planData.endDate.format('YYYY-MM-DD'),
             };
 
             let response;
             if (isEditMode) {
-                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {
-                    headers: { 'userId': userId }
+                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {                 
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'userId': userId}
                 });
+                // title="날짜 수정"
             } else {
                 response = await axios.post('/api/my-plan/add-my-plan', payload, {
-                    headers: { 'userId': userId }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'userId': userId },
                 });
             }
 
             if (response.data.code === 200) {
                 alert(isEditMode ? '여행 계획이 수정되었습니다.' : '새 여행 계획이 저장되었습니다.');
-                navigate('/calendar');
+                navigate(`/myplan`);
             } else {
                 setError('저장에 실패했습니다.');
             }
