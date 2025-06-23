@@ -50,6 +50,8 @@ const EditMyList = ({
         endDate: null,
         locations: []
     });
+    // 삭제 장소 저장
+    const [deletedLocations, setDeletedLocations] = useState([]);
 
     const DAY_COLOR_MAP = {
         1: '#FF6B6B',
@@ -101,6 +103,7 @@ const EditMyList = ({
                 };
 
                 setPlanData(newPlanData);
+                console.log(newPlanData);
 
                 if (locations.length > 0) {
                     setSelectedDay(locations[0].day || 1);
@@ -115,6 +118,7 @@ const EditMyList = ({
             setLoading(false);
         }
     };
+
 
     // 새 여행 계획 초기화
     const initializeNewPlan = () => {
@@ -240,6 +244,8 @@ const EditMyList = ({
     const dayLocations = planData.locations
         .filter(loc => Number(loc.day) === selectedDay)
         .sort((a, b) => a.order - b.order);
+
+
 
     // 장소 삭제
     const handleDeleteLocation = useCallback((locationIndex) => {
@@ -367,11 +373,14 @@ const EditMyList = ({
 
         setSaving(true);
         setError(null);
+        console.log(planData.startDate);
+        console.log(planData.endDate);
 
         try {
             const userId = localStorage.getItem('userId') || 1;
             console.log('확인:', planData.locations[0]);
             const payload = {
+                id: planData.id,
                 userId: Number(userId),
                 title: planData.title,
                 travelLists: planData.locations.map(loc => ({
@@ -385,12 +394,17 @@ const EditMyList = ({
 
             let response;
             if (isEditMode) {
-                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {
-                    headers: { 'userId': userId }
+                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {                 
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'userId': userId}
                 });
+                // title="날짜 수정"
             } else {
                 response = await axios.post('/api/my-plan/add-my-plan', payload, {
-                    headers: { 'userId': userId }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'userId': userId },
                 });
             }
 
