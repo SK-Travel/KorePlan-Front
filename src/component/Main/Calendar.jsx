@@ -451,7 +451,7 @@ export default function Calendar() {
                     <Button
                         variant="contained"
                         size="large"
-                        onClick={() => navigate(`/myplan/${id}`)}
+                        onClick={() => navigate(`/myplan/edit/${id}`)} 
                         sx={{
                             background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
                             minWidth: isMobile ? '200px' : '180px',
@@ -473,7 +473,7 @@ export default function Calendar() {
                     <Button
                         variant="outlined"
                         size="large"
-                        onClick={() => navigate('/myplan')}
+                        onClick={() => navigate('/myplan/edit')}
                         sx={{
                             borderColor: '#1976d2',
                             color: '#1976d2',
