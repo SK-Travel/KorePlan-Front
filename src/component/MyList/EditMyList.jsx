@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    Button, 
-    Typography, 
+import {
+    Button,
+    Typography,
     CircularProgress,
     Alert,
     IconButton,
     Fab
 } from '@mui/material';
-import { 
-    ArrowBack, 
-    Edit, 
-    Delete, 
-    Save, 
+import {
+    ArrowBack,
+    Edit,
+    Delete,
+    Save,
     Add,
     Favorite,
     CalendarToday
@@ -23,12 +23,12 @@ import 'dayjs/locale/ko';
 
 dayjs.locale('ko');
 
-const EditMyList = ({ 
-    onOpenSpotSearch, 
-    onOpenWishlistModal, 
+const EditMyList = ({
+    onOpenSpotSearch,
+    onOpenWishlistModal,
     onOpenDateModal,
-    onAddLocation, // 부모에서 전달받는 장소 추가 함수
-    onUpdateDates  // 부모에서 전달받는 날짜 업데이트 함수
+    onAddLocation,
+    onUpdateDates
 }) => {
     const { planId } = useParams();
     const navigate = useNavigate();
@@ -85,7 +85,7 @@ const EditMyList = ({
     const fetchPlanData = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const userId = localStorage.getItem('userId') || 1;
             const response = await axios.get(`/api/my-plan/detail/${planId}`, {
@@ -95,16 +95,13 @@ const EditMyList = ({
             if (response.data.code === 200) {
                 const result = response.data.result;
                 const locations = result.sendDataDto || [];
-                console.log('🔍 API 응답 전체:', response.data);
-                console.log('🔍 result:', result);
-                console.log('🔍 locations 배열:', locations);
                 const newPlanData = {
                     title: result.title || '',
                     startDate: result.startDate ? dayjs(result.startDate) : null,
                     endDate: result.endDate ? dayjs(result.endDate) : null,
                     locations: locations
                 };
-                
+
                 setPlanData(newPlanData);
                 console.log(newPlanData);
 
@@ -163,7 +160,7 @@ const EditMyList = ({
             const dayLocs = locations.filter(loc => Number(loc.day) === day).sort((a, b) => a.order - b.order);
             if (!dayLocs.length) return;
 
-            markersByDay.current[day] = dayLocs.map(loc => {
+            markersByDay.current[day] = dayLocs.map((loc, index) => {
                 const marker = new naver.maps.Marker({
                     position: new naver.maps.LatLng(loc.mapy, loc.mapx),
                     map,
@@ -184,7 +181,7 @@ const EditMyList = ({
                                 font-size: 12px;
                                 box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                             ">
-                                ${loc.order}
+                                ${index + 1}
                             </div>
                         `,
                         anchor: new naver.maps.Point(15, 15),
@@ -251,19 +248,14 @@ const EditMyList = ({
 
 
     // 장소 삭제
-    const handleDeleteLocation = (locationIndex) => {
-        const confirmDelete = confirm('이 장소를 삭제하시겠습니까?');
-        if (!confirmDelete) return;
-
-        const target = planData.locations[locationIndex];
-
-        // 삭제된 장소 따로 저장
-        setDeletedLocations(prev => [...prev, target]);
-
-        // UI에서만 제거
-        const updatedLocations = planData.locations.filter((_, index) => index !== locationIndex);
-        setPlanData(prev => ({ ...prev, locations: updatedLocations }));
-    };
+    const handleDeleteLocation = useCallback((locationIndex) => {
+        if (confirm('이 장소를 삭제하시겠습니까?')) {
+            setPlanData(prev => {
+                const updatedLocations = prev.locations.filter((_, index) => index !== locationIndex);
+                return { ...prev, locations: updatedLocations };
+            });
+        }
+    }, []);
 
     // 제목 수정 (인라인 편집)
     const [editingTitle, setEditingTitle] = useState(false);
@@ -282,65 +274,90 @@ const EditMyList = ({
     };
 
     // 장소 추가 핸들러들
-    const handleOpenSpotSearch = () => {
+    const handleOpenSpotSearch = useCallback(() => {
         onOpenSpotSearch({
             selectedDay,
             currentLocations: planData.locations
         });
-    };
+    }, [selectedDay, planData.locations, onOpenSpotSearch]);
 
-    const handleOpenWishlist = () => {
+    const handleOpenWishlist = useCallback(() => {
         onOpenWishlistModal({
             selectedDay,
             currentLocations: planData.locations
         });
-    };
+    }, [selectedDay, planData.locations, onOpenWishlistModal]);
 
-    const handleOpenDateModal = () => {
-        setTempDateRange([{
-            startDate: planData.startDate?.toDate() || new Date(),
-            endDate: planData.endDate?.toDate() || new Date(),
-            key: 'selection'
-        }]);
-        setDateModalOpen(true);
-    };
+    const handleOpenDateModal = useCallback(() => {
+        onOpenDateModal({
+            startDate: planData.startDate,
+            endDate: planData.endDate
+        });
+    }, [planData.startDate, planData.endDate, onOpenDateModal]);
 
     // 외부에서 호출되는 장소 추가 함수
-    const addLocationToDay = (newLocation, targetDay) => {
-        const maxOrder = planData.locations
-            .filter(loc => loc.day === targetDay)
-            .reduce((max, loc) => Math.max(max, loc.order || 0), 0);
+    const addLocationToDay = useCallback((newLocation, targetDay) => {
+        setPlanData(prev => {
+            const maxOrder = prev.locations
+                .filter(loc => Number(loc.day) === Number(targetDay))
+                .reduce((max, loc) => Math.max(max, loc.order || 0), 0);
 
-        const locationWithOrder = {
-            ...newLocation,
-            day: targetDay,
-            order: maxOrder + 1
-        };
+            const locationWithOrder = {
+                ...newLocation,
+                day: Number(targetDay),
+                order: maxOrder + 1,
+                id: `${newLocation.contentId}-${targetDay}-${Date.now()}`
+            };
 
-        setPlanData(prev => ({
-            ...prev,
-            locations: [...prev.locations, locationWithOrder]
-        }));
-    };
+            const updatedLocations = [...prev.locations, locationWithOrder];
+            return {
+                ...prev,
+                locations: updatedLocations
+            };
+        });
+    }, []);
 
-    // 날짜 업데이트 함수
-    const updatePlanDates = (startDate, endDate) => {
-        setPlanData(prev => ({
-            ...prev,
-            startDate,
-            endDate
-        }));
-    };
+    const updatePlanDates = useCallback((startDate, endDate) => {
+        setPlanData(prev => {
+            const newDayCount = endDate.diff(startDate, 'day') + 1;
+            const currentDayCount = prev.endDate ? prev.endDate.diff(prev.startDate, 'day') + 1 : 0;
+
+            let adjustedLocations = [...prev.locations];
+
+            if (newDayCount < currentDayCount) {
+                adjustedLocations = prev.locations.map(loc => {
+                    if (loc.day > newDayCount) {
+                        return { ...loc, day: newDayCount };
+                    }
+                    return loc;
+                });
+            }
+
+            const updated = {
+                ...prev,
+                startDate,
+                endDate,
+                locations: adjustedLocations
+            };
+
+            return updated;
+        });
+
+        const newDayCount = endDate.diff(startDate, 'day') + 1;
+        if (selectedDay > newDayCount) {
+            setSelectedDay(1);
+        }
+    }, [selectedDay]);
 
     // 부모 컴포넌트에 함수들 전달
     useEffect(() => {
-        if (onAddLocation) {
+        if (onAddLocation && onAddLocation.current !== addLocationToDay) {
             onAddLocation.current = addLocationToDay;
         }
-        if (onUpdateDates) {
+        if (onUpdateDates && onUpdateDates.current !== updatePlanDates) {
             onUpdateDates.current = updatePlanDates;
         }
-    }, [onAddLocation, onUpdateDates]);
+    }, [addLocationToDay, updatePlanDates, onAddLocation, onUpdateDates]);
 
     // 저장
     const handleSave = async () => {
@@ -361,13 +378,16 @@ const EditMyList = ({
 
         try {
             const userId = localStorage.getItem('userId') || 1;
-            const token = localStorage.getItem('jwtToken');  // 토큰 꺼내기
+            console.log('확인:', planData.locations[0]);
             const payload = {
                 id: planData.id,
                 userId: Number(userId),
                 title: planData.title,
-                sendDataDto: planData.locations,
-                deletedLocations: deletedLocations,
+                travelLists: planData.locations.map(loc => ({
+                    dataId: loc.dataId,    // 
+                    day: loc.day,          //  
+                    order: loc.order       //
+                })),
                 startDate: planData.startDate.format('YYYY-MM-DD'),
                 endDate: planData.endDate.format('YYYY-MM-DD'),
             };
@@ -390,7 +410,7 @@ const EditMyList = ({
 
             if (response.data.code === 200) {
                 alert(isEditMode ? '여행 계획이 수정되었습니다.' : '새 여행 계획이 저장되었습니다.');
-                navigate(`/myplan`);
+                navigate('/myplan');
             } else {
                 setError('저장에 실패했습니다.');
             }
@@ -434,8 +454,8 @@ const EditMyList = ({
         }}>
             {/* 에러 알림 */}
             {error && (
-                <Alert 
-                    severity="error" 
+                <Alert
+                    severity="error"
                     onClose={() => setError(null)}
                     style={{
                         position: 'fixed',
@@ -477,89 +497,103 @@ const EditMyList = ({
                     boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
                     zIndex: 10
                 }}>
+                    {/* 제목과 날짜를 한 줄에 배치 */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         marginBottom: '12px'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Button
-                                startIcon={<ArrowBack />}
-                                onClick={() => navigate('/calendar')}
-                                size="small"
-                            >
-                                돌아가기
-                            </Button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <IconButton 
-                                size="small"
-                                onClick={handleOpenDateModal}
-                                title="날짜 수정"
-                            >
-                                <CalendarToday />
-                            </IconButton>
-                            <span style={{
-                                fontSize: '14px',
-                                color: '#717171',
-                                backgroundColor: '#f7f7f7',
-                                padding: '4px 8px',
-                                borderRadius: '6px'
-                            }}>
-                                {getDurationText()}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* 제목 편집 */}
-                    <div style={{ marginBottom: '12px' }}>
-                        {editingTitle ? (
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <input
-                                    type="text"
-                                    value={tempTitle}
-                                    onChange={(e) => setTempTitle(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && saveTitleEdit()}
-                                    onBlur={saveTitleEdit}
-                                    autoFocus
-                                    style={{
+                        {/* 제목 편집 - 왼쪽 */}
+                        <div>
+                            {editingTitle ? (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        value={tempTitle}
+                                        onChange={(e) => setTempTitle(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && saveTitleEdit()}
+                                        onBlur={saveTitleEdit}
+                                        autoFocus
+                                        style={{
+                                            fontSize: isMobile ? '16px' : '18px',
+                                            fontWeight: '600',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            minWidth: '200px'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h2 style={{
+                                        margin: 0,
                                         fontSize: isMobile ? '16px' : '18px',
                                         fontWeight: '600',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        flex: 1
-                                    }}
-                                />
-                            </div>
-                        ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <h2 style={{
-                                    margin: 0,
-                                    fontSize: isMobile ? '16px' : '18px',
-                                    fontWeight: '600',
-                                    color: '#222'
+                                        color: '#222'
+                                    }}>
+                                        {planData.title}
+                                    </h2>
+                                    <IconButton
+                                        size="small"
+                                        onClick={startTitleEdit}
+                                        title="제목 수정"
+                                    >
+                                        <Edit fontSize="small" />
+                                    </IconButton>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 날짜 정보 카드 - 오른쪽 */}
+                        <div
+                            onClick={handleOpenDateModal}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: '#f8f9fa',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s ease',
+                                border: '1px solid #e9ecef'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#e9ecef'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#f8f9fa'}
+                        >
+                            <CalendarToday style={{ fontSize: '16px', color: '#495057' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{
+                                    fontSize: '12px',
+                                    color: '#6c757d',
+                                    lineHeight: 1
                                 }}>
-                                    {planData.title}
-                                </h2>
-                                <IconButton 
-                                    size="small"
-                                    onClick={startTitleEdit}
-                                    title="제목 수정"
-                                >
-                                    <Edit fontSize="small" />
-                                </IconButton>
+                                    {planData.startDate && planData.endDate ?
+                                        `${planData.startDate.format('M월 D일')} ~ ${planData.endDate.format('M월 D일')}`
+                                        : '날짜 설정'
+                                    }
+                                </span>
+                                <span style={{
+                                    fontSize: '13px',
+                                    color: '#495057',
+                                    fontWeight: '600',
+                                    marginTop: '2px'
+                                }}>
+                                    {getDurationText()}
+                                </span>
                             </div>
-                        )}
+                        </div>
                     </div>
 
+                    {/* Day 탭들 */}
                     <div style={{
                         display: 'flex',
                         gap: '8px',
                         flexWrap: 'wrap'
                     }}>
-                        {dayList.map(day => (
+                        {Array.from({ length: planData.startDate && planData.endDate ? planData.endDate.diff(planData.startDate, 'day') + 1 : 3 }, (_, index) => index + 1).map(day => (
                             <button
                                 key={day}
                                 onClick={() => setSelectedDay(day)}
@@ -580,21 +614,6 @@ const EditMyList = ({
                         ))}
                     </div>
                 </div>
-
-                {/* 저장 버튼 */}
-                <Fab
-                    color="primary"
-                    onClick={handleSave}
-                    disabled={saving}
-                    style={{
-                        position: 'absolute',
-                        bottom: '20px',
-                        right: '20px',
-                        background: saving ? '#ccc' : 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
-                    }}
-                >
-                    {saving ? <CircularProgress size={24} /> : <Save />}
-                </Fab>
             </div>
 
             {/* 장소 목록 영역 */}
@@ -661,32 +680,57 @@ const EditMyList = ({
                         <div style={{
                             textAlign: 'center',
                             padding: '40px 20px',
-                            color: '#717171'
+                            color: '#717171',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between'
                         }}>
-                            <p>이 날에는 아직 계획된 장소가 없습니다.</p>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <div>
+                                <p>이 날에는 아직 계획된 장소가 없습니다.</p>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Add />}
+                                        onClick={handleOpenSpotSearch}
+                                        size="small"
+                                    >
+                                        장소 검색
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Favorite />}
+                                        onClick={handleOpenWishlist}
+                                        size="small"
+                                    >
+                                        찜 목록에서
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* 빈 상태에서도 저장 버튼 표시 */}
+                            <div style={{ padding: '20px 0' }}>
                                 <Button
-                                    variant="outlined"
-                                    startIcon={<Add />}
-                                    onClick={handleOpenSpotSearch}
-                                    size="small"
+                                    variant="contained"
+                                    startIcon={saving ? <CircularProgress size={16} /> : <Save />}
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    style={{
+                                        background: saving ? '#ccc' : 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
+                                        color: 'white',
+                                        padding: '10px 24px',
+                                        fontSize: '14px',
+                                        fontWeight: '600'
+                                    }}
                                 >
-                                    장소 검색
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Favorite />}
-                                    onClick={handleOpenWishlist}
-                                    size="small"
-                                >
-                                    찜 목록에서
+                                    {saving ? '저장 중...' : '여행 계획 저장'}
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         dayLocations.map((loc, idx) => (
                             <div
-                                key={`${loc.contentId}-${idx}`}
+                                key={`${loc.contentId}-${loc.day}-${loc.order}-${idx}`}
                                 style={{
                                     display: 'flex',
                                     gap: '12px',
@@ -766,14 +810,14 @@ const EditMyList = ({
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap'
                                     }}>
-                                        {loc.regionName} • {loc.wardName}
+                                        {loc.addr || '주소 정보 없음'}
                                     </p>
                                 </div>
 
                                 {/* 삭제 버튼 */}
                                 <IconButton
                                     size="small"
-                                    onClick={() => handleDeleteLocation(planData.locations.findIndex(l => 
+                                    onClick={() => handleDeleteLocation(planData.locations.findIndex(l =>
                                         l.contentId === loc.contentId && l.day === loc.day && l.order === loc.order
                                     ))}
                                     style={{
@@ -800,7 +844,8 @@ const EditMyList = ({
                         <div style={{
                             display: 'flex',
                             gap: '8px',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            marginBottom: '16px'
                         }}>
                             <Button
                                 variant="outlined"
@@ -819,6 +864,25 @@ const EditMyList = ({
                                 찜 목록에서
                             </Button>
                         </div>
+
+                        {/* 저장 버튼 */}
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <Button
+                                variant="contained"
+                                startIcon={saving ? <CircularProgress size={16} /> : <Save />}
+                                onClick={handleSave}
+                                disabled={saving}
+                                style={{
+                                    background: saving ? '#ccc' : 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
+                                    color: 'white',
+                                    padding: '10px 24px',
+                                    fontSize: '14px',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                {saving ? '저장 중...' : '여행 계획 저장'}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -827,3 +891,4 @@ const EditMyList = ({
 };
 
 export default EditMyList;
+
