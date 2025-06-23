@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Header from '../component/fragments/Header.jsx';
 import Footer from '../component/fragments/Footer.jsx';
 import ScrollToTop from '../component/Button/ScrollToTop.jsx';
 import EditMyList from '../component/MyList/EditMyList.jsx';
-// import SpotSearchModal from '../component/SpotSearchModal.jsx';
-// import WishlistModal from '../component/WishlistModal.jsx';
-// import DateSettingModal from '../component/DateSettingModal.jsx';
+
+import SpotSearchModal from '../component/MyList/SpotSearchModal.jsx';
+import WishlistModal from '../component/MyList/WishlistModal.jsx';
+import DateSettingModal from '../component/MyList/DateSettingModal.jsx';
+
 
 /// CSS 컴포넌트 ///
 import {
@@ -19,13 +21,11 @@ const MyPlanEditPage = () => {
     // 모달 상태 관리
     const [spotSearchModal, setSpotSearchModal] = useState({
         open: false,
-        selectedDay: 1,
         currentLocations: []
     });
     
     const [wishlistModal, setWishlistModal] = useState({
         open: false,
-        selectedDay: 1,
         currentLocations: []
     });
     
@@ -35,75 +35,123 @@ const MyPlanEditPage = () => {
         endDate: null
     });
 
+    // Day 선택 모달 상태
+    const [daySelectionModal, setDaySelectionModal] = useState({
+        open: false,
+        selectedLocation: null,
+        availableDays: [],
+        source: null // 'search' 또는 'wishlist'
+    });
+
     // EditMyList 컴포넌트의 함수들을 참조하기 위한 ref
     const addLocationRef = useRef(null);
     const updateDatesRef = useRef(null);
+    const getPlanDataRef = useRef(null);
+
+    // 중복 검사 개선: contentId + day + 위치 좌표로 더 정확한 중복 검사
+    const getExcludeIdentifiers = useCallback((currentLocations) => {
+        return currentLocations.map(loc => ({
+            contentId: loc.contentId,
+            day: loc.day,
+            mapx: loc.mapx,
+            mapy: loc.mapy,
+            title: loc.title?.trim()
+        }));
+    }, []);
+
+    // 사용 가능한 Day 목록 가져오기
+    const getAvailableDays = useCallback(() => {
+        if (getPlanDataRef.current) {
+            const planData = getPlanDataRef.current();
+            if (planData.startDate && planData.endDate) {
+                const diffDays = planData.endDate.diff(planData.startDate, 'day') + 1;
+                return Array.from({ length: diffDays }, (_, i) => i + 1);
+            }
+        }
+        return [1, 2, 3]; // 기본값
+    }, []);
 
     // 장소 검색 모달 열기
-    const handleOpenSpotSearch = (data) => {
+    const handleOpenSpotSearch = useCallback((data) => {
+        console.log('🔍 장소 검색 모달 열기:', data);
         setSpotSearchModal({
             open: true,
-            selectedDay: data.selectedDay,
             currentLocations: data.currentLocations
         });
-    };
+    }, []);
 
     // 장소 검색 모달 닫기
-    const handleCloseSpotSearch = () => {
+    const handleCloseSpotSearch = useCallback(() => {
         setSpotSearchModal(prev => ({ ...prev, open: false }));
-    };
+    }, []);
 
-    // 장소 검색에서 장소 선택
-    const handleLocationSelectFromSearch = (location) => {
+    // 검색에서 Day 선택 후 장소 추가 (더 간단한 방식)
+    const handleLocationSelectFromSearch = useCallback((location, selectedDay) => {
+        console.log('🎯 검색에서 장소 선택:', location, '선택된 Day:', selectedDay);
+        
         if (addLocationRef.current) {
-            addLocationRef.current(location, spotSearchModal.selectedDay);
+            addLocationRef.current(location, selectedDay);
+        } else {
+            console.error('❌ addLocationRef.current가 없습니다');
         }
-        handleCloseSpotSearch();
-    };
+    }, []);
 
     // 찜 목록 모달 열기
-    const handleOpenWishlist = (data) => {
+    const handleOpenWishlist = useCallback((data) => {
+        console.log('💖 찜 목록 모달 열기:', data);
         setWishlistModal({
             open: true,
-            selectedDay: data.selectedDay,
             currentLocations: data.currentLocations
         });
-    };
+    }, []);
 
     // 찜 목록 모달 닫기
-    const handleCloseWishlist = () => {
+    const handleCloseWishlist = useCallback(() => {
         setWishlistModal(prev => ({ ...prev, open: false }));
-    };
+    }, []);
 
-    // 찜 목록에서 장소 선택
-    const handleLocationSelectFromWishlist = (location) => {
+    // 찜 목록에서 Day 선택 후 장소 추가 (더 간단한 방식)
+    const handleLocationSelectFromWishlist = useCallback((location, selectedDay) => {
+        console.log('💖 찜에서 장소 선택:', location, '선택된 Day:', selectedDay);
+        
         if (addLocationRef.current) {
-            addLocationRef.current(location, wishlistModal.selectedDay);
+            addLocationRef.current(location, selectedDay);
+        } else {
+            console.error('❌ addLocationRef.current가 없습니다');
         }
-        handleCloseWishlist();
-    };
+    }, []);
 
     // 날짜 설정 모달 열기
-    const handleOpenDateModal = (data) => {
+    const handleOpenDateModal = useCallback((data) => {
+        console.log('📅 날짜 모달 열기:', data);
         setDateModal({
             open: true,
             startDate: data.startDate,
             endDate: data.endDate
         });
-    };
+    }, []);
 
     // 날짜 설정 모달 닫기
-    const handleCloseDateModal = () => {
+    const handleCloseDateModal = useCallback(() => {
         setDateModal(prev => ({ ...prev, open: false }));
-    };
+    }, []);
 
     // 날짜 변경 적용
-    const handleDateChange = (startDate, endDate) => {
+    const handleDateChange = useCallback((startDate, endDate) => {
+        console.log('📅 날짜 변경:', { startDate, endDate });
+        
         if (updateDatesRef.current) {
             updateDatesRef.current(startDate, endDate);
+            
+            // 상태 업데이트 후 모달 닫기
+            setTimeout(() => {
+                handleCloseDateModal();
+            }, 100);
+        } else {
+            console.error('❌ updateDatesRef.current가 없습니다');
+            handleCloseDateModal();
         }
-        handleCloseDateModal();
-    };
+    }, [handleCloseDateModal]);
 
     return (
         <PageWrapper>
@@ -118,36 +166,37 @@ const MyPlanEditPage = () => {
                             onOpenDateModal={handleOpenDateModal}
                             onAddLocation={addLocationRef}
                             onUpdateDates={updateDatesRef}
+                            onGetPlanData={getPlanDataRef}
                         />
                         
                         {/* 장소 검색 모달 */}
-                        {/* <SpotSearchModal
+                        <SpotSearchModal
                             open={spotSearchModal.open}
                             onClose={handleCloseSpotSearch}
-                            onLocationSelect={handleLocationSelectFromSearch}
-                            selectedDay={spotSearchModal.selectedDay}
+                            onAddLocation={handleLocationSelectFromSearch}
                             currentLocations={spotSearchModal.currentLocations}
-                            excludeContentIds={spotSearchModal.currentLocations.map(loc => loc.contentId)}
-                        /> */}
+                            excludeIdentifiers={getExcludeIdentifiers(spotSearchModal.currentLocations)}
+                        />
                         
                         {/* 찜 목록 모달 */}
-                        {/* <WishlistModal
+                        <WishlistModal
                             open={wishlistModal.open}
                             onClose={handleCloseWishlist}
-                            onLocationSelect={handleLocationSelectFromWishlist}
-                            selectedDay={wishlistModal.selectedDay}
+                            onAddLocation={handleLocationSelectFromWishlist}
                             currentLocations={wishlistModal.currentLocations}
-                            excludeContentIds={wishlistModal.currentLocations.map(loc => loc.contentId)}
-                        /> */}
+                            excludeIdentifiers={getExcludeIdentifiers(wishlistModal.currentLocations)}
+                        />
                         
                         {/* 날짜 설정 모달 */}
-                        {/* <DateSettingModal
+                        <DateSettingModal
                             open={dateModal.open}
                             onClose={handleCloseDateModal}
-                            onDateChange={handleDateChange}
+                            onUpdateDates={handleDateChange} // onDateChange → onUpdateDates로 맞춤
                             initialStartDate={dateModal.startDate}
                             initialEndDate={dateModal.endDate}
-                        /> */}
+                        />
+
+                        {/* Day 선택 모달은 각 검색/찜 모달 내부에서 처리 */}
                     </MainContent>
                 </Main>
             </BodyWrapper>
