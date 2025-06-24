@@ -1,34 +1,211 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    Button, 
-    Typography, 
+import {
+    Button,
+    Typography,
     CircularProgress,
     Alert,
     IconButton,
     Fab
 } from '@mui/material';
-import { 
-    ArrowBack, 
-    Edit, 
-    Delete, 
-    Save, 
+import {
+    ArrowBack,
+    Edit,
+    Delete,
+    Save,
     Add,
     Favorite,
-    CalendarToday
+    CalendarToday,
+    DragIndicator
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import 'dayjs/locale/ko';
 
+// @dnd-kit imports
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 dayjs.locale('ko');
 
-const EditMyList = ({ 
-    onOpenSpotSearch, 
-    onOpenWishlistModal, 
+// 드래그 가능한 아이템 컴포넌트
+const SortableLocationItem = ({ 
+    location, 
+    index, 
+    selectedDay, 
+    onDelete, 
+    DAY_COLOR_MAP,
+    totalLocations 
+}) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ 
+        id: `${location.contentId}-${location.day}-${location.order}-${index}` 
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.8 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={{
+                ...style,
+                display: 'flex',
+                gap: '12px',
+                padding: '20px 0',
+                borderBottom: index < totalLocations - 1 ? '1px solid #f0f0f0' : 'none',
+                position: 'relative',
+                backgroundColor: isDragging ? '#e3f2fd' : 'transparent',
+                border: isDragging ? '2px dashed #2196f3' : '2px solid transparent',
+                borderRadius: '8px',
+                transition: isDragging ? 'none' : 'all 0.2s ease',
+            }}
+        >
+            {/* 드래그 핸들과 순서 번호 */}
+            <div 
+                {...attributes}
+                {...listeners}
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginTop: '20px',
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none', // 터치 스크롤 방지
+                }}
+            >
+                <DragIndicator style={{
+                    color: '#ccc',
+                    fontSize: '16px',
+                }} />
+                {/* 순서 번호 */}
+                <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: DAY_COLOR_MAP[selectedDay],
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    flexShrink: 0
+                }}>
+                    {index + 1}
+                </div>
+            </div>
+
+            {/* 이미지 */}
+            <div style={{ flexShrink: 0 }}>
+                {location.firstImage ? (
+                    <img
+                        src={location.firstImage}
+                        alt={location.title}
+                        style={{
+                            width: '72px',
+                            height: '72px',
+                            borderRadius: '8px',
+                            objectFit: 'cover'
+                        }}
+                    />
+                ) : (
+                    <div style={{
+                        width: '72px',
+                        height: '72px',
+                        backgroundColor: '#f7f7f7',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        color: '#717171',
+                        textAlign: 'center'
+                    }}>
+                        이미지<br />없음
+                    </div>
+                )}
+            </div>
+
+            {/* 정보 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{
+                    margin: '0 0 4px 0',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#222',
+                    lineHeight: '1.3',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {location.title}
+                </h4>
+
+                {/* 주소 정보 */}
+                <p style={{
+                    margin: '0 0 4px 0',
+                    fontSize: '13px',
+                    color: '#999',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {location.addr || '주소 정보 없음'}
+                </p>
+            </div>
+
+            {/* 삭제 버튼 */}
+            <IconButton
+                size="small"
+                onClick={onDelete}
+                style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '0px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+            >
+                <Delete fontSize="small" color="error" />
+            </IconButton>
+        </div>
+    );
+};
+
+const EditMyList = ({
+    onOpenSpotSearch,
+    onOpenWishlistModal,
     onOpenDateModal,
-    onAddLocation, // 부모에서 전달받는 장소 추가 함수
-    onUpdateDates  // 부모에서 전달받는 날짜 업데이트 함수
+    onAddLocation,
+    onUpdateDates
 }) => {
     const { planId } = useParams();
     const navigate = useNavigate();
@@ -38,11 +215,24 @@ const EditMyList = ({
     const markersByDay = useRef({});
     const polylinesByDay = useRef({});
 
+    // @dnd-kit 센서 설정 (터치 지원 포함)
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px 이동 후 드래그 시작 (터치 스크롤과 구분)
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     // 상태 관리
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [selectedDay, setSelectedDay] = useState(1);
+    const [showAddMenu, setShowAddMenu] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [planData, setPlanData] = useState({
         title: '',
@@ -50,8 +240,6 @@ const EditMyList = ({
         endDate: null,
         locations: []
     });
-    // 삭제 장소 저장
-    const [deletedLocations, setDeletedLocations] = useState([]);
 
     const DAY_COLOR_MAP = {
         1: '#FF6B6B',
@@ -62,6 +250,27 @@ const EditMyList = ({
         6: '#F7DC6F',
         7: '#BB8FCE'
     };
+
+    // 스크롤바 숨기는 CSS 추가
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .day-tabs-scroll::-webkit-scrollbar {
+                display: none;
+            }
+            .day-tabs-scroll {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        `;
+        document.head.appendChild(style);
+
+        return () => {
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
+        };
+    }, []);
 
     // 반응형 처리
     useEffect(() => {
@@ -85,7 +294,7 @@ const EditMyList = ({
     const fetchPlanData = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const userId = localStorage.getItem('userId') || 1;
             const response = await axios.get(`/api/my-plan/detail/${planId}`, {
@@ -95,18 +304,14 @@ const EditMyList = ({
             if (response.data.code === 200) {
                 const result = response.data.result;
                 const locations = result.sendDataDto || [];
-                console.log('🔍 API 응답 전체:', response.data);
-                console.log('🔍 result:', result);
-                console.log('🔍 locations 배열:', locations);
                 const newPlanData = {
                     title: result.title || '',
                     startDate: result.startDate ? dayjs(result.startDate) : null,
                     endDate: result.endDate ? dayjs(result.endDate) : null,
                     locations: locations
                 };
-                
+
                 setPlanData(newPlanData);
-                console.log(newPlanData);
 
                 if (locations.length > 0) {
                     setSelectedDay(locations[0].day || 1);
@@ -121,7 +326,6 @@ const EditMyList = ({
             setLoading(false);
         }
     };
-
 
     // 새 여행 계획 초기화
     const initializeNewPlan = () => {
@@ -163,7 +367,7 @@ const EditMyList = ({
             const dayLocs = locations.filter(loc => Number(loc.day) === day).sort((a, b) => a.order - b.order);
             if (!dayLocs.length) return;
 
-            markersByDay.current[day] = dayLocs.map(loc => {
+            markersByDay.current[day] = dayLocs.map((loc, index) => {
                 const marker = new naver.maps.Marker({
                     position: new naver.maps.LatLng(loc.mapy, loc.mapx),
                     map,
@@ -184,7 +388,7 @@ const EditMyList = ({
                                 font-size: 12px;
                                 box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                             ">
-                                ${loc.order}
+                                ${index + 1}
                             </div>
                         `,
                         anchor: new naver.maps.Point(15, 15),
@@ -248,22 +452,51 @@ const EditMyList = ({
         .filter(loc => Number(loc.day) === selectedDay)
         .sort((a, b) => a.order - b.order);
 
+    // @dnd-kit 드래그 종료 핸들러
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
 
+        if (!over || active.id === over.id) {
+            return;
+        }
+
+        const oldIndex = dayLocations.findIndex(
+            (loc, idx) => `${loc.contentId}-${loc.day}-${loc.order}-${idx}` === active.id
+        );
+        const newIndex = dayLocations.findIndex(
+            (loc, idx) => `${loc.contentId}-${loc.day}-${loc.order}-${idx}` === over.id
+        );
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+            // arrayMove로 순서 변경
+            const reorderedLocations = arrayMove(dayLocations, oldIndex, newIndex);
+            
+            // order 값 재할당
+            const updatedDayLocations = reorderedLocations.map((loc, index) => ({
+                ...loc,
+                order: index + 1
+            }));
+
+            // 전체 locations 업데이트
+            setPlanData(prev => {
+                const otherDayLocations = prev.locations.filter(loc => Number(loc.day) !== selectedDay);
+                return {
+                    ...prev,
+                    locations: [...otherDayLocations, ...updatedDayLocations]
+                };
+            });
+        }
+    };
 
     // 장소 삭제
-    const handleDeleteLocation = (locationIndex) => {
-        const confirmDelete = confirm('이 장소를 삭제하시겠습니까?');
-        if (!confirmDelete) return;
-
-        const target = planData.locations[locationIndex];
-
-        // 삭제된 장소 따로 저장
-        setDeletedLocations(prev => [...prev, target]);
-
-        // UI에서만 제거
-        const updatedLocations = planData.locations.filter((_, index) => index !== locationIndex);
-        setPlanData(prev => ({ ...prev, locations: updatedLocations }));
-    };
+    const handleDeleteLocation = useCallback((locationIndex) => {
+        if (confirm('이 장소를 삭제하시겠습니까?')) {
+            setPlanData(prev => {
+                const updatedLocations = prev.locations.filter((_, index) => index !== locationIndex);
+                return { ...prev, locations: updatedLocations };
+            });
+        }
+    }, []);
 
     // 제목 수정 (인라인 편집)
     const [editingTitle, setEditingTitle] = useState(false);
@@ -282,65 +515,90 @@ const EditMyList = ({
     };
 
     // 장소 추가 핸들러들
-    const handleOpenSpotSearch = () => {
+    const handleOpenSpotSearch = useCallback(() => {
         onOpenSpotSearch({
             selectedDay,
             currentLocations: planData.locations
         });
-    };
+    }, [selectedDay, planData.locations, onOpenSpotSearch]);
 
-    const handleOpenWishlist = () => {
+    const handleOpenWishlist = useCallback(() => {
         onOpenWishlistModal({
             selectedDay,
             currentLocations: planData.locations
         });
-    };
+    }, [selectedDay, planData.locations, onOpenWishlistModal]);
 
-    const handleOpenDateModal = () => {
-        setTempDateRange([{
-            startDate: planData.startDate?.toDate() || new Date(),
-            endDate: planData.endDate?.toDate() || new Date(),
-            key: 'selection'
-        }]);
-        setDateModalOpen(true);
-    };
+    const handleOpenDateModal = useCallback(() => {
+        onOpenDateModal({
+            startDate: planData.startDate,
+            endDate: planData.endDate
+        });
+    }, [planData.startDate, planData.endDate, onOpenDateModal]);
 
     // 외부에서 호출되는 장소 추가 함수
-    const addLocationToDay = (newLocation, targetDay) => {
-        const maxOrder = planData.locations
-            .filter(loc => loc.day === targetDay)
-            .reduce((max, loc) => Math.max(max, loc.order || 0), 0);
+    const addLocationToDay = useCallback((newLocation, targetDay) => {
+        setPlanData(prev => {
+            const maxOrder = prev.locations
+                .filter(loc => Number(loc.day) === Number(targetDay))
+                .reduce((max, loc) => Math.max(max, loc.order || 0), 0);
 
-        const locationWithOrder = {
-            ...newLocation,
-            day: targetDay,
-            order: maxOrder + 1
-        };
+            const locationWithOrder = {
+                ...newLocation,
+                day: Number(targetDay),
+                order: maxOrder + 1,
+                id: `${newLocation.contentId}-${targetDay}-${Date.now()}`
+            };
 
-        setPlanData(prev => ({
-            ...prev,
-            locations: [...prev.locations, locationWithOrder]
-        }));
-    };
+            const updatedLocations = [...prev.locations, locationWithOrder];
+            return {
+                ...prev,
+                locations: updatedLocations
+            };
+        });
+    }, []);
 
-    // 날짜 업데이트 함수
-    const updatePlanDates = (startDate, endDate) => {
-        setPlanData(prev => ({
-            ...prev,
-            startDate,
-            endDate
-        }));
-    };
+    const updatePlanDates = useCallback((startDate, endDate) => {
+        setPlanData(prev => {
+            const newDayCount = endDate.diff(startDate, 'day') + 1;
+            const currentDayCount = prev.endDate ? prev.endDate.diff(prev.startDate, 'day') + 1 : 0;
+
+            let adjustedLocations = [...prev.locations];
+
+            if (newDayCount < currentDayCount) {
+                adjustedLocations = prev.locations.map(loc => {
+                    if (loc.day > newDayCount) {
+                        return { ...loc, day: newDayCount };
+                    }
+                    return loc;
+                });
+            }
+
+            const updated = {
+                ...prev,
+                startDate,
+                endDate,
+                locations: adjustedLocations
+            };
+
+            return updated;
+        });
+
+        const newDayCount = endDate.diff(startDate, 'day') + 1;
+        if (selectedDay > newDayCount) {
+            setSelectedDay(1);
+        }
+    }, [selectedDay]);
 
     // 부모 컴포넌트에 함수들 전달
     useEffect(() => {
-        if (onAddLocation) {
+        if (onAddLocation && onAddLocation.current !== addLocationToDay) {
             onAddLocation.current = addLocationToDay;
         }
-        if (onUpdateDates) {
+        if (onUpdateDates && onUpdateDates.current !== updatePlanDates) {
             onUpdateDates.current = updatePlanDates;
         }
-    }, [onAddLocation, onUpdateDates]);
+    }, [addLocationToDay, updatePlanDates, onAddLocation, onUpdateDates]);
 
     // 저장
     const handleSave = async () => {
@@ -356,41 +614,39 @@ const EditMyList = ({
 
         setSaving(true);
         setError(null);
-        console.log(planData.startDate);
-        console.log(planData.endDate);
 
         try {
             const userId = localStorage.getItem('userId') || 1;
-            const token = localStorage.getItem('jwtToken');  // 토큰 꺼내기
             const payload = {
-                id: planData.id,
                 userId: Number(userId),
                 title: planData.title,
-                sendDataDto: planData.locations,
-                deletedLocations: deletedLocations,
+                travelLists: planData.locations.map(loc => ({
+                    dataId: loc.dataId,
+                    day: loc.day,
+                    order: loc.order
+                })),
                 startDate: planData.startDate.format('YYYY-MM-DD'),
                 endDate: planData.endDate.format('YYYY-MM-DD'),
             };
 
             let response;
+            let successMessage;
+
             if (isEditMode) {
-                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {                 
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'userId': userId}
+                response = await axios.put(`/api/my-plan/update/${planId}`, payload, {
+                    headers: { 'userId': userId }
                 });
-                // title="날짜 수정"
+                successMessage = '여행 계획이 수정되었습니다.';
             } else {
                 response = await axios.post('/api/my-plan/add-my-plan', payload, {
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'userId': userId },
+                    headers: { 'userId': userId }
                 });
+                successMessage = '새 여행 계획이 저장되었습니다.';
             }
 
             if (response.data.code === 200) {
-                alert(isEditMode ? '여행 계획이 수정되었습니다.' : '새 여행 계획이 저장되었습니다.');
-                navigate(`/myplan`);
+                alert(successMessage);
+                navigate('/myplan');
             } else {
                 setError('저장에 실패했습니다.');
             }
@@ -434,8 +690,8 @@ const EditMyList = ({
         }}>
             {/* 에러 알림 */}
             {error && (
-                <Alert 
-                    severity="error" 
+                <Alert
+                    severity="error"
                     onClose={() => setError(null)}
                     style={{
                         position: 'fixed',
@@ -452,7 +708,7 @@ const EditMyList = ({
 
             {/* 지도 영역 */}
             <div style={{
-                flex: isMobile ? 'none' : '1',
+                flex: isMobile ? 'none' : '3',
                 height: isMobile ? '50vh' : '100%',
                 width: isMobile ? '100%' : 'auto',
                 position: 'relative'
@@ -464,142 +720,12 @@ const EditMyList = ({
                         height: '100%',
                     }}
                 />
-
-                {/* 지도 위 컨트롤 패널 */}
-                <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    right: '20px',
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: isMobile ? '12px 16px' : '16px 20px',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                    zIndex: 10
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '12px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Button
-                                startIcon={<ArrowBack />}
-                                onClick={() => navigate('/calendar')}
-                                size="small"
-                            >
-                                돌아가기
-                            </Button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <IconButton 
-                                size="small"
-                                onClick={handleOpenDateModal}
-                                title="날짜 수정"
-                            >
-                                <CalendarToday />
-                            </IconButton>
-                            <span style={{
-                                fontSize: '14px',
-                                color: '#717171',
-                                backgroundColor: '#f7f7f7',
-                                padding: '4px 8px',
-                                borderRadius: '6px'
-                            }}>
-                                {getDurationText()}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* 제목 편집 */}
-                    <div style={{ marginBottom: '12px' }}>
-                        {editingTitle ? (
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <input
-                                    type="text"
-                                    value={tempTitle}
-                                    onChange={(e) => setTempTitle(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && saveTitleEdit()}
-                                    onBlur={saveTitleEdit}
-                                    autoFocus
-                                    style={{
-                                        fontSize: isMobile ? '16px' : '18px',
-                                        fontWeight: '600',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        flex: 1
-                                    }}
-                                />
-                            </div>
-                        ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <h2 style={{
-                                    margin: 0,
-                                    fontSize: isMobile ? '16px' : '18px',
-                                    fontWeight: '600',
-                                    color: '#222'
-                                }}>
-                                    {planData.title}
-                                </h2>
-                                <IconButton 
-                                    size="small"
-                                    onClick={startTitleEdit}
-                                    title="제목 수정"
-                                >
-                                    <Edit fontSize="small" />
-                                </IconButton>
-                            </div>
-                        )}
-                    </div>
-
-                    <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        flexWrap: 'wrap'
-                    }}>
-                        {dayList.map(day => (
-                            <button
-                                key={day}
-                                onClick={() => setSelectedDay(day)}
-                                style={{
-                                    padding: '8px 16px',
-                                    borderRadius: '24px',
-                                    border: 'none',
-                                    backgroundColor: selectedDay === day ? DAY_COLOR_MAP[day] : '#f7f7f7',
-                                    color: selectedDay === day ? 'white' : '#717171',
-                                    fontSize: '14px',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                Day {day}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 저장 버튼 */}
-                <Fab
-                    color="primary"
-                    onClick={handleSave}
-                    disabled={saving}
-                    style={{
-                        position: 'absolute',
-                        bottom: '20px',
-                        right: '20px',
-                        background: saving ? '#ccc' : 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
-                    }}
-                >
-                    {saving ? <CircularProgress size={24} /> : <Save />}
-                </Fab>
             </div>
 
             {/* 장소 목록 영역 */}
             <div style={{
-                width: isMobile ? '100%' : '400px',
+                flex: isMobile ? 'none' : '2',
+                width: isMobile ? '100%' : 'auto',
                 height: isMobile ? 'auto' : '100%',
                 backgroundColor: 'white',
                 borderLeft: isMobile ? 'none' : '1px solid #e5e5e5',
@@ -607,50 +733,299 @@ const EditMyList = ({
                 display: 'flex',
                 flexDirection: 'column'
             }}>
-                {/* 헤더 */}
+                {/* 상단 컨트롤 패널 */}
                 <div style={{
-                    padding: '24px 20px 20px',
+                    backgroundColor: 'white',
+                    borderRadius: isMobile ? '0' : '0 0 12px 12px',
+                    padding: isMobile ? '16px 20px' : '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     borderBottom: '1px solid #f0f0f0'
                 }}>
+                    {/* 제목과 날짜 정보 */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '4px'
+                        justifyContent: 'space-between',
+                        marginBottom: '16px'
                     }}>
-                        <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: DAY_COLOR_MAP[selectedDay],
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }}>
-                            {selectedDay}
+                        {/* 제목 편집 - 왼쪽 */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            {editingTitle ? (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        value={tempTitle}
+                                        onChange={(e) => setTempTitle(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && saveTitleEdit()}
+                                        onBlur={saveTitleEdit}
+                                        autoFocus
+                                        style={{
+                                            fontSize: isMobile ? '16px' : '18px',
+                                            fontWeight: '600',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            width: '100%',
+                                            maxWidth: '200px'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h2 style={{
+                                        margin: 0,
+                                        fontSize: isMobile ? '16px' : '18px',
+                                        fontWeight: '600',
+                                        color: '#222',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {planData.title}
+                                    </h2>
+                                    <IconButton
+                                        size="small"
+                                        onClick={startTitleEdit}
+                                        title="제목 수정"
+                                    >
+                                        <Edit fontSize="small" />
+                                    </IconButton>
+                                </div>
+                            )}
                         </div>
-                        <h3 style={{
-                            margin: 0,
-                            fontSize: '20px',
-                            fontWeight: '600',
-                            color: '#222'
-                        }}>
-                            Day {selectedDay}의 여행
-                        </h3>
+
+                        {/* 날짜 정보 카드 - 오른쪽 */}
+                        <div
+                            onClick={handleOpenDateModal}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: '#f8f9fa',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s ease',
+                                border: '1px solid #e9ecef',
+                                marginLeft: '8px',
+                                flexShrink: 0
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#e9ecef'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#f8f9fa'}
+                        >
+                            <CalendarToday style={{ fontSize: '14px', color: '#495057' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{
+                                    fontSize: '11px',
+                                    color: '#6c757d',
+                                    lineHeight: 1
+                                }}>
+                                    {planData.startDate && planData.endDate ?
+                                        `${planData.startDate.format('M/D')} ~ ${planData.endDate.format('M/D')}`
+                                        : '날짜 설정'
+                                    }
+                                </span>
+                                <span style={{
+                                    fontSize: '12px',
+                                    color: '#495057',
+                                    fontWeight: '600',
+                                    marginTop: '1px'
+                                }}>
+                                    {getDurationText()}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <p style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        color: '#717171'
+
+                    {/* Day 탭들과 액션 버튼들 */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        justifyContent: 'space-between',
+                        gap: isMobile ? '0' : '16px',
+                        flexDirection: isMobile ? 'column' : 'row'
                     }}>
-                        {dayLocations.length}개의 장소를 방문해요
-                    </p>
+                        {/* Day 탭들 */}
+                        <div
+                            className={isMobile ? "day-tabs-scroll" : ""}
+                            style={{
+                                display: 'flex',
+                                gap: '6px',
+                                flexWrap: 'nowrap',
+                                marginBottom: isMobile ? '12px' : '0',
+                                overflowX: isMobile ? 'scroll' : 'visible',
+                                paddingBottom: isMobile ? '4px' : '0',
+                                WebkitOverflowScrolling: 'touch'
+                            }}>
+                            {Array.from({ length: planData.startDate && planData.endDate ? planData.endDate.diff(planData.startDate, 'day') + 1 : 3 }, (_, index) => index + 1).map(day => (
+                                <button
+                                    key={day}
+                                    onClick={() => setSelectedDay(day)}
+                                    style={{
+                                        padding: '6px 14px',
+                                        borderRadius: '20px',
+                                        border: 'none',
+                                        backgroundColor: selectedDay === day ? DAY_COLOR_MAP[day] : '#f7f7f7',
+                                        color: selectedDay === day ? 'white' : '#717171',
+                                        fontSize: '13px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        whiteSpace: 'nowrap',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    Day {day}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 액션 버튼들 */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '8px',
+                            flexShrink: 0,
+                            flexDirection: isMobile ? 'column' : 'row',
+                            width: isMobile ? '100%' : 'auto'
+                        }}>
+                            {/* 장소 추가하기 버튼 (드롭다운) */}
+                            <div className="add-menu-container" style={{
+                                position: 'relative',
+                                width: isMobile ? '100%' : 'auto'
+                            }}>
+                                <button
+                                    onClick={() => setShowAddMenu(!showAddMenu)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: isMobile ? '10px 16px' : '6px 12px',
+                                        backgroundColor: 'white',
+                                        border: '2px solid #4ECDC4',
+                                        borderRadius: isMobile ? '8px' : '20px',
+                                        color: '#4ECDC4',
+                                        fontSize: isMobile ? '14px' : '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                        whiteSpace: 'nowrap',
+                                        width: isMobile ? '100%' : 'auto',
+                                        justifyContent: isMobile ? 'center' : 'flex-start'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#4ECDC4';
+                                        e.target.style.color = 'white';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = 'white';
+                                        e.target.style.color = '#4ECDC4';
+                                    }}
+                                >
+                                    <Add style={{ fontSize: isMobile ? '16px' : '14px' }} />
+                                    장소 추가하기
+                                </button>
+
+                                {/* 드롭다운 메뉴 */}
+                                {showAddMenu && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: isMobile ? 0 : 'auto',
+                                        right: isMobile ? 0 : 0,
+                                        marginTop: '4px',
+                                        backgroundColor: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        zIndex: 1000,
+                                        minWidth: isMobile ? 'auto' : '140px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <button
+                                            onClick={() => {
+                                                handleOpenSpotSearch();
+                                                setShowAddMenu(false);
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: isMobile ? '12px 16px' : '10px 12px',
+                                                border: 'none',
+                                                backgroundColor: 'transparent',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                fontSize: isMobile ? '14px' : '13px',
+                                                borderBottom: '1px solid #f0f0f0'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                        >
+                                            🔍 장소 검색
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                handleOpenWishlist();
+                                                setShowAddMenu(false);
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: isMobile ? '12px 16px' : '10px 12px',
+                                                border: 'none',
+                                                backgroundColor: 'transparent',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                fontSize: isMobile ? '14px' : '13px'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                        >
+                                            💖 찜 목록에서
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 저장하기 버튼 */}
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: isMobile ? '10px 16px' : '6px 12px',
+                                    backgroundColor: saving ? '#ccc' : '#28a745',
+                                    border: 'none',
+                                    borderRadius: isMobile ? '8px' : '20px',
+                                    color: 'white',
+                                    fontSize: isMobile ? '14px' : '12px',
+                                    fontWeight: '600',
+                                    cursor: saving ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                    whiteSpace: 'nowrap',
+                                    width: isMobile ? '100%' : 'auto',
+                                    justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!saving) {
+                                        e.target.style.backgroundColor = '#218838';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!saving) {
+                                        e.target.style.backgroundColor = '#28a745';
+                                    }
+                                }}
+                            >
+                                {saving ? <CircularProgress size={isMobile ? 16 : 12} /> : <Save style={{ fontSize: isMobile ? '16px' : '14px' }} />}
+                                {saving ? '저장 중...' : '저장하기'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* 장소 목록 */}
+                {/* 장소 목록 - @dnd-kit으로 드래그 앤 드롭 */}
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -661,166 +1036,43 @@ const EditMyList = ({
                         <div style={{
                             textAlign: 'center',
                             padding: '40px 20px',
-                            color: '#717171'
+                            color: '#717171',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between'
                         }}>
-                            <p>이 날에는 아직 계획된 장소가 없습니다.</p>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Add />}
-                                    onClick={handleOpenSpotSearch}
-                                    size="small"
-                                >
-                                    장소 검색
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Favorite />}
-                                    onClick={handleOpenWishlist}
-                                    size="small"
-                                >
-                                    찜 목록에서
-                                </Button>
+                            <div>
+                                <p>이 날에는 아직 계획된 장소가 없습니다.</p>
                             </div>
                         </div>
                     ) : (
-                        dayLocations.map((loc, idx) => (
-                            <div
-                                key={`${loc.contentId}-${idx}`}
-                                style={{
-                                    display: 'flex',
-                                    gap: '12px',
-                                    padding: '20px 0',
-                                    borderBottom: idx < dayLocations.length - 1 ? '1px solid #f0f0f0' : 'none',
-                                    position: 'relative'
-                                }}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={dayLocations.map((loc, idx) => `${loc.contentId}-${loc.day}-${loc.order}-${idx}`)}
+                                strategy={verticalListSortingStrategy}
                             >
-                                {/* 순서 번호 */}
-                                <div style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    backgroundColor: DAY_COLOR_MAP[selectedDay],
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold',
-                                    flexShrink: 0,
-                                    marginTop: '4px'
-                                }}>
-                                    {idx + 1}
-                                </div>
-
-                                {/* 이미지 */}
-                                <div style={{ flexShrink: 0 }}>
-                                    {loc.firstImage ? (
-                                        <img
-                                            src={loc.firstImage}
-                                            alt={loc.title}
-                                            style={{
-                                                width: '72px',
-                                                height: '72px',
-                                                borderRadius: '8px',
-                                                objectFit: 'cover'
-                                            }}
-                                        />
-                                    ) : (
-                                        <div style={{
-                                            width: '72px',
-                                            height: '72px',
-                                            backgroundColor: '#f7f7f7',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '11px',
-                                            color: '#717171',
-                                            textAlign: 'center'
-                                        }}>
-                                            이미지<br />없음
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* 정보 */}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <h4 style={{
-                                        margin: '0 0 4px 0',
-                                        fontSize: '16px',
-                                        fontWeight: '600',
-                                        color: '#222',
-                                        lineHeight: '1.3',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}>
-                                        {loc.title}
-                                    </h4>
-                                    <p style={{
-                                        margin: '0 0 8px 0',
-                                        fontSize: '14px',
-                                        color: '#717171',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}>
-                                        {loc.regionName} • {loc.wardName}
-                                    </p>
-                                </div>
-
-                                {/* 삭제 버튼 */}
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleDeleteLocation(planData.locations.findIndex(l => 
-                                        l.contentId === loc.contentId && l.day === loc.day && l.order === loc.order
-                                    ))}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '16px',
-                                        right: '0px',
-                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                    }}
-                                >
-                                    <Delete fontSize="small" color="error" />
-                                </IconButton>
-                            </div>
-                        ))
+                                {dayLocations.map((loc, idx) => (
+                                    <SortableLocationItem
+                                        key={`${loc.contentId}-${loc.day}-${loc.order}-${idx}`}
+                                        location={loc}
+                                        index={idx}
+                                        selectedDay={selectedDay}
+                                        onDelete={() => handleDeleteLocation(planData.locations.findIndex(l =>
+                                            l.contentId === loc.contentId && l.day === loc.day && l.order === loc.order
+                                        ))}
+                                        DAY_COLOR_MAP={DAY_COLOR_MAP}
+                                        totalLocations={dayLocations.length}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                     )}
                 </div>
-
-                {/* 하단 장소 추가 버튼들 */}
-                {dayLocations.length > 0 && (
-                    <div style={{
-                        padding: '20px',
-                        borderTop: '1px solid #f0f0f0'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            gap: '8px',
-                            justifyContent: 'center'
-                        }}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<Add />}
-                                onClick={handleOpenSpotSearch}
-                                size="small"
-                            >
-                                장소 검색
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                startIcon={<Favorite />}
-                                onClick={handleOpenWishlist}
-                                size="small"
-                            >
-                                찜 목록에서
-                            </Button>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

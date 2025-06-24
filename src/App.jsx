@@ -16,6 +16,7 @@ import RegionSearchPage from './pages/RegionSearchPage.jsx';
 import MyListPage from './pages/MyListPage.jsx';
 import MyReviewPage from './pages/MyReviewPage.jsx';
 import MyPlanEditPage from './pages/MyPlanEditPage.jsx';
+//import MyPlanCreatePage from './pages/MyPlanCreatePage.jsx';
 
 export function App() {
   const router = createBrowserRouter([
@@ -33,10 +34,10 @@ export function App() {
     { path: "/AIChat", element: <AIChatPage /> }, // AI추천 페이지
     { path: "/region", element: <RegionSearchPage /> }, // 지역 기반 여행지 리스트 페이지
     { path: "/myplan", element: <MyListPage /> }, // MyList & 찜 페이지
-    { path: "/myplan/edit", element: <MyPlanEditPage /> }, // MyList 수정 페이지{
+    { path: "/myplan/edit", element: <MyPlanEditPage/>}, // MyList 생성 페이지
     { path: "/myplan/edit/:planId", element: <MyPlanEditPage />}, // 기존 여행 수정
     { path: "/review", element: <MyReviewPage /> }, // 내 리뷰 조회 페이지
-
+    
   ]);
   return <RouterProvider router={router} />;
 }

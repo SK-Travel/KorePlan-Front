@@ -65,9 +65,9 @@ const Header = () => {
       {/* 우측 아이콘 2개 */}
       <UserSection>
         {/* 검색 아이콘 */}
-        <Button onClick={goToSearch}>
+        {/* <Button onClick={goToSearch}>
           <TbMapSearch style={{ fontSize: 45, color: "#000" }} />
-        </Button>
+        </Button> */}
         
         {/* Menu 컴포넌트 */}
         <Menu />

@@ -94,12 +94,20 @@ const Like = () => {
   // 로딩 상태
   if (loading) {
     return (
-      <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ 
+        width: '100%', 
+        maxWidth: '100%', 
+        margin: '0 auto', 
+        padding: '16px',
+        boxSizing: 'border-box'
+      }}>
         <div style={{
           background: '#ffffff',
           borderRadius: '8px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          padding: '32px'
+          padding: '32px',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             display: 'flex',
@@ -126,12 +134,20 @@ const Like = () => {
   // 에러 상태
   if (error) {
     return (
-      <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ 
+        width: '100%', 
+        maxWidth: '100%', 
+        margin: '0 auto', 
+        padding: '16px',
+        boxSizing: 'border-box'
+      }}>
         <div style={{
           background: '#ffffff',
           borderRadius: '8px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          padding: '32px'
+          padding: '32px',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             display: 'flex',
@@ -141,7 +157,7 @@ const Like = () => {
           }}>
             <AlertCircle style={{ width: '32px', height: '32px', marginRight: '12px' }} />
             <div>
-              <p style={{ fontSize: '18px', fontWeight: '600' }}>{error}</p>
+              <p style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>{error}</p>
               <button 
                 onClick={fetchLikedPlaces}
                 style={{
@@ -170,26 +186,39 @@ const Like = () => {
   }
 
   return (
-    <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '24px' }}>
+    <div style={{ 
+      width: '100%', 
+      maxWidth: '100%', 
+      margin: '0 auto', 
+      padding: '16px',
+      boxSizing: 'border-box',
+      overflowX: 'hidden'
+    }}>
       <div style={{
         background: '#ffffff',
         borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
       }}>
         {/* 헤더 */}
         <div style={{
           borderBottom: '1px solid #e5e7eb',
-          padding: '20px'
+          padding: '20px',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            width: '100%'
           }}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center',
-              flex: 1
+              flex: 1,
+              minWidth: 0
             }}>
               <Heart style={{
                 width: '24px',
@@ -199,11 +228,14 @@ const Like = () => {
                 flexShrink: 0
               }} />
               <h1 style={{
-                fontSize: '24px',
+                fontSize: 'clamp(18px, 4vw, 24px)',
                 fontWeight: 'bold',
                 color: '#1f2937',
                 margin: 0,
-                lineHeight: '1.2'
+                lineHeight: '1.2',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>내 찜 목록</h1>
             </div>
             <span style={{
@@ -221,12 +253,14 @@ const Like = () => {
         <div style={{ 
           padding: '16px',
           maxHeight: likedPlaces.length > 5 ? '500px' : 'auto',
-          overflowY: likedPlaces.length > 5 ? 'auto' : 'visible'
+          overflowY: likedPlaces.length > 5 ? 'auto' : 'visible',
+          overflowX: 'hidden',
+          boxSizing: 'border-box'
         }}>
           {likedPlaces.length === 0 ? (
             <div style={{
               textAlign: 'center',
-              padding: '48px',
+              padding: '48px 16px',
               color: '#6b7280'
             }}>
               <Heart style={{
@@ -235,13 +269,14 @@ const Like = () => {
                 margin: '0 auto 16px',
                 color: '#d1d5db'
               }} />
-              <p style={{ fontSize: '18px', marginBottom: '8px' }}>아직 찜한 여행지가 없습니다</p>
-              <p style={{ fontSize: '14px' }}>마음에 드는 여행지를 찜해보세요!</p>
+              <p style={{ fontSize: '18px', marginBottom: '8px', margin: 0 }}>아직 찜한 여행지가 없습니다</p>
+              <p style={{ fontSize: '14px', margin: '8px 0 0 0' }}>마음에 드는 여행지를 찜해보세요!</p>
             </div>
           ) : (
             <div style={{
               display: 'grid',
-              gap: '12px'
+              gap: '12px',
+              width: '100%'
             }}>
               {likedPlaces.map((place) => {
                 const placeId = place.id || place.contentId;
@@ -258,7 +293,10 @@ const Like = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       transition: 'all 0.2s ease',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      minWidth: 0
                     }}
                     onMouseOver={(e) => {
                       e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
@@ -309,11 +347,11 @@ const Like = () => {
                     {/* 정보 */}
                     <div style={{ 
                       flex: 1,
-                      minWidth: 0, // 텍스트 오버플로우 방지
+                      minWidth: 0,
                       paddingRight: '12px'
                     }}>
                       <h3 style={{
-                        fontSize: '18px',
+                        fontSize: 'clamp(16px, 3.5vw, 18px)',
                         fontWeight: '600',
                         color: '#1f2937',
                         margin: '0 0 8px 0',
