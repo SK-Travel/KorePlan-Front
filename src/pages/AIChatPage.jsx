@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useNavigationType } from 'react-router-dom';
 import { PageWrapper, BodyWrapper, Main, MainContent } from '../styles/MainPageStyle';
 import Header from '../component/fragments/Header';
 import TravelPlannerModal from '../component/AIChat/TravelPlannerModal';
@@ -10,6 +10,24 @@ const AIChatPage = () => {
     const [planData, setPlanData] = useState(null); // GPT로부터 받은 여행 계획 데이터를 저장
     const [isPlanning, setIsPlanning] = useState(true); // 모달 표시 여부 상태
     const navigate = useNavigate();
+    const navigationType = useNavigationType(); // 현재 진입 방식 (POP이면 뒤로가기)
+
+    // 뒤로가기일 때만 sessionStorage 복원
+    useEffect(() => {
+        if (navigationType === 'POP') {
+            const saved = sessionStorage.getItem("planData");
+            if (saved) {
+                setPlanData(JSON.parse(saved));
+                setIsPlanning(false);
+            }
+        } else {
+    // 직접 진입 or 링크 클릭으로 온 경우에는 초기화
+            sessionStorage.removeItem("planData");
+            setPlanData(null);
+            setIsPlanning(true);
+        }
+    }, [navigationType]);
+
 
     useEffect(() => {
         if (!planData) return; // planData가 없으면 바로 리턴
