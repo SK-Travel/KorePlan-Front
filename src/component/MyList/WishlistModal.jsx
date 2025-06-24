@@ -29,7 +29,8 @@ const WishlistModal = ({
     onAddLocation,
     selectedDay,
     currentLocations = [],
-    excludeIdentifiers = []
+    excludeIdentifiers = [],
+    availableDays = [1, 2, 3]  // 부모에서 실제 날짜들을 받아옴
 }) => {
     const [likedPlaces, setLikedPlaces] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -40,7 +41,7 @@ const WishlistModal = ({
     const [daySelectionModal, setDaySelectionModal] = useState({
         open: false,
         selectedLocation: null,
-        availableDays: [1, 2, 3] // 기본값, 부모에서 받아올 수도 있음
+        availableDays: []  // 초기값은 빈 배열
     });
 
     // 찜 목록 조회
@@ -81,11 +82,12 @@ const WishlistModal = ({
     // "추가하기" 클릭 시 Day 선택 모달 열기
     const handleAddClick = (place) => {
         console.log('💖 찜에서 추가하기 클릭:', place);
+        console.log('💖 부모에서 받은 availableDays:', availableDays);
 
         setDaySelectionModal({
             open: true,
             selectedLocation: place,
-            availableDays: [1, 2, 3, 4, 5, 6, 7] // 실제로는 부모에서 받아와야 함
+            availableDays: availableDays  // 👈 부모에서 받은 실제 날짜들 사용
         });
     };
 
@@ -186,6 +188,10 @@ const WishlistModal = ({
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
                             여행 계획에 추가할 찜한 장소를 선택하세요
+                        </Typography>
+                        {/* 디버깅용 정보 추가 */}
+                        <Typography variant="caption" color="primary" style={{ display: 'block', marginTop: '4px' }}>
+                            사용 가능한 날짜: {availableDays.join(', ')}
                         </Typography>
                     </div>
                     <IconButton onClick={onClose} size="small">
@@ -407,7 +413,7 @@ const WishlistModal = ({
                 open={daySelectionModal.open}
                 onClose={handleCloseDaySelection}
                 onDaySelect={handleDaySelect}
-                availableDays={daySelectionModal.availableDays}
+                availableDays={daySelectionModal.availableDays}  // 👈 이제 부모에서 받은 실제 날짜들이 전달됨
                 locationTitle={daySelectionModal.selectedLocation?.title}
             />
         </>

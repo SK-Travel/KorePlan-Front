@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Header from '../component/fragments/Header.jsx';
-import EditMyList from '../component/MyList/EditMyList.jsx';
-
+import CreateMyList from '../component/MyList/CreateMyList.jsx';
 import SpotSearchModal from '../component/MyList/SpotSearchModal.jsx';
 import WishlistModal from '../component/MyList/WishlistModal.jsx';
 import DateSettingModal from '../component/MyList/DateSettingModal.jsx';
@@ -15,7 +14,7 @@ import {
     MainContent,
 } from '../styles/EditPageStyle.js';
 
-const MyPlanEditPage = () => {
+const MyPlanCreatePage = () => {
     // 모달 상태 관리
     const [spotSearchModal, setSpotSearchModal] = useState({
         open: false,
@@ -41,9 +40,6 @@ const MyPlanEditPage = () => {
         source: null // 'search' 또는 'wishlist'
     });
 
-    // 사용 가능한 날짜 상태 관리 추가
-    const [availableDays, setAvailableDays] = useState([1, 2, 3]);
-
     // EditMyList 컴포넌트의 함수들을 참조하기 위한 ref
     const addLocationRef = useRef(null);
     const updateDatesRef = useRef(null);
@@ -60,12 +56,17 @@ const MyPlanEditPage = () => {
         }));
     }, []);
 
-    // 사용 가능한 Day 목록 업데이트 (간단 버전)
-    const updateAvailableDays = useCallback(() => {
-        // getPlanDataRef 대신 기본값 유지
-        // 실제 업데이트는 날짜 변경 시점에 처리
-        console.log('📅 기본 availableDays 사용:', availableDays);
-    }, [availableDays]);
+    // 사용 가능한 Day 목록 가져오기
+    const getAvailableDays = useCallback(() => {
+        if (getPlanDataRef.current) {
+            const planData = getPlanDataRef.current();
+            if (planData.startDate && planData.endDate) {
+                const diffDays = planData.endDate.diff(planData.startDate, 'day') + 1;
+                return Array.from({ length: diffDays }, (_, i) => i + 1);
+            }
+        }
+        return [1, 2, 3]; // 기본값
+    }, []);
 
     // 장소 검색 모달 열기
     const handleOpenSpotSearch = useCallback((data) => {
@@ -136,16 +137,10 @@ const MyPlanEditPage = () => {
     const handleDateChange = useCallback((startDate, endDate) => {
         console.log('📅 날짜 변경:', { startDate, endDate });
         
-        // 즉시 availableDays 계산 및 업데이트
-        const diffDays = endDate.diff(startDate, 'day') + 1;
-        const newAvailableDays = Array.from({ length: diffDays }, (_, i) => i + 1);
-        console.log('📅 새로운 availableDays:', newAvailableDays);
-        setAvailableDays(newAvailableDays);
-        
         if (updateDatesRef.current) {
             updateDatesRef.current(startDate, endDate);
             
-            // 모달 닫기
+            // 상태 업데이트 후 모달 닫기
             setTimeout(() => {
                 handleCloseDateModal();
             }, 100);
@@ -162,14 +157,14 @@ const MyPlanEditPage = () => {
                 <Main>
                     <MainContent>
                         {/* 여행 계획 수정 메인 컴포넌트 */}
-                        <EditMyList 
+                        {/* <CreateMyList 
                             onOpenSpotSearch={handleOpenSpotSearch}
                             onOpenWishlistModal={handleOpenWishlist}
                             onOpenDateModal={handleOpenDateModal}
                             onAddLocation={addLocationRef}
                             onUpdateDates={updateDatesRef}
                             onGetPlanData={getPlanDataRef}
-                        />
+                        /> */}
                         
                         {/* 장소 검색 모달 */}
                         <SpotSearchModal
@@ -178,7 +173,6 @@ const MyPlanEditPage = () => {
                             onAddLocation={handleLocationSelectFromSearch}
                             currentLocations={spotSearchModal.currentLocations}
                             excludeIdentifiers={getExcludeIdentifiers(spotSearchModal.currentLocations)}
-                            availableDays={availableDays}  // 👈 state로 관리되는 배열 전달
                         />
                         
                         {/* 찜 목록 모달 */}
@@ -188,7 +182,6 @@ const MyPlanEditPage = () => {
                             onAddLocation={handleLocationSelectFromWishlist}
                             currentLocations={wishlistModal.currentLocations}
                             excludeIdentifiers={getExcludeIdentifiers(wishlistModal.currentLocations)}
-                            availableDays={availableDays}  // 👈 state로 관리되는 배열 전달
                         />
                         
                         {/* 날짜 설정 모달 */}
@@ -209,4 +202,4 @@ const MyPlanEditPage = () => {
     );
 };
 
-export default MyPlanEditPage;
+export default MyPlanCreatePage;
