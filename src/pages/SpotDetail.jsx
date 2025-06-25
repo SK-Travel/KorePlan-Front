@@ -11,8 +11,6 @@ import {
 // 구조 컴포넌트
 import Footer from '../component/fragments/Footer';
 import Header from '../component/fragments/Header';
-import ReviewList from '../component/Search/ReviewList';
-import SpotMap from '../component/SpotDetail/SpotMap';
 import SpotImages from '../component/SpotDetail/SpotImages';
 import SpotHeader from '../component/SpotDetail/SpotHeader.jsx';
 import SpotComment from '../component/SpotDetail/SpotComment.jsx';

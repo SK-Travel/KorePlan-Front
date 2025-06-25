@@ -6,7 +6,6 @@ import SpotSearchModal from '../component/MyList/SpotSearchModal.jsx';
 import WishlistModal from '../component/MyList/WishlistModal.jsx';
 import DateSettingModal from '../component/MyList/DateSettingModal.jsx';
 
-
 /// CSS 컴포넌트 ///
 import {
     PageWrapper,
@@ -19,12 +18,14 @@ const MyPlanEditPage = () => {
     // 모달 상태 관리
     const [spotSearchModal, setSpotSearchModal] = useState({
         open: false,
-        currentLocations: []
+        currentLocations: [],
+        selectedDay: 1  // 👈 현재 선택된 Day 추가
     });
     
     const [wishlistModal, setWishlistModal] = useState({
         open: false,
-        currentLocations: []
+        currentLocations: [],
+        selectedDay: 1  // 👈 현재 선택된 Day 추가
     });
     
     const [dateModal, setDateModal] = useState({
@@ -33,16 +34,8 @@ const MyPlanEditPage = () => {
         endDate: null
     });
 
-    // Day 선택 모달 상태
-    const [daySelectionModal, setDaySelectionModal] = useState({
-        open: false,
-        selectedLocation: null,
-        availableDays: [],
-        source: null // 'search' 또는 'wishlist'
-    });
-
     // 사용 가능한 날짜 상태 관리 추가
-    const [availableDays, setAvailableDays] = useState([1, 2, 3]);
+    const [availableDays, setAvailableDays] = useState([]);
 
     // EditMyList 컴포넌트의 함수들을 참조하기 위한 ref
     const addLocationRef = useRef(null);
@@ -60,19 +53,13 @@ const MyPlanEditPage = () => {
         }));
     }, []);
 
-    // 사용 가능한 Day 목록 업데이트 (간단 버전)
-    const updateAvailableDays = useCallback(() => {
-        // getPlanDataRef 대신 기본값 유지
-        // 실제 업데이트는 날짜 변경 시점에 처리
-        console.log('📅 기본 availableDays 사용:', availableDays);
-    }, [availableDays]);
-
     // 장소 검색 모달 열기
     const handleOpenSpotSearch = useCallback((data) => {
         console.log('🔍 장소 검색 모달 열기:', data);
         setSpotSearchModal({
             open: true,
-            currentLocations: data.currentLocations
+            currentLocations: data.currentLocations,
+            selectedDay: data.selectedDay  // 👈 현재 선택된 Day 저장
         });
     }, []);
 
@@ -81,23 +68,25 @@ const MyPlanEditPage = () => {
         setSpotSearchModal(prev => ({ ...prev, open: false }));
     }, []);
 
-    // 검색에서 Day 선택 후 장소 추가 (더 간단한 방식)
-    const handleLocationSelectFromSearch = useCallback((location, selectedDay) => {
-        console.log('🎯 검색에서 장소 선택:', location, '선택된 Day:', selectedDay);
+    // 검색에서 장소 선택 시 현재 선택된 Day에 바로 추가
+    const handleLocationSelectFromSearch = useCallback((location) => {
+        console.log('🎯 검색에서 장소 선택:', location, '현재 선택된 Day:', spotSearchModal.selectedDay);
         
         if (addLocationRef.current) {
-            addLocationRef.current(location, selectedDay);
+            addLocationRef.current(location, spotSearchModal.selectedDay);
+            alert(`Day ${spotSearchModal.selectedDay}에 ${location.title}이(가) 추가되었습니다!`);
         } else {
             console.error('❌ addLocationRef.current가 없습니다');
         }
-    }, []);
+    }, [spotSearchModal.selectedDay]);
 
     // 찜 목록 모달 열기
     const handleOpenWishlist = useCallback((data) => {
         console.log('💖 찜 목록 모달 열기:', data);
         setWishlistModal({
             open: true,
-            currentLocations: data.currentLocations
+            currentLocations: data.currentLocations,
+            selectedDay: data.selectedDay  // 👈 현재 선택된 Day 저장
         });
     }, []);
 
@@ -106,16 +95,17 @@ const MyPlanEditPage = () => {
         setWishlistModal(prev => ({ ...prev, open: false }));
     }, []);
 
-    // 찜 목록에서 Day 선택 후 장소 추가 (더 간단한 방식)
-    const handleLocationSelectFromWishlist = useCallback((location, selectedDay) => {
-        console.log('💖 찜에서 장소 선택:', location, '선택된 Day:', selectedDay);
+    // 찜 목록에서 장소 선택 시 현재 선택된 Day에 바로 추가
+    const handleLocationSelectFromWishlist = useCallback((location) => {
+        console.log('💖 찜에서 장소 선택:', location, '현재 선택된 Day:', wishlistModal.selectedDay);
         
         if (addLocationRef.current) {
-            addLocationRef.current(location, selectedDay);
+            addLocationRef.current(location, wishlistModal.selectedDay);
+            alert(`Day ${wishlistModal.selectedDay}에 ${location.title}이(가) 추가되었습니다!`);
         } else {
             console.error('❌ addLocationRef.current가 없습니다');
         }
-    }, []);
+    }, [wishlistModal.selectedDay]);
 
     // 날짜 설정 모달 열기
     const handleOpenDateModal = useCallback((data) => {
@@ -169,42 +159,40 @@ const MyPlanEditPage = () => {
                             onAddLocation={addLocationRef}
                             onUpdateDates={updateDatesRef}
                             onGetPlanData={getPlanDataRef}
+                            totalDays={availableDays.length}
                         />
                         
                         {/* 장소 검색 모달 */}
                         <SpotSearchModal
                             open={spotSearchModal.open}
                             onClose={handleCloseSpotSearch}
-                            onAddLocation={handleLocationSelectFromSearch}
+                            onAddLocation={handleLocationSelectFromSearch}  // 👈 Day 파라미터 제거
                             currentLocations={spotSearchModal.currentLocations}
                             excludeIdentifiers={getExcludeIdentifiers(spotSearchModal.currentLocations)}
-                            availableDays={availableDays}  // 👈 state로 관리되는 배열 전달
+                            selectedDay={spotSearchModal.selectedDay}  // 👈 현재 선택된 Day 전달
                         />
                         
                         {/* 찜 목록 모달 */}
                         <WishlistModal
                             open={wishlistModal.open}
                             onClose={handleCloseWishlist}
-                            onAddLocation={handleLocationSelectFromWishlist}
+                            onAddLocation={handleLocationSelectFromWishlist}  // 👈 Day 파라미터 제거
                             currentLocations={wishlistModal.currentLocations}
                             excludeIdentifiers={getExcludeIdentifiers(wishlistModal.currentLocations)}
-                            availableDays={availableDays}  // 👈 state로 관리되는 배열 전달
+                            selectedDay={wishlistModal.selectedDay}  // 👈 현재 선택된 Day 전달
                         />
                         
                         {/* 날짜 설정 모달 */}
                         <DateSettingModal
                             open={dateModal.open}
                             onClose={handleCloseDateModal}
-                            onUpdateDates={handleDateChange} // onDateChange → onUpdateDates로 맞춤
+                            onUpdateDates={handleDateChange}
                             initialStartDate={dateModal.startDate}
                             initialEndDate={dateModal.endDate}
                         />
-
-                        {/* Day 선택 모달은 각 검색/찜 모달 내부에서 처리 */}
                     </MainContent>
                 </Main>
             </BodyWrapper>
-            
         </PageWrapper>
     );
 };
