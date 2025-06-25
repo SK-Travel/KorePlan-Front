@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Eye, Star, MapPin, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ConfirmationModal from './ConfirmationModal'; // 모달 컴포넌트 import
 
 // 숫자 포맷팅 함수
 const formatNumber = (num) => {
@@ -45,72 +46,99 @@ const RecentLikedPlaces = () => {
   const [error, setError] = useState(null);
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
   const [bookmarkLoading, setBookmarkLoading] = useState(new Set());
+  
+  // 모달 관련 state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState(null);
+  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadRecentLikedData = async () => {
-      try {
+  // 최근 찜한 데이터 로딩 함수 (재사용 가능하도록 분리)
+  const loadRecentLikedData = async (showLoading = true) => {
+    try {
+      if (showLoading) {
         setLoading(true);
-        setError(null);
-        
-        // 새로운 API 호출 - 최근 찜한 여행지 5개 직접 조회
-        const response = await fetch('/api/like/recent-liked-places', {
-          method: 'GET',
-          credentials: 'include',
-        });
+      }
+      setError(null);
+      
+      // 새로운 API 호출 - 최근 찜한 여행지 5개 직접 조회
+      const response = await fetch('/api/like/recent-liked-places', {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            setError('로그인이 필요한 서비스입니다.');
-            setData([]);
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('최근 찜한 여행지 API 응답:', result);
-        
-        if (result.code === 200 && result.recentLikedPlaces) {
-          const places = result.recentLikedPlaces.map(item => ({
-            ...item,
-            // 기존 코드와 호환을 위한 필드 매핑
-            firstImage: item.firstimage,
-            contentId: item.contentId
-          }));
-          
-          setData(places);
-          
-          // 찜한 데이터 ID 설정 (모든 데이터가 찜한 상태)
-          const likedIds = places.map(place => place.id);
-          setBookmarkedItems(new Set(likedIds.map(id => Number(id))));
-          
-        } else if (result.code === 401) {
+      if (!response.ok) {
+        if (response.status === 401) {
           setError('로그인이 필요한 서비스입니다.');
           setData([]);
-        } else {
-          setData([]);
+          return;
         }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('🔄 최근 찜한 여행지 API 재호출 응답:', result);
+      
+      if (result.code === 200 && result.recentLikedPlaces) {
+        const places = result.recentLikedPlaces.map(item => ({
+          ...item,
+          // 기존 코드와 호환을 위한 필드 매핑
+          firstImage: item.firstimage,
+          contentId: item.contentId
+        }));
         
-      } catch (error) {
-        console.error('최근 찜한 데이터 로딩 실패:', error);
-        setError('데이터를 불러오는데 실패했습니다.');
+        console.log(`📊 새로 로딩된 찜한 여행지: ${places.length}개`, places.map(p => p.title));
+        setData(places);
+        
+        // 찜한 데이터 ID 설정 (모든 데이터가 찜한 상태)
+        const likedIds = places.map(place => place.id);
+        setBookmarkedItems(new Set(likedIds.map(id => Number(id))));
+        
+      } else if (result.code === 401) {
+        setError('로그인이 필요한 서비스입니다.');
         setData([]);
-      } finally {
+      } else {
+        setData([]);
+      }
+      
+    } catch (error) {
+      console.error('최근 찜한 데이터 로딩 실패:', error);
+      setError('데이터를 불러오는데 실패했습니다.');
+      setData([]);
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     loadRecentLikedData();
   }, []);
 
-  // 찜 토글 함수
+  // 찜 토글 함수 (모달 적용)
   const toggleBookmark = async (item, e) => {
     e.stopPropagation();
     const itemId = item.id || item.contentId;
+    const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
     
     if (bookmarkLoading.has(itemId)) return;
 
+    // 찜 해제하는 경우 모달 띄우기
+    if (isCurrentlyBookmarked) {
+      setItemToRemove(item);
+      setShowConfirmModal(true);
+      return;
+    }
+
+    // 찜 추가하는 경우 바로 실행
+    await executeBookmarkToggle(item);
+  };
+
+  // 실제 찜 토글 실행 함수
+  const executeBookmarkToggle = async (item) => {
+    const itemId = item.id || item.contentId;
+    
     setBookmarkLoading(prev => new Set([...prev, itemId]));
     
     try {
@@ -132,23 +160,15 @@ const RecentLikedPlaces = () => {
       if (result.code === 200) {
         const newIsBookmarked = result.likeStatus;
         
-        setBookmarkedItems(prev => {
-          const newSet = new Set(prev);
-          if (newIsBookmarked) {
-            newSet.add(itemId);
-          } else {
-            newSet.delete(itemId);
-            // 찜 해제시 목록에서 제거
-            setData(prevData => prevData.filter(dataItem => {
-              const dataItemId = dataItem.id || dataItem.contentId;
-              return dataItemId !== itemId;
-            }));
-          }
-          return newSet;
-        });
-        
-        // likeCount 실시간 업데이트
         if (newIsBookmarked) {
+          // 찜 추가인 경우 - 기존 로직 유지
+          setBookmarkedItems(prev => {
+            const newSet = new Set(prev);
+            newSet.add(itemId);
+            return newSet;
+          });
+          
+          // likeCount 실시간 업데이트
           setData(prevList => 
             prevList.map(dataItem => {
               const dataItemId = dataItem.id || dataItem.contentId;
@@ -160,6 +180,15 @@ const RecentLikedPlaces = () => {
                 : dataItem;
             })
           );
+        } else {
+          // 찜 해제인 경우 - 전체 데이터 다시 로딩
+          console.log('🔄 찜 해제 후 데이터 다시 로딩 시작...');
+          try {
+            await loadRecentLikedData(false); // showLoading=false로 호출
+            console.log('✅ 데이터 재로딩 완료');
+          } catch (reloadError) {
+            console.error('❌ 데이터 재로딩 실패:', reloadError);
+          }
         }
         
         console.log(`✅ 찜 ${newIsBookmarked ? '추가' : '제거'} 성공: ${item.title}`);
@@ -181,6 +210,21 @@ const RecentLikedPlaces = () => {
         return newSet;
       });
     }
+  };
+
+  // 모달 확인 버튼 클릭
+  const handleConfirmRemove = async () => {
+    if (itemToRemove) {
+      await executeBookmarkToggle(itemToRemove);
+      setShowConfirmModal(false);
+      setItemToRemove(null);
+    }
+  };
+
+  // 모달 취소 버튼 클릭
+  const handleCancelRemove = () => {
+    setShowConfirmModal(false);
+    setItemToRemove(null);
   };
 
   const handleCardClick = (item) => {
@@ -264,286 +308,294 @@ const RecentLikedPlaces = () => {
   }
 
   return (
-    <div style={{
-      width: '100%',
-      maxWidth: '1400px',
-      margin: '0 auto',
-      paddingTop: '20px',
-      paddingBottom: '20px',
-      borderBottom: '1px solid #e5e7eb'
-    }}>
-      <div className="recent-liked-container">
-        <div className="recent-liked-cards-wrapper">
-          {data.map((item, index) => {
-            const itemId = item.id || item.contentId;
-            const isBookmarked = bookmarkedItems.has(itemId);
-            const isBookmarkLoading = bookmarkLoading.has(itemId);
-            
-            return (
-              <div
-                key={itemId}
-                className="recent-liked-card"
-                onClick={() => handleCardClick(item)}
-              >
-                
-
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  overflow: 'hidden',
-                  height: '100%',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                }}>
-                  {/* 이미지 섹션 */}
+    <>
+      <div style={{
+        width: '100%',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        paddingTop: '20px',
+        paddingBottom: '20px',
+        borderBottom: '1px solid #e5e7eb'
+      }}>
+        <div className="recent-liked-container">
+          <div className="recent-liked-cards-wrapper">
+            {data.map((item, index) => {
+              const itemId = item.id || item.contentId;
+              const isBookmarked = bookmarkedItems.has(itemId);
+              const isBookmarkLoading = bookmarkLoading.has(itemId);
+              
+              return (
+                <div
+                  key={itemId}
+                  className="recent-liked-card"
+                  onClick={() => handleCardClick(item)}
+                >
                   <div style={{
-                    position: 'relative',
-                    aspectRatio: '1',
-                    overflow: 'hidden'
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    overflow: 'hidden',
+                    height: '100%',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
                   }}>
-                    <img
-                      src={getImageUrl(item.firstImage || item.firstimage)}
-                      alt={item.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease'
-                      }}
-                      onError={handleImageError}
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                    />
-                    
-                    {/* 찜 버튼 */}
-                    <button
-                      onClick={(e) => toggleBookmark(item, e)}
-                      disabled={isBookmarkLoading}
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: isBookmarkLoading ? 
-                          'rgba(255, 255, 255, 0.7)' : 
-                          'rgba(255, 255, 255, 0.9)',
-                        borderRadius: '50%',
-                        border: 'none',
-                        cursor: isBookmarkLoading ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.3s ease',
-                        opacity: isBookmarkLoading ? 0.7 : 1
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isBookmarkLoading) {
-                          e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
-                          e.target.style.transform = 'scale(1.1)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isBookmarkLoading) {
-                          e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-                          e.target.style.transform = 'scale(1)';
-                        }
-                      }}
-                    >
-                      {isBookmarkLoading ? (
-                        <span style={{ fontSize: '14px' }}>⏳</span>
-                      ) : (
-                        <Heart 
-                          style={{ 
-                            width: '16px', 
-                            height: '16px', 
-                            color: isBookmarked ? '#ef4444' : '#6b7280',
-                            fill: isBookmarked ? '#ef4444' : 'none'
-                          }} 
-                        />
-                      )}
-                    </button>
-                  </div>
-
-                  {/* 콘텐츠 섹션 */}
-                  <div style={{ padding: '12px' }}>
-                    {/* 제목 */}
-                    <h3 style={{
-                      fontWeight: '600',
-                      fontSize: '16px',
-                      color: '#1f2937',
-                      marginBottom: '4px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      transition: 'color 0.3s ease'
-                    }}>
-                      {item.title || '제목 없음'}
-                    </h3>
-                    
-                    {/* 위치 */}
+                    {/* 이미지 섹션 */}
                     <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#6b7280',
-                      marginBottom: '8px'
+                      position: 'relative',
+                      aspectRatio: '1',
+                      overflow: 'hidden'
                     }}>
-                      <MapPin style={{ width: '12px', height: '12px', marginRight: '4px', flexShrink: 0 }} />
-                      <span style={{
-                        fontSize: '12px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {item.regionName || item.addr1 || '위치 정보 없음'}
-                        {item.wardName && item.wardName !== item.regionName && (
-                          <span> {item.wardName}</span>
+                      <img
+                        src={getImageUrl(item.firstImage || item.firstimage)}
+                        alt={item.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.3s ease'
+                        }}
+                        onError={handleImageError}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'scale(1)';
+                        }}
+                      />
+                      
+                      {/* 찜 버튼 */}
+                      <button
+                        onClick={(e) => toggleBookmark(item, e)}
+                        disabled={isBookmarkLoading}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: isBookmarkLoading ? 
+                            'rgba(255, 255, 255, 0.7)' : 
+                            'rgba(255, 255, 255, 0.9)',
+                          borderRadius: '50%',
+                          border: 'none',
+                          cursor: isBookmarkLoading ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.3s ease',
+                          opacity: isBookmarkLoading ? 0.7 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isBookmarkLoading) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                            e.target.style.transform = 'scale(1.1)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isBookmarkLoading) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                            e.target.style.transform = 'scale(1)';
+                          }
+                        }}
+                      >
+                        {isBookmarkLoading ? (
+                          <span style={{ fontSize: '14px' }}>⏳</span>
+                        ) : (
+                          <Heart 
+                            style={{ 
+                              width: '16px', 
+                              height: '16px', 
+                              color: isBookmarked ? '#ef4444' : '#6b7280',
+                              fill: isBookmarked ? '#ef4444' : 'none'
+                            }} 
+                          />
                         )}
-                      </span>
+                      </button>
                     </div>
 
-                    {/* 통계 정보 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {/* 별점과 좋아요 */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
+                    {/* 콘텐츠 섹션 */}
+                    <div style={{ padding: '12px' }}>
+                      {/* 제목 */}
+                      <h3 style={{
+                        fontWeight: '600',
+                        fontSize: '16px',
+                        color: '#1f2937',
+                        marginBottom: '4px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        transition: 'color 0.3s ease'
                       }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: '#eab308'
-                        }}>
-                          <Star style={{ width: '12px', height: '12px', marginRight: '4px', fill: 'currentColor' }} />
-                          <span style={{ fontSize: '12px', fontWeight: '500' }}>
-                            {item.rating ? item.rating.toFixed(1) : '0.0'}
-                          </span>
-                          <span style={{ fontSize: '10px', color: '#6b7280', marginLeft: '2px' }}>
-                            ({formatNumber(item.reviewCount || 0)})
-                          </span>
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: '#ef4444'
-                        }}>
-                          <Heart style={{ width: '12px', height: '12px', marginRight: '4px' }} />
-                          <span style={{ fontSize: '12px' }}>{formatNumber(item.likeCount || 0)}</span>
-                        </div>
-                      </div>
+                        {item.title || '제목 없음'}
+                      </h3>
                       
-                      {/* 조회수 */}
+                      {/* 위치 */}
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        color: '#6b7280'
+                        color: '#6b7280',
+                        marginBottom: '8px'
                       }}>
-                        <Eye style={{ width: '12px', height: '12px', marginRight: '4px' }} />
-                        <span style={{ fontSize: '12px' }}>
-                          {formatNumber(item.viewCount || 0)} views
+                        <MapPin style={{ width: '12px', height: '12px', marginRight: '4px', flexShrink: 0 }} />
+                        <span style={{
+                          fontSize: '12px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {item.regionName || item.addr1 || '위치 정보 없음'}
+                          {item.wardName && item.wardName !== item.regionName && (
+                            <span> {item.wardName}</span>
+                          )}
                         </span>
+                      </div>
+
+                      {/* 통계 정보 */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {/* 별점과 좋아요 */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#eab308'
+                          }}>
+                            <Star style={{ width: '12px', height: '12px', marginRight: '4px', fill: 'currentColor' }} />
+                            <span style={{ fontSize: '12px', fontWeight: '500' }}>
+                              {item.rating ? item.rating.toFixed(1) : '0.0'}
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#6b7280', marginLeft: '2px' }}>
+                              ({formatNumber(item.reviewCount || 0)})
+                            </span>
+                          </div>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#ef4444'
+                          }}>
+                            <Heart style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+                            <span style={{ fontSize: '12px' }}>{formatNumber(item.likeCount || 0)}</span>
+                          </div>
+                        </div>
+                        
+                        {/* 조회수 */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#6b7280'
+                        }}>
+                          <Eye style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+                          <span style={{ fontSize: '12px' }}>
+                            {formatNumber(item.viewCount || 0)} views
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* 반응형 스타일 */}
-      <style>
-        {`
-          .recent-liked-container {
-            position: relative;
-            width: 100%;
-          }
-
-          .recent-liked-cards-wrapper {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-            justify-content: flex-start;
-          }
-
-          .recent-liked-card {
-            flex: 1;
-            min-width: 200px;
-            max-width: 240px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s ease;
-          }
-
-          .recent-liked-card:hover {
-            transform: translateY(-4px);
-            z-index: 10;
-          }
-
-          /* 모바일 스타일 */
-          @media (max-width: 768px) {
-            .recent-liked-cards-wrapper {
-              overflow-x: auto;
-              scroll-snap-type: x mandatory;
-              scrollbar-width: none;
-              -ms-overflow-style: none;
-              justify-content: flex-start;
-              padding: 0 20px;
-              gap: 16px;
+        {/* 반응형 스타일 */}
+        <style>
+          {`
+            .recent-liked-container {
+              position: relative;
+              width: 100%;
             }
 
-            .recent-liked-cards-wrapper::-webkit-scrollbar {
-              display: none;
+            .recent-liked-cards-wrapper {
+              display: flex;
+              gap: 20px;
+              width: 100%;
+              justify-content: flex-start;
             }
 
             .recent-liked-card {
-              flex: none;
-              min-width: 280px;
-              max-width: 280px;
-              scroll-snap-align: start;
+              flex: 1;
+              min-width: 200px;
+              max-width: 240px;
+              cursor: pointer;
+              position: relative;
+              transition: all 0.3s ease;
             }
 
             .recent-liked-card:hover {
-              transform: none;
+              transform: translateY(-4px);
+              z-index: 10;
             }
-          }
 
-          /* 더 작은 모바일 */
-          @media (max-width: 480px) {
-            .recent-liked-cards-wrapper {
-              padding: 0 16px;
-              gap: 12px;
-            }
-            
-            .recent-liked-card {
-              min-width: 260px;
-              max-width: 260px;
-            }
-          }
+            /* 모바일 스타일 */
+            @media (max-width: 768px) {
+              .recent-liked-cards-wrapper {
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                justify-content: flex-start;
+                padding: 0 20px;
+                gap: 16px;
+              }
 
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
+              .recent-liked-cards-wrapper::-webkit-scrollbar {
+                display: none;
+              }
+
+              .recent-liked-card {
+                flex: none;
+                min-width: 280px;
+                max-width: 280px;
+                scroll-snap-align: start;
+              }
+
+              .recent-liked-card:hover {
+                transform: none;
+              }
             }
-            50% {
-              opacity: .5;
+
+            /* 더 작은 모바일 */
+            @media (max-width: 480px) {
+              .recent-liked-cards-wrapper {
+                padding: 0 16px;
+                gap: 12px;
+              }
+              
+              .recent-liked-card {
+                min-width: 260px;
+                max-width: 260px;
+              }
             }
-          }
-        `}
-      </style>
-    </div>
+
+            @keyframes pulse {
+              0%, 100% {
+                opacity: 1;
+              }
+              50% {
+                opacity: .5;
+              }
+            }
+          `}
+        </style>
+      </div>
+
+      {/* 확인 모달 */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancelRemove}
+        placeName={itemToRemove?.title || ''}
+      />
+    </>
   );
 };
 

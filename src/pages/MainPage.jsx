@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../component/fragments/Header.jsx';
 import Footer from '../component/fragments/Footer.jsx';
 import Calendar from '../component/Main/Calendar.jsx';
-import SearchFilterBar from '../component/Main/SearchFilterBar';
+
 
 /// CSS 컴포넌트 ///
 import {
@@ -25,7 +25,7 @@ const MainPage = () => {
                 <Main>
                     <MainContent>
                         <Top5Section/>
-                        <LikedPlacesSection></LikedPlacesSection>
+                        <LikedPlacesSection/>
                         <Calendar />
                         <ScrollToTop/>
                     </MainContent>

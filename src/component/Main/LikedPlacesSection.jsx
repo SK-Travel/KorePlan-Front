@@ -6,10 +6,7 @@ import RecentLikedPlaces from './RecentLikedPlaces'
 const LikedPlacesSection = () => {
   const navigate = useNavigate();
 
-  const handleViewAll = () => {
-    // 전체 찜 목록 페이지로 이동
-    navigate('/my-likes');
-  };
+ 
 
   return (
     <section style={{
