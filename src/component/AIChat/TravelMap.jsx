@@ -40,6 +40,21 @@ const TravelMap = ({ locations, days, region, startDate, endDate, onReset }) => 
         .filter(loc => Number(loc.day) === selectedDay)
         .sort((a, b) => a.order - b.order);
 
+    const lastDay = Math.max(...dayList);
+
+    const displayedLocations =
+    selectedDay === lastDay
+        ? [
+            {
+            title: '숙소 체크아웃',
+            regionName: '',
+            wardName: '',
+            isCheckout: true // 구분용 플래그
+            },
+            ...dayLocations
+        ]
+        : dayLocations;
+
     // 지도 및 마커/폴리라인 생성
     useEffect(() => {
         if (!mapRef.current || !window.naver || locations.length === 0) return;
@@ -463,23 +478,24 @@ const TravelMap = ({ locations, days, region, startDate, endDate, onReset }) => 
                 </div>
 
                 {/* 장소 목록 스크롤 영역 */}
+                {/* 장소 목록 스크롤 영역 */}
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
                     padding: isMobile ? '0 16px' : '0 20px',
                     maxHeight: isMobile ? '60vh' : 'none'
                 }}>
-                    {dayLocations.map((loc, idx) => (
+                    {displayedLocations.map((loc, idx) => (
                         <div
                             key={idx}
                             style={{
                                 display: 'flex',
                                 gap: isMobile ? '10px' : '12px',
                                 padding: isMobile ? '16px 0' : '20px 0',
-                                borderBottom: idx < dayLocations.length - 1 ? '1px solid #f0f0f0' : 'none',
+                                borderBottom: idx < displayedLocations.length - 1 ? '1px solid #f0f0f0' : 'none',
                                 cursor: 'pointer'
                             }}
-                            onClick={() => handleCardClick(loc)}
+                            onClick={() => !loc.isCheckout && handleCardClick(loc)}
                         >
                             {/* 순서 번호 */}
                             <div style={{
@@ -499,72 +515,90 @@ const TravelMap = ({ locations, days, region, startDate, endDate, onReset }) => 
                                 {idx + 1}
                             </div>
 
-                            {/* 이미지 */}
-                            <div style={{ flexShrink: 0 }}>
-                                {loc.firstimage ? (
-                                    <img
-                                        src={loc.firstimage}
-                                        alt={loc.title}
-                                        style={{
-                                            width: isMobile ? '60px' : '72px',
-                                            height: isMobile ? '60px' : '72px',
-                                            borderRadius: '8px',
-                                            objectFit: 'cover'
-                                        }}
-                                    />
-                                ) : (
-                                    <div style={{
-                                        width: isMobile ? '60px' : '72px',
-                                        height: isMobile ? '60px' : '72px',
-                                        backgroundColor: '#f7f7f7',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: isMobile ? '10px' : '11px',
-                                        color: '#717171',
-                                        textAlign: 'center'
-                                    }}>
-                                        이미지<br />없음
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* 정보 */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <h4 style={{
-                                    margin: '0 0 4px 0',
-                                    fontSize: isMobile ? '14px' : '16px',
+                            {/* 이미지 or 체크아웃 */}
+                            {loc.isCheckout ? (
+                                <div style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     fontWeight: '600',
-                                    color: '#222',
-                                    lineHeight: '1.3',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
+                                    color: '#333',
+                                    fontSize: isMobile ? '14px' : '16px'
                                 }}>
-                                    {loc.title}
-                                </h4>
-                                <p style={{
-                                    margin: '0 0 8px 0',
-                                    fontSize: isMobile ? '12px' : '14px',
-                                    color: '#717171',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    {loc.regionName} • {loc.wardName}
-                                </p>
-                                <span style={{
-                                    fontSize: isMobile ? '11px' : '12px',
-                                    color: '#0066CC',
-                                    textDecoration: 'underline'
-                                }}>
-                                    상세보기
-                                </span>
-                            </div>
+                                    🧳 {loc.title}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* 이미지 */}
+                                    <div style={{ flexShrink: 0 }}>
+                                        {loc.firstimage ? (
+                                            <img
+                                                src={loc.firstimage}
+                                                alt={loc.title}
+                                                style={{
+                                                    width: isMobile ? '60px' : '72px',
+                                                    height: isMobile ? '60px' : '72px',
+                                                    borderRadius: '8px',
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div style={{
+                                                width: isMobile ? '60px' : '72px',
+                                                height: isMobile ? '60px' : '72px',
+                                                backgroundColor: '#f7f7f7',
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontSize: isMobile ? '10px' : '11px',
+                                                color: '#717171',
+                                                textAlign: 'center'
+                                            }}>
+                                                이미지<br />없음
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 정보 */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <h4 style={{
+                                            margin: '0 0 4px 0',
+                                            fontSize: isMobile ? '14px' : '16px',
+                                            fontWeight: '600',
+                                            color: '#222',
+                                            lineHeight: '1.3',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            {loc.title}
+                                        </h4>
+                                        <p style={{
+                                            margin: '0 0 8px 0',
+                                            fontSize: isMobile ? '12px' : '14px',
+                                            color: '#717171',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            {loc.regionName} • {loc.wardName}
+                                        </p>
+                                        <span style={{
+                                            fontSize: isMobile ? '11px' : '12px',
+                                            color: '#0066CC',
+                                            textDecoration: 'underline'
+                                        }}>
+                                            상세보기
+                                        </span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
+
 
                 {/* 하단 버튼들 */}
                 <div style={{
