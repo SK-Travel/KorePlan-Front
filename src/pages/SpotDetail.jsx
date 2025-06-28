@@ -28,6 +28,9 @@ const SpotDetail = () => {
     const [localSpotData, setLocalSpotData] = useState(spotData);
     const [viewCountIncremented, setViewCountIncremented] = useState(false);
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
     // 페이지 진입 시 조회수 증가
     useEffect(() => {
         if (!contentId || viewCountIncremented) return;

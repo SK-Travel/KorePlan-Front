@@ -1,22 +1,27 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => { 
-    const [dataList, setDataList] = useState([]);
-    const [displayedData, setDisplayedData] = useState([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [message, setMessage] = useState('');
+const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadData, onNavigateToDetail, initialDataListState, onStateChange }) => { 
+    const [dataList, setDataList] = useState(initialDataListState?.dataList || []);
+    const [totalCount, setTotalCount] = useState(initialDataListState?.totalCount || 0);
+    const [message, setMessage] = useState(initialDataListState?.message || '');
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState(null);
-    const [hasMore, setHasMore] = useState(true);
+    
+    // 페이징 상태
+    const [currentPage, setCurrentPage] = useState(initialDataListState?.currentPage || 0);
+    const [totalPages, setTotalPages] = useState(initialDataListState?.totalPages || 0);
+    const [hasNext, setHasNext] = useState(initialDataListState?.hasNext || false);
+    const [hasPrevious, setHasPrevious] = useState(initialDataListState?.hasPrevious || false);
+    
     const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-    const [bookmarkLoading, setBookmarkLoading] = useState(new Set()); // 찜 처리 중인 아이템들
-    const [selectedSort, setSelectedSort] = useState('SCORE'); // ✅ 내부에서 관리
+    const [bookmarkLoading, setBookmarkLoading] = useState(new Set());
+    const [selectedSort, setSelectedSort] = useState(initialDataListState?.selectedSort || 'SCORE');
     const navigate = useNavigate();
-    const ITEMS_PER_PAGE = 12;
-
+    
+    const PAGE_SIZE = 12;
     const API_BASE_URL = '/api/region-list';
     const LIKE_API_BASE_URL = '/api/like';
 
@@ -25,14 +30,63 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         loadUserLikes();
     }, []);
 
-    // ✅ selectedSort 의존성 추가
+    // ✅ 상태가 변경될 때마다 부모에게 알려주기 (onStateChange 의존성 제거)
     useEffect(() => {
-        if (selectedRegion && selectedTheme) {
-            resetAndLoadData();
+        if (onStateChange) {
+            const currentState = {
+                dataList,
+                totalCount,
+                currentPage,
+                totalPages,
+                hasNext,
+                hasPrevious,
+                selectedSort,
+                message
+            };
+            onStateChange(currentState);
         }
-    }, [selectedRegion, selectedWard, selectedTheme, selectedSort]);
+    }, [dataList, totalCount, currentPage, totalPages, hasNext, hasPrevious, selectedSort, message]); // onStateChange 제거
 
-    // ✅ 정렬 변경 핸들러 추가
+    // ✅ 초기 상태가 있으면 복원, 없으면 새로 조회
+    useEffect(() => {
+        if (shouldLoadData && selectedRegion && selectedTheme) {
+            // 복원할 데이터가 있는지 확인
+            const hasRestoredData = initialDataListState?.dataList?.length > 0;
+            
+            if (hasRestoredData) {
+                console.log('🔄 기존 데이터 복원, API 호출 안함:', {
+                    count: initialDataListState.dataList.length,
+                    page: initialDataListState.currentPage + 1,
+                    total: initialDataListState.totalCount
+                });
+                
+                // 찜 상태만 다시 확인
+                if (initialDataListState.dataList.length > 0) {
+                    const dataIds = initialDataListState.dataList.map(item => item.id).filter(id => id);
+                    if (dataIds.length > 0) {
+                        checkLikeStatus(dataIds);
+                    }
+                }
+            } else {
+                console.log('🔄 새로운 조회 시작');
+                resetAndLoadFirstPage();
+            }
+        }
+    }, [shouldLoadData]); // shouldLoadData만 의존성으로 설정
+
+    // ✅ 정렬 변경 시에만 새로 조회 (복원된 데이터가 있어도 정렬이 다르면 새로 조회)
+    useEffect(() => {
+        if (shouldLoadData && selectedRegion && selectedTheme && dataList.length > 0) {
+            // 현재 정렬과 초기 정렬이 다르면 새로 조회
+            const initialSort = initialDataListState?.selectedSort || 'SCORE';
+            if (selectedSort !== initialSort) {
+                console.log('📊 정렬 변경으로 인한 첫 페이지 재로드:', selectedSort);
+                resetAndLoadFirstPage();
+            }
+        }
+    }, [selectedSort]);
+
+    // 정렬 변경 핸들러
     const handleSortChange = (sortType) => {
         console.log('📊 정렬 변경:', sortType);
         setSelectedSort(sortType);
@@ -54,7 +108,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         try {
             const response = await fetch(`${LIKE_API_BASE_URL}/my-likes`, {
                 method: 'GET',
-                credentials: 'include', // 세션 쿠키 포함
+                credentials: 'include',
             });
 
             if (response.ok) {
@@ -84,7 +138,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.code === 200 && result.likeStatusMap) {
-                    // likeStatusMap에서 true인 항목들만 찜 목록에 추가
                     const likedIds = Object.entries(result.likeStatusMap)
                         .filter(([id, isLiked]) => isLiked)
                         .map(([id]) => parseInt(id));
@@ -98,62 +151,50 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
     };
 
-    const resetAndLoadData = () => {
+    // 첫 페이지 로드 (기존 데이터 초기화)
+    const resetAndLoadFirstPage = () => {
         setDataList([]);
-        setDisplayedData([]);
-        setHasMore(true);
-        loadData();
+        setCurrentPage(0);
+        setTotalPages(0);
+        setHasNext(false);
+        setHasPrevious(false);
+        setError(null);
+        loadData(0, true); // 첫 페이지 로드, 기존 데이터 대체
     };
 
+    // 다음 페이지 로드 ("더보기" 버튼)
     const loadMoreData = () => {
-        if (loadingMore || !hasMore) return;
+        if (loadingMore || !hasNext) return;
 
-        const currentLength = displayedData.length;
-        const remainingData = dataList.slice(currentLength, currentLength + ITEMS_PER_PAGE);
-
-        console.log('🔄 더보기 버튼 클릭:', {
-            currentLength,
-            dataListLength: dataList.length,
-            remainingDataLength: remainingData.length,
-            hasMore,
-            loadingMore
-        });
-
-        if (remainingData.length === 0) {
-            console.log('❌ 더 이상 로드할 데이터 없음');
-            setHasMore(false);
-            return;
-        }
-
-        setLoadingMore(true);
-
-        setTimeout(() => {
-            setDisplayedData(prev => {
-                const newData = [...prev, ...remainingData];
-                console.log('✅ 새 데이터 추가됨:', newData.length);
-                return newData;
-            });
-            setLoadingMore(false);
-
-            if (currentLength + remainingData.length >= dataList.length) {
-                console.log('🏁 모든 데이터 로드 완료');
-                setHasMore(false);
-            }
-        }, 300);
+        console.log('🔄 더보기 버튼 클릭 - 다음 페이지:', currentPage + 1);
+        loadData(currentPage + 1, false); // 다음 페이지 로드, 기존 데이터에 추가
     };
 
-    const loadData = async () => {
+    // ✅ 핵심: 깔끔해진 데이터 로드 함수
+    const loadData = async (page = 0, replaceData = true) => {
         try {
-            setLoading(true);
+            if (replaceData) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
             setError(null);
 
+            // ✅ 단순한 파라미터 구성
             const params = new URLSearchParams();
             params.append('region', selectedRegion || '전국');
             params.append('theme', selectedTheme || '관광지');
-            params.append('sort', selectedSort || 'SCORE'); // ✅ 정렬 파라미터 추가
+            params.append('sort', selectedSort || 'SCORE');
+            params.append('page', page.toString());
+            params.append('size', PAGE_SIZE.toString());
 
-            if (selectedWard && selectedWard !== '전체' && selectedWard !== '') {
-                params.append('ward', selectedWard);
+            // 구/군 선택이 있는 경우에만 추가
+            if (selectedWard && Array.isArray(selectedWard) && selectedWard.length > 0) {
+                selectedWard.forEach(ward => {
+                    if (ward && ward !== '전체') {
+                        params.append('ward', ward);
+                    }
+                });
             }
 
             console.log('🔍 API 요청:', `${API_BASE_URL}/filter?${params.toString()}`);
@@ -169,13 +210,21 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
 
             if (data.success !== false) {
                 const newDataList = data.dataList || [];
-                console.log('📝 받은 데이터 샘플:', newDataList[0]);
                 
-                setDataList(newDataList);
-                setDisplayedData(newDataList.slice(0, ITEMS_PER_PAGE));
+                // 페이징 정보 업데이트
+                setCurrentPage(data.currentPage || 0);
+                setTotalPages(data.totalPages || 0);
+                setHasNext(data.hasNext || false);
+                setHasPrevious(data.hasPrevious || false);
                 setTotalCount(data.totalCount || 0);
                 setMessage(data.message || '데이터를 불러왔습니다.');
-                setHasMore(newDataList.length > ITEMS_PER_PAGE);
+
+                // 데이터 업데이트 (첫 페이지면 대체, 추가 페이지면 추가)
+                if (replaceData) {
+                    setDataList(newDataList);
+                } else {
+                    setDataList(prevList => [...prevList, ...newDataList]);
+                }
 
                 // 데이터 로드 후 찜 상태 확인
                 if (newDataList.length > 0) {
@@ -184,23 +233,51 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         await checkLikeStatus(dataIds);
                     }
                 }
+
+                console.log('✅ 페이징 로드 완료 - 페이지: {}/{}, 현재 표시: {}개, 전체: {}개', 
+                           data.currentPage + 1, data.totalPages, 
+                           replaceData ? newDataList.length : dataList.length + newDataList.length, 
+                           data.totalCount);
+
             } else {
                 throw new Error(data.message || '데이터 조회에 실패했습니다.');
             }
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error.message);
             setError(error.message);
-            setDataList([]);
-            setDisplayedData([]);
-            setTotalCount(0);
+            
+            if (replaceData) {
+                setDataList([]);
+                setCurrentPage(0);
+                setTotalPages(0);
+                setHasNext(false);
+                setHasPrevious(false);
+                setTotalCount(0);
+            }
             setMessage('데이터를 불러오는 중 오류가 발생했습니다.');
-            setHasMore(false);
         } finally {
-            setLoading(false);
+            if (replaceData) {
+                setLoading(false);
+            } else {
+                setLoadingMore(false);
+            }
         }
     };
 
+    // 카드 클릭 핸들러
     const handleCardClick = (item) => {
+        console.log('🔍 카드 클릭됨:', {
+            contentId: item.contentId,
+            title: item.title,
+            targetUrl: `/spot/${item.contentId}`
+        });
+        
+        // ✅ 상세 페이지로 이동하기 전에 상태 저장
+        if (onNavigateToDetail) {
+            onNavigateToDetail();
+        }
+        
+        console.log('🚀 navigate 호출 시작');
         navigate(`/spot/${item.contentId}`, {
             state: {
                 contentId: item.contentId,
@@ -209,35 +286,27 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                 spotData: item,
             }
         });
+        console.log('✅ navigate 호출 완료');
     };
 
-    // DB와 연동된 찜 버튼 토글
+    // 찜 버튼 토글
     const toggleBookmark = async (item, e) => {
         e.stopPropagation();
         
-        const itemId = item.id; // Primary Key인 id 사용 (Long 타입)
+        const itemId = item.id;
         const itemTitle = item.title || '항목';
         
-        console.log('🔍 디버그 - id:', itemId, 'type:', typeof itemId);
-        console.log('🔍 현재 bookmarkedItems:', Array.from(bookmarkedItems));
-        
-        // 이미 처리 중인 아이템이면 중복 요청 방지
         if (bookmarkLoading.has(itemId)) {
             return;
         }
 
         const isCurrentlyBookmarked = bookmarkedItems.has(itemId);
-        console.log('🔍 현재 북마크 상태:', isCurrentlyBookmarked);
-        
-        // 로딩 상태 추가
         setBookmarkLoading(prev => new Set([...prev, itemId]));
         
         try {
-            console.log(`🔄 찜 ${isCurrentlyBookmarked ? '제거' : '추가'} 요청 (id):`, itemId);
-            
             const response = await fetch(`${LIKE_API_BASE_URL}/${itemId}`, {
                 method: 'POST',
-                credentials: 'include', // 세션 쿠키 포함
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -248,14 +317,9 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             }
 
             const result = await response.json();
-            console.log('📊 찜 API 응답:', result);
 
             if (result.code === 200) {
-                
-                // Boolean 버전 (백엔드를 boolean으로 수정했을 때 사용)
-                const newIsBookmarked = result.likeStatus; // true/false 직접 사용
-                
-                console.log('📊 새로운 북마크 상태:', newIsBookmarked);
+                const newIsBookmarked = result.likeStatus;
                 
                 setBookmarkedItems(prev => {
                     const newSet = new Set(prev);
@@ -264,7 +328,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     } else {
                         newSet.delete(itemId);
                     }
-                    console.log('📊 업데이트된 bookmarkedItems:', Array.from(newSet));
                     return newSet;
                 });
                 
@@ -282,20 +345,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     )
                 );
                 
-                setDisplayedData(prevList => 
-                    prevList.map(dataItem => 
-                        dataItem.id === itemId
-                            ? { 
-                                ...dataItem, 
-                                likeCount: newIsBookmarked 
-                                    ? (dataItem.likeCount || 0) + 1 
-                                    : Math.max((dataItem.likeCount || 0) - 1, 0)
-                            }
-                            : dataItem
-                    )
-                );
-                
-                // 성공 토스트 메시지
                 setSnackbar({
                     open: true,
                     message: result.message || (newIsBookmarked ? 
@@ -304,33 +353,24 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     severity: 'success'
                 });
                 
-                console.log(`✅ 찜 ${newIsBookmarked ? '추가' : '제거'} 성공, likeCount 업데이트됨`);
-                
             } else if (result.code === 401) {
-                // 로그인 필요
                 setSnackbar({
                     open: true,
                     message: '로그인이 필요한 서비스입니다',
                     severity: 'info'
                 });
-                console.log('⚠️ 로그인 필요');
-                
             } else {
                 throw new Error(result.error_message || '찜 처리 중 오류가 발생했습니다');
             }
             
         } catch (error) {
             console.error('❌ 찜 처리 실패:', error);
-            
-            // 에러 토스트 메시지
             setSnackbar({
                 open: true,
                 message: '찜 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
                 severity: 'error'
             });
-            
         } finally {
-            // 로딩 상태 제거
             setBookmarkLoading(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(itemId);
@@ -339,12 +379,11 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
     };
 
-    // 스낵바 닫기
+    // 유틸리티 함수들
     const handleSnackbarClose = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
     };
 
-    // 숫자 포맷팅
     const formatNumber = (num) => {
         if (!num) return '0';
         if (num >= 1000) {
@@ -353,7 +392,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         return num.toLocaleString();
     };
 
-    // ✅ 정렬 타입별 표시명 반환 함수 추가
     const getSortDisplayName = (sortType) => {
         switch (sortType) {
             case 'SCORE': return '종합점수';
@@ -365,19 +403,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         }
     };
 
-    // 받은 데이터 확인용 (개발 중에만 사용)
-    const logItemData = (item) => {
-        console.log('📊 아이템 데이터:', {
-            id: item.id,
-            contentId: item.contentId,
-            title: item.title,
-            viewCount: item.viewCount,
-            likeCount: item.likeCount,
-            rating: item.rating,
-            reviewCount: item.reviewCount
-        });
-    };
-
+    // 이미지 관련 함수들
     const getImageUrl = (imageUrl) => {
         if (!imageUrl || imageUrl.trim() === '') {
             return createPlaceholderImage();
@@ -412,6 +438,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         e.target.src = createPlaceholderImage();
     };
 
+    // 스타일 정의
     const cardStyle = {
         width: '320px',
         backgroundColor: 'white',
@@ -428,6 +455,11 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
         transform: 'translateY(-8px)',
         boxShadow: '0 12px 30px rgba(0,0,0,0.15)'
     };
+
+    // shouldLoadData가 false인 경우 렌더링하지 않음
+    if (!shouldLoadData) {
+        return null;
+    }
 
     if (loading) {
         return (
@@ -449,7 +481,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     fontSize: '14px',
                     color: '#bdc3c7'
                 }}>
-                    {selectedRegion} {selectedWard && selectedWard !== '전체' ? `> ${selectedWard}` : ''}  {selectedTheme} ({getSortDisplayName(selectedSort)} 순)
+                    {selectedRegion} {selectedWard && Array.isArray(selectedWard) && selectedWard.length > 0 ? `> ${selectedWard.join(', ')}` : ''}  {selectedTheme} ({getSortDisplayName(selectedSort)} 순)
                 </div>
             </div>
         );
@@ -486,7 +518,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     {error}
                 </div>
                 <button
-                    onClick={loadData}
+                    onClick={() => loadData(0, true)}
                     style={{
                         padding: '10px 20px',
                         backgroundColor: '#3498db',
@@ -513,63 +545,68 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
             {/* 결과 헤더 + 정렬 셀렉터 */}
-            
-
-{/* 결과 헤더 */}
-<div style={{
-    marginBottom: '25px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'column',
-    gap: '20px'
-}}>
-    {/* 결과 정보 */}
-    <div style={{
-        padding: '20px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '12px',
-        border: '1px solid #e9ecef',
-        textAlign: 'center',
-        maxWidth: '600px'
-    }}>
-        <div style={{
-            fontSize: '18px',
-            color: '#34495e',
-            lineHeight: '1.5'
-        }}>
-            선택된 지역의 <span style={{ color: '#3498db', fontWeight: 'bold' }}>{selectedTheme}</span>{' '}
-            <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>{totalCount.toLocaleString()}개</span>를{' '}
-            <select
-                value={selectedSort}
-                onChange={(e) => handleSortChange(e.target.value)}
-                style={{
-                    display: 'inline-block',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    backgroundColor: 'white',
-                    color: '#f39c12',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    margin: '0 4px'
-                }}
-            >
-                <option value="SCORE">종합점수 순</option>
-                <option value="VIEW_COUNT">조회수 순</option>
-                <option value="LIKE_COUNT">찜수 순</option>
-                <option value="RATING">평점 순</option>
-                <option value="REVIEW_COUNT">리뷰수 순</option>
-            </select>
-            으로 조회하였습니다.
-        </div>
-    </div>
-</div>
+            <div style={{
+                marginBottom: '25px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '20px'
+            }}>
+                {/* 결과 정보 */}
+                <div style={{
+                    padding: '20px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '12px',
+                    border: '1px solid #e9ecef',
+                    textAlign: 'center',
+                    maxWidth: '600px'
+                }}>
+                    <div style={{
+                        fontSize: '18px',
+                        color: '#34495e',
+                        lineHeight: '1.5'
+                    }}>
+                        선택된 지역의 <span style={{ color: '#3498db', fontWeight: 'bold' }}>{selectedTheme}</span>{' '}
+                        <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>{totalCount.toLocaleString()}개</span>를{' '}
+                        <select
+                            value={selectedSort}
+                            onChange={(e) => handleSortChange(e.target.value)}
+                            style={{
+                                display: 'inline-block',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #ddd',
+                                backgroundColor: 'white',
+                                color: '#f39c12',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                margin: '0 4px'
+                            }}
+                        >
+                            <option value="SCORE">종합점수 순</option>
+                            <option value="VIEW_COUNT">조회수 순</option>
+                            <option value="LIKE_COUNT">찜수 순</option>
+                            <option value="RATING">평점 순</option>
+                            <option value="REVIEW_COUNT">리뷰수 순</option>
+                        </select>
+                        으로 조회하였습니다.
+                    </div>
+                    {/* 페이징 정보 표시 */}
+                    <div style={{
+                        fontSize: '14px',
+                        color: '#7f8c8d',
+                        marginTop: '10px'
+                    }}>
+                        현재 {dataList.length}개 표시 중 (페이지 {currentPage + 1}/{totalPages})
+                    </div>
+                </div>
+            </div>
 
             {/* 데이터 카드 목록 */}
-            {displayedData.length > 0 ? (
+            {dataList.length > 0 ? (
                 <>
                     <div style={{
                         display: 'flex',
@@ -577,15 +614,10 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         gap: '20px',
                         justifyContent: 'center',
                     }}>
-                        {displayedData.map((item, index) => {
-                            const itemId = item.id; // Long 타입 ID 그대로 사용
+                        {dataList.map((item, index) => {
+                            const itemId = item.id;
                             const isBookmarked = bookmarkedItems.has(itemId);
                             const isBookmarkLoading = bookmarkLoading.has(itemId);
-                            
-                            // 개발 중 데이터 확인 (첫 번째 아이템만)
-                            if (index === 0) {
-                                logItemData(item);
-                            }
                             
                             return (
                                 <div
@@ -780,8 +812,8 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                         })}
                     </div>
 
-                    {/* 더보기 버튼 */}
-                    {hasMore && (
+                    {/* 더보기 버튼 (hasNext가 true일 때만 표시) */}
+                    {hasNext && (
                         <div style={{
                             textAlign: 'center',
                             marginTop: '40px',
@@ -837,7 +869,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                                     </>
                                 ) : (
                                     <>
-                                        📄 더보기 ({dataList.length - displayedData.length}개 남음)
+                                        📄 더보기 (페이지 {currentPage + 2}/{totalPages})
                                     </>
                                 )}
                             </button>
@@ -845,7 +877,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     )}
 
                     {/* 모든 데이터 로드 완료 메시지 */}
-                    {!hasMore && displayedData.length > 0 && (
+                    {!hasNext && dataList.length > 0 && (
                         <div style={{
                             textAlign: 'center',
                             padding: '30px',
@@ -854,7 +886,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                             borderTop: '1px solid #ecf0f1',
                             marginTop: '30px'
                         }}>
-                            🎉 모든 데이터를 확인했습니다! ({displayedData.length}개)
+                            🎉 모든 데이터를 확인했습니다! (총 {totalCount.toLocaleString()}개 중 {dataList.length}개 표시)
                         </div>
                     )}
 
@@ -938,7 +970,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme }) => {
                     </div>
                     <div style={{ fontSize: '14px', color: '#bdc3c7' }}>
                         현재 조건: {selectedRegion}
-                        {selectedWard && selectedWard !== '전체' ? ` > ${selectedWard}` : ''}
+                        {selectedWard && Array.isArray(selectedWard) && selectedWard.length > 0 ? ` > ${selectedWard.join(', ')}` : ''}
                         {` > ${selectedTheme} (${getSortDisplayName(selectedSort)} 순)`}
                     </div>
                 </div>

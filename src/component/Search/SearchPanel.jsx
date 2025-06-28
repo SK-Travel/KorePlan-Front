@@ -28,15 +28,29 @@ const getThemeColor = (theme) => {
 // 개별 장소 카드 컴포넌트
 const PlaceCard = ({ place, isSelected, onHover, onClick, onBookmark }) => {
     const navigate = useNavigate();
+    const isFestival = place.theme === 15;
     const handleDetailClick = (e) => {
         e.stopPropagation();
-        navigate(`/spot/${place.contentId}`, {
-            state: {
-                contentId: place.contentId,
-                contentTypeId: place.theme,
-                spotData: place,
-            }
-        });
+
+        if (isFestival) {
+            // 축제인 경우
+            navigate(`/festival/${place.contentId}`, {
+                state: {
+                    contentId: place.contentId,
+                    contentTypeId: place.theme,
+                    festivalData: place,
+                }
+            });
+        } else {
+            // 일반 장소인 경우
+            navigate(`/spot/${place.contentId}`, {
+                state: {
+                    contentId: place.contentId,
+                    contentTypeId: place.theme,
+                    spotData: place,
+                }
+            });
+        }
     };
 
     const handleBookmarkClick = (e) => {
@@ -150,26 +164,28 @@ const PlaceCard = ({ place, isSelected, onHover, onClick, onBookmark }) => {
                         alignItems: 'center',
                         marginTop: '8px'
                     }}>
-                        {/* 찜하기 버튼 */}
-                        <button
-                            onClick={handleBookmarkClick}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2px',
-                                padding: '3px 6px',
-                                border: 'none',
-                                borderRadius: '4px',
-                                backgroundColor: place.isBookmarked ? '#ff6b6b' : '#f8f9fa',
-                                color: place.isBookmarked ? 'white' : '#666',
-                                fontSize: '11px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            {place.isBookmarked ? '💖' : '🤍'}
-                            찜
-                        </button>
+                        {/* 찜하기 버튼 - 축제가 아닐 때만 표시 */}
+                        {!isFestival && (
+                            <button
+                                onClick={handleBookmarkClick}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    padding: '3px 6px',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    backgroundColor: place.isBookmarked ? '#ff6b6b' : '#f8f9fa',
+                                    color: place.isBookmarked ? 'white' : '#666',
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {place.isBookmarked ? '💖' : '🤍'}
+                                찜
+                            </button>
+                        )}
 
                         {/* 상세보기 버튼 */}
                         <button
@@ -206,7 +222,7 @@ const PlaceCard = ({ place, isSelected, onHover, onClick, onBookmark }) => {
 const ThemeButton = ({ theme, isActive, isLoading, onClick }) => {
     const config = THEME_CONFIG[theme];
     if (!config) return null;
-    
+
     return (
         <button
             onClick={() => onClick(theme)}
@@ -267,10 +283,10 @@ const SearchPanel = ({
         const checkMobile = () => {
             setIsMobile(window.innerWidth <= 768);
         };
-        
+
         checkMobile();
         window.addEventListener('resize', checkMobile);
-        
+
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
@@ -466,7 +482,7 @@ const SearchPanel = ({
                         marginBottom: '16px'
                     }}>
                         {Object.keys(THEME_CONFIG).map(theme => (
-                            <ThemeButton 
+                            <ThemeButton
                                 key={theme}
                                 theme={parseInt(theme)}
                                 isActive={selectedTheme === parseInt(theme)}
@@ -484,8 +500,8 @@ const SearchPanel = ({
                                 disabled={isThemeLoading}
                                 style={{
                                     width: '100%',
-                                    background: isThemeLoading 
-                                        ? 'rgba(74, 144, 226, 0.1)' 
+                                    background: isThemeLoading
+                                        ? 'rgba(74, 144, 226, 0.1)'
                                         : 'linear-gradient(135deg, #4A90E2 0%, #357ABD 100%)',
                                     border: 'none',
                                     borderRadius: '12px',
@@ -615,7 +631,7 @@ const SearchPanel = ({
                                     onBookmark={onBookmark}
                                 />
                             ))}
-                            
+
                             {/* 더보기 로딩 - 테마 검색 모드 */}
                             {isThemeMode && isThemeLoading && themeSearchResults.length > 0 && (
                                 <div style={{
@@ -642,7 +658,7 @@ const SearchPanel = ({
                                     </div>
                                 </div>
                             )}
-                            
+
                             {/* 더보기 로딩 - 키워드 검색 모드 */}
                             {!isThemeMode && loading && searchResults.length > 0 && (
                                 <div style={{
@@ -669,7 +685,7 @@ const SearchPanel = ({
                                     </div>
                                 </div>
                             )}
-                            
+
                             {/* 더보기 버튼 - 테마 검색 모드 */}
                             {isThemeMode && hasMoreData && displayContent.items.length > 0 && !isThemeLoading && (
                                 <div style={{
@@ -745,7 +761,7 @@ const SearchPanel = ({
                                     </button>
                                 </div>
                             )}
-                            
+
                             {/* 마지막 페이지 메시지 */}
                             {displayContent.items.length > 0 && !hasMoreData && (
                                 <div style={{

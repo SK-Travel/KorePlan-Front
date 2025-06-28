@@ -160,10 +160,11 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                 }}>
                     선택된 테마: 
                     <strong style={{ 
-                        color: themes.find(t => t.key === selectedTheme)?.color || '#3498db',
+                        color: themes.find(t => t.key === selectedTheme)?.color || '#7f8c8d',
                         marginLeft: '8px',
                         fontSize: isMobile ? '15px' : '16px'
                     }}>
+                        {/* ✅ 수정: 빈 문자열일 때 미선택 상태 표시 */}
                         {themes.find(t => t.key === selectedTheme)?.label || '테마 미선택'}
                     </strong>
                 </div>
@@ -174,13 +175,24 @@ const ThemeSelector = ({ onThemeChange, selectedTheme }) => {
                     color: '#7f8c8d',
                     marginTop: '8px'
                 }}>
-                    {selectedTheme === '관광지' && '명소, 유적지, 자연경관 등의 관광 명소'}
-                    {selectedTheme === '문화시설' && '박물관, 미술관, 공연장 등의 문화 공간'}
-                    {selectedTheme === '레포츠' && '스포츠, 레저 활동 시설'}
-                    {selectedTheme === '숙박' && '호텔, 펜션, 게스트하우스 등 숙박 시설'}
-                    {selectedTheme === '쇼핑' && '쇼핑몰, 시장, 특산품 판매점'}
-                    {selectedTheme === '음식점' && '맛집, 카페, 전통 음식점'}
-                    {!selectedTheme && '원하는 테마를 선택해주세요'}
+                    {/* ✅ 수정: 빈 문자열 상태 처리 */}
+                    {!selectedTheme ? (
+                        '원하는 테마를 선택해주세요'
+                    ) : selectedTheme === '관광지' ? (
+                        '명소, 유적지, 자연경관 등의 관광 명소'
+                    ) : selectedTheme === '문화시설' ? (
+                        '박물관, 미술관, 공연장 등의 문화 공간'
+                    ) : selectedTheme === '레포츠' ? (
+                        '스포츠, 레저 활동 시설'
+                    ) : selectedTheme === '숙박' ? (
+                        '호텔, 펜션, 게스트하우스 등 숙박 시설'
+                    ) : selectedTheme === '쇼핑' ? (
+                        '쇼핑몰, 시장, 특산품 판매점'
+                    ) : selectedTheme === '음식점' ? (
+                        '맛집, 카페, 전통 음식점'
+                    ) : (
+                        '원하는 테마를 선택해주세요'
+                    )}
                 </div>
             </div>
         </div>

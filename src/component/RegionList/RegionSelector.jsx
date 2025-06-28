@@ -360,6 +360,7 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                                 color: selectedRegion ? '#2c3e50' : '#7f8c8d',
                                 fontWeight: selectedRegion ? '600' : '400'
                             }}>
+                                {/* ✅ 수정: 빈 문자열일 때 안내 문구 표시 */}
                                 {selectedRegion || '시/도를 선택하세요'}
                             </span>
                             <span style={{
@@ -465,6 +466,7 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                 }}>
                     <span>현재 선택:</span>
                     <strong style={{ color: '#3498db' }}>
+                        {/* ✅ 수정: 빈 문자열일 때 미선택 상태 표시 */}
                         {selectedRegion || '지역 미선택'}
                     </strong>
                     {selectedWards.length > 0 && (
@@ -501,7 +503,10 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
                     color: '#7f8c8d',
                     marginTop: '8px'
                 }}>
-                    {selectedRegion === '전국' ? (
+                    {/* ✅ 수정: 빈 문자열 상태 처리 */}
+                    {!selectedRegion ? (
+                        '지역을 선택해주세요'
+                    ) : selectedRegion === '전국' ? (
                         '전국 데이터를 표시합니다'
                     ) : selectedRegion && selectedWards.length === 0 ? (
                         `${selectedRegion} 전체 데이터를 표시합니다`
@@ -675,4 +680,3 @@ const RegionSelector = ({ onRegionChange, onWardChange, selectedRegion, selected
     );
 }
 export default RegionSelector;
-

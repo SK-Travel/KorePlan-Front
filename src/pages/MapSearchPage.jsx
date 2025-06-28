@@ -15,7 +15,7 @@ import SearchPanel from '../component/Search/SearchPanel.jsx';
 
 const MapSearch = () => {
     const navigationType = useNavigationType(); // 현재 진입 방식 (POP이면 뒤로가기)
-    
+
     // 기존 상태들
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTheme, setSelectedTheme] = useState(null);
@@ -25,7 +25,7 @@ const MapSearch = () => {
     const [loading, setLoading] = useState(false);
     const [isPanelOpen, setIsPanelOpen] = useState(true);
     const [currentLocation, setCurrentLocation] = useState(null);
-    
+
     // 테마 검색용 상태들
     const [themeSearchResults, setThemeSearchResults] = useState([]);
     const [isThemeLoading, setIsThemeLoading] = useState(false);
@@ -57,11 +57,11 @@ const MapSearch = () => {
             mapZoom: mapInstanceRef.current ? mapInstanceRef.current.getZoom() : null,
             timestamp: Date.now()
         };
-        
+
         sessionStorage.setItem("mapSearchState", JSON.stringify(mapSearchState));
         console.log('📱 지도 검색 상태 저장됨:', mapSearchState);
     }, [
-        searchQuery, selectedTheme, searchResults, selectedPlace, isPanelOpen, 
+        searchQuery, selectedTheme, searchResults, selectedPlace, isPanelOpen,
         currentLocation, themeSearchResults, isThemeMode, currentPage, hasMoreData
     ]);
 
@@ -71,7 +71,7 @@ const MapSearch = () => {
         if (saved) {
             try {
                 const savedState = JSON.parse(saved);
-                
+
                 // 5분 이내의 데이터만 복원 (선택사항)
                 const isRecent = Date.now() - savedState.timestamp < 5 * 60 * 1000;
                 if (!isRecent) {
@@ -193,7 +193,7 @@ const MapSearch = () => {
     const loadLikedPlaces = useCallback(async () => {
         try {
             console.log('찜한 장소 불러오기 시작...');
-            
+
             const response = await axios.get('/api/like/all-liked-places', {
                 withCredentials: true
             });
@@ -226,7 +226,7 @@ const MapSearch = () => {
                 }));
 
                 setLikedPlaces(likedPlaces);
-                
+
                 console.log('✅ 찜한 장소 불러오기 성공:', likedPlaces.length + '개');
             } else if (response.data.code === 401) {
                 console.warn('🔒 로그인이 필요합니다:', response.data.error_message);
@@ -242,9 +242,9 @@ const MapSearch = () => {
     const updateSearchResultsWithLikeStatus = useCallback(async (searchResults) => {
         try {
             const dataIds = searchResults.map(place => place.id).filter(id => id != null);
-            
+
             if (dataIds.length === 0) return searchResults;
-            
+
             const response = await axios.post('/api/like/check-status', {
                 dataIds: dataIds
             }, {
@@ -253,18 +253,18 @@ const MapSearch = () => {
 
             if (response.data.code === 200) {
                 const likeStatusMap = response.data.likeStatusMap;
-                
+
                 const updatedResults = searchResults.map(place => ({
                     ...place,
                     isBookmarked: likeStatusMap[place.id] || false
                 }));
-                
+
                 return updatedResults;
             }
         } catch (error) {
             console.warn('찜 상태 확인 실패, 기본값 사용:', error);
         }
-        
+
         return searchResults;
     }, []);
 
@@ -277,7 +277,7 @@ const MapSearch = () => {
         }
 
         setLoading(true);
-        
+
         // 새 검색인 경우에만 상태 초기화
         if (!isLoadMore) {
             setIsThemeMode(false);
@@ -286,10 +286,10 @@ const MapSearch = () => {
             setCurrentPage(0);
             setHasMoreData(true);
         }
-        
+
         try {
             console.log('키워드 검색 시작:', query, '페이지:', page);
-            
+
             const response = await axios.get('/api/map-search/keyword', {
                 params: {
                     keyword: query.trim(),
@@ -304,7 +304,7 @@ const MapSearch = () => {
 
             if (response.data.code === 200) {
                 const searchResults = response.data.result || [];
-                
+
                 const convertedResults = searchResults.map(item => ({
                     id: item.id,
                     contentId: item.dataId || item.contentId,
@@ -331,7 +331,7 @@ const MapSearch = () => {
                 }));
 
                 const resultsWithLikeStatus = await updateSearchResultsWithLikeStatus(convertedResults);
-                
+
                 if (isLoadMore) {
                     console.log('키워드 검색 더보기 모드');
                     setSearchResults(prev => {
@@ -358,7 +358,7 @@ const MapSearch = () => {
                 } else {
                     setHasMoreData(resultsWithLikeStatus.length >= 10);
                 }
-                
+
                 console.log('키워드 검색 성공:', resultsWithLikeStatus.length + '개 결과');
             } else {
                 console.error('키워드 검색 실패:', response.data.message);
@@ -386,7 +386,7 @@ const MapSearch = () => {
             isLoading: loading,
             resultCount: searchResults.length
         });
-        
+
         if (searchQuery.trim() && hasMoreData && !loading) {
             const nextPage = currentPage + 1;
             console.log(`키워드 검색 다음 페이지 요청: ${nextPage}`);
@@ -395,6 +395,8 @@ const MapSearch = () => {
     }, [searchQuery, currentPage, hasMoreData, loading, searchResults.length, handleSearch]);
 
     // 테마별 주변 장소 검색 API 호출
+    // MapSearch.jsx의 searchNearbyPlacesByTheme 함수 수정
+
     const searchNearbyPlacesByTheme = useCallback(async (theme, page = 0, isLoadMore = false, shouldToggle = true) => {
         try {
             console.log(`테마 ${theme} 검색 시작 - 페이지: ${page}, isLoadMore: ${isLoadMore}, shouldToggle: ${shouldToggle}`);
@@ -409,7 +411,7 @@ const MapSearch = () => {
             }
 
             setIsThemeLoading(true);
-            
+
             if (!isLoadMore) {
                 setSelectedTheme(theme);
                 setIsThemeMode(true);
@@ -428,9 +430,9 @@ const MapSearch = () => {
             console.log('API 호출 URL:', apiUrl);
 
             const response = await fetch(apiUrl);
-            
+
             console.log('API 응답 상태:', response.status);
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('API 에러 응답:', errorText);
@@ -442,36 +444,82 @@ const MapSearch = () => {
             console.log('페이징 정보:', data.pagination);
 
             if (data.code === 200) {
-                const results = data.result.map(place => ({
-                    id: place.id,
-                    contentId: place.contentId,
-                    title: place.title,
-                    addr1: place.addr1,
-                    addr2: place.addr2,
-                    mapy: parseFloat(place.mapy),
-                    mapx: parseFloat(place.mapx),
-                    firstImage: place.firstimage,
-                    firstImage2: place.firstimage2,
-                    tel: place.tel,
-                    theme: place.theme,
-                    regionName: place.regionName,
-                    regionCode: place.regionCode,
-                    wardName: place.wardName,
-                    wardCode: place.wardCode,
-                    viewCount: place.viewCount,
-                    likeCount: place.likeCount,
-                    reviewCount: place.reviewCount,
-                    rating: place.rating,
-                    score: place.score,
-                    isBookmarked: false
-                }));
+                const searchResults = data.result || [];
 
-                console.log(`받은 결과 개수: ${results.length}`);
+                // 축제인 경우와 일반 장소인 경우 데이터 변환 분기
+                const convertedResults = searchResults.map(item => {
+                    if (theme === 15) {
+                        // 축제 데이터 변환 (FestivalResponseDto 구조)
+                        return {
+                            id: item.contentId, // FestivalResponseDto는 Long id가 없으므로 contentId 사용
+                            contentId: item.contentId,
+                            title: item.title,
+                            addr1: item.addr1 || '',
+                            addr2: item.addr2 || '',
+                            mapy: parseFloat(item.mapy) || 37.5665,
+                            mapx: parseFloat(item.mapx) || 126.9780,
+                            firstImage: item.firstimage || '',
+                            firstImage2: item.firstimage2 || '',
+                            theme: 15, // 축제는 항상 15
+                            tel: '정보없음', // 축제는 전화번호 필드가 없음
+                            regionName: item.regionName || '',
+                            regionCode: item.regionCode,
+                            wardName: item.wardName || '',
+                            wardCode: item.wardCode,
+                            viewCount: item.viewCount || 0,
+                            likeCount: 0, // 축제는 찜 기능 없음
+                            reviewCount: 0, // 축제는 리뷰 기능 없음
+                            rating: 0, // 축제는 평점 기능 없음
+                            score: 0, // 축제는 점수 기능 없음
+                            isBookmarked: false, // 축제는 찜 기능 없음
+                            dist: 0,
+                            // 축제 전용 필드들 (상세페이지용)
+                            eventStartDate: item.eventStartDate,
+                            eventEndDate: item.eventEndDate,
+                            overview: item.overview,
+                            status: item.status,
+                            homepage: item.homepage,
+                            c2Name: item.c2Name
+                        };
+                    } else {
+                        // 일반 장소 데이터 변환 (기존 로직)
+                        return {
+                            id: item.id,
+                            contentId: item.dataId || item.contentId,
+                            title: item.title,
+                            addr1: item.addr1 || '',
+                            addr2: item.addr2 || '',
+                            mapy: parseFloat(item.mapy) || 37.5665,
+                            mapx: parseFloat(item.mapx) || 126.9780,
+                            firstImage: item.firstImage || item.firstimage || '',
+                            firstImage2: item.firstImage2 || item.firstimage2 || '',
+                            theme: item.theme || item.contentTypeId || 12,
+                            tel: item.tel || '',
+                            regionName: item.regionName || '',
+                            regionCode: item.regionCode,
+                            wardName: item.wardName || '',
+                            wardCode: item.wardCode,
+                            viewCount: item.viewCount || 0,
+                            likeCount: item.likeCount || 0,
+                            reviewCount: item.reviewCount || 0,
+                            rating: item.rating || 0,
+                            score: item.score || 0,
+                            isBookmarked: false,
+                            dist: item.dist || 0
+                        };
+                    }
+                });
 
-                const resultsWithLikeStatus = await updateSearchResultsWithLikeStatus(results);
-                
+                // 축제는 찜 상태 확인 불필요, 일반 장소만 확인
+                let resultsWithLikeStatus;
+                if (theme === 15) {
+                    resultsWithLikeStatus = convertedResults; // 축제는 찜 상태 확인 생략
+                } else {
+                    resultsWithLikeStatus = await updateSearchResultsWithLikeStatus(convertedResults);
+                }
+
                 if (isLoadMore) {
-                    console.log('더보기 모드: 기존 결과에 추가');
+                    console.log('테마 검색 더보기 모드');
                     setThemeSearchResults(prev => {
                         const existingIds = new Set(prev.map(item => item.id));
                         const uniqueNewResults = resultsWithLikeStatus.filter(item => !existingIds.has(item.id));
@@ -480,7 +528,7 @@ const MapSearch = () => {
                         return newResults;
                     });
                 } else {
-                    console.log('새 검색 모드: 결과 교체');
+                    console.log('새 테마 검색');
                     setThemeSearchResults(resultsWithLikeStatus);
                     if (resultsWithLikeStatus.length > 0) {
                         setSelectedPlace(resultsWithLikeStatus[0]);
@@ -490,17 +538,16 @@ const MapSearch = () => {
                 }
 
                 setCurrentPage(page);
-                
                 if (data.pagination) {
-                    console.log('페이징 정보 사용:', data.pagination);
+                    console.log('테마 검색 페이징:', data.pagination);
                     setHasMoreData(data.pagination.hasNext);
                 } else {
                     console.log('페이징 정보 없음, fallback 로직 사용');
-                    setHasMoreData(results.length >= 10);
+                    setHasMoreData(resultsWithLikeStatus.length >= 10);
                 }
 
-                console.log(`테마 검색 성공: ${results.length}개 결과 (페이지: ${page}), hasMore: ${data.pagination?.hasNext || results.length >= 10}`);
-                
+                console.log(`테마 검색 성공: ${resultsWithLikeStatus.length}개 결과 (페이지: ${page}), hasMore: ${data.pagination?.hasNext || resultsWithLikeStatus.length >= 10}`);
+
             } else {
                 throw new Error(data.message || '테마 검색에 실패했습니다.');
             }
@@ -525,7 +572,7 @@ const MapSearch = () => {
             isThemeLoading,
             resultCount: themeSearchResults.length
         });
-        
+
         if (selectedTheme && hasMoreData && !isThemeLoading) {
             const nextPage = currentPage + 1;
             console.log(`다음 페이지 요청: ${nextPage}`);
@@ -542,7 +589,7 @@ const MapSearch = () => {
     // 현재 위치에서 테마 재검색 (패널에서 호출)
     const handleRefreshThemeSearch = useCallback(() => {
         console.log('패널에서 테마 재검색 요청:', selectedTheme);
-        
+
         if (selectedTheme) {
             searchNearbyPlacesByTheme(selectedTheme, 0, false, false);
         }
@@ -552,7 +599,7 @@ const MapSearch = () => {
     const handleBookmark = async (dataId) => {
         try {
             console.log('찜하기 토글 시작:', dataId);
-            
+
             const response = await axios.post(`/api/like/${dataId}`, {}, {
                 withCredentials: true
             });
@@ -561,18 +608,18 @@ const MapSearch = () => {
 
             if (response.data.code === 200) {
                 const isLiked = response.data.likeStatus;
-                
-                setSearchResults(prev => 
-                    prev.map(place => 
-                        place.id === dataId 
+
+                setSearchResults(prev =>
+                    prev.map(place =>
+                        place.id === dataId
                             ? { ...place, isBookmarked: isLiked }
                             : place
                     )
                 );
 
-                setThemeSearchResults(prev => 
-                    prev.map(place => 
-                        place.id === dataId 
+                setThemeSearchResults(prev =>
+                    prev.map(place =>
+                        place.id === dataId
                             ? { ...place, isBookmarked: isLiked }
                             : place
                     )
@@ -587,7 +634,7 @@ const MapSearch = () => {
             }
         } catch (error) {
             console.error('❌ 찜하기 실패:', error);
-            
+
             if (error.response?.status === 401) {
                 alert('로그인이 필요한 기능입니다.');
             }
@@ -640,7 +687,7 @@ const MapSearch = () => {
                             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                         }}>
                             {/* 지도 컴포넌트 */}
-                            <NaverMap 
+                            <NaverMap
                                 selectedPlace={selectedPlace}
                                 searchResults={searchResults}
                                 themeSearchResults={themeSearchResults}
@@ -655,7 +702,7 @@ const MapSearch = () => {
                             />
 
                             {/* 검색바 컴포넌트 */}
-                            <SearchBar 
+                            <SearchBar
                                 searchQuery={searchQuery}
                                 onSearchQueryChange={handleSearchQueryChange}
                                 onSearch={handleSearch}
@@ -664,7 +711,7 @@ const MapSearch = () => {
                             />
 
                             {/* 검색 패널 컴포넌트 */}
-                            <SearchPanel 
+                            <SearchPanel
                                 isPanelOpen={isPanelOpen}
                                 onTogglePanel={togglePanel}
                                 selectedTheme={selectedTheme}
