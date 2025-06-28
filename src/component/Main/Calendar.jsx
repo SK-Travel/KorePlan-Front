@@ -141,7 +141,7 @@ export default function Calendar() {
     return (
         <Container maxWidth="lg">
             <Box sx={{ py: 4 }}>
-                {                /* 헤더 섹션 */}
+                {/* 헤더 섹션 */}
                 <Card 
                     elevation={3}
                     sx={{ 
@@ -307,14 +307,16 @@ export default function Calendar() {
                                     height: '32px',
                                     borderRadius: '50%',
                                     position: 'relative',
-                                    zIndex: 2,
+                                    zIndex: 3,
                                 },
+                                // 오늘 날짜 스타일 수정
                                 '& .rdrDayToday .rdrDayNumber': {
                                     border: '2px solid #1976d2 !important',
                                     color: '#1976d2 !important',
                                     fontWeight: '700 !important',
-                                    backgroundColor: 'white !important',
+                                    backgroundColor: 'transparent !important',
                                     textDecoration: 'none !important',
+                                    zIndex: 4,
                                 },
                                 '& .rdrDayToday .rdrDayNumber span': {
                                     textDecoration: 'none !important',
@@ -322,16 +324,18 @@ export default function Calendar() {
                                 '& .rdrDayPassive .rdrDayNumber': {
                                     color: theme.palette.text.disabled,
                                 },
+                                // 범위 내 날짜 배경 중앙 정렬
                                 '& .rdrDayInRange': {
                                     position: 'relative',
                                     backgroundColor: 'transparent !important',
                                     '&::before': {
                                         content: '""',
                                         position: 'absolute',
-                                        top: '4px',
-                                        bottom: '4px',
+                                        top: '80%',
+                                        transform: 'translateY(-50%)',
                                         left: '0',
                                         right: '0',
+                                        height: '32px',
                                         backgroundColor: 'rgba(25, 118, 210, 0.1) !important',
                                         zIndex: 1,
                                     },
@@ -339,55 +343,60 @@ export default function Calendar() {
                                         color: '#1976d2 !important',
                                         fontWeight: '500 !important',
                                         backgroundColor: 'transparent !important',
-                                        zIndex: 2,
+                                        zIndex: 3,
                                     },
                                 },
+                                // 시작 날짜 배경 중앙 정렬
                                 '& .rdrDayStartEdge': {
                                     position: 'relative',
                                     backgroundColor: 'transparent !important',
                                     '&::before': {
                                         content: '""',
                                         position: 'absolute',
-                                        top: '4px',
-                                        bottom: '4px',
+                                        top: '80%',
+                                        transform: 'translateY(-50%)',
                                         left: '4px',
                                         right: '0',
+                                        height: '32px',
                                         backgroundColor: '#1976d2 !important',
                                         borderTopLeftRadius: '16px !important',
                                         borderBottomLeftRadius: '16px !important',
                                         borderTopRightRadius: '0 !important',
                                         borderBottomRightRadius: '0 !important',
-                                        zIndex: 1,
+                                        zIndex: 2,
                                     },
                                     '& .rdrDayNumber': {
                                         color: 'white !important',
                                         fontWeight: '600 !important',
-                                        zIndex: 2,
+                                        zIndex: 3,
                                     },
                                 },
+                                // 끝 날짜 배경 중앙 정렬
                                 '& .rdrDayEndEdge': {
                                     position: 'relative',
                                     backgroundColor: 'transparent !important',
                                     '&::before': {
                                         content: '""',
                                         position: 'absolute',
-                                        top: '4px',
-                                        bottom: '4px',
+                                        top: '80%',
+                                        transform: 'translateY(-50%)',
                                         left: '0',
                                         right: '4px',
+                                        height: '32px',
                                         backgroundColor: '#1976d2 !important',
                                         borderTopLeftRadius: '0 !important',
                                         borderBottomLeftRadius: '0 !important',
                                         borderTopRightRadius: '16px !important',
                                         borderBottomRightRadius: '16px !important',
-                                        zIndex: 1,
+                                        zIndex: 2,
                                     },
                                     '& .rdrDayNumber': {
                                         color: 'white !important',
                                         fontWeight: '600 !important',
-                                        zIndex: 2,
+                                        zIndex: 3,
                                     },
                                 },
+                                // 시작과 끝이 같은 날인 경우
                                 '& .rdrDayStartEdge.rdrDayEndEdge': {
                                     '&::before': {
                                         left: '4px',
@@ -398,6 +407,23 @@ export default function Calendar() {
                                         borderTopRightRadius: '16px !important',
                                         borderBottomRightRadius: '16px !important',
                                     },
+                                },
+                                // 오늘 날짜가 선택된 범위에 포함된 경우 처리
+                                '& .rdrDayToday.rdrDayInRange .rdrDayNumber': {
+                                    backgroundColor: 'white !important',
+                                    border: '2px solid #1976d2 !important',
+                                    color: '#1976d2 !important',
+                                    fontWeight: '700 !important',
+                                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3) !important',
+                                    zIndex: 4,
+                                },
+                                '& .rdrDayToday.rdrDayStartEdge .rdrDayNumber, & .rdrDayToday.rdrDayEndEdge .rdrDayNumber': {
+                                    backgroundColor: '#1976d2 !important',
+                                    border: '2px solid white !important',
+                                    color: 'white !important',
+                                    fontWeight: '700 !important',
+                                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3) !important',
+                                    zIndex: 4,
                                 },
                                 '& .rdrDayHovered': {
                                     backgroundColor: '#f5f5f5',
@@ -437,8 +463,6 @@ export default function Calendar() {
                         </Box>
                     </CardContent>
                 </Card>
-
-                
 
                 {/* 액션 버튼들 */}
                 <Box 
