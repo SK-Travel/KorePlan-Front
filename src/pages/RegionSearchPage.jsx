@@ -29,7 +29,9 @@ const RegionSearchPage = () => {
         hasNext: false,
         hasPrevious: false,
         selectedSort: 'SCORE',
-        message: ''
+        message: '',
+        scrollPosition: 0, // ✅ 스크롤 위치 추가
+        searchConditions: null // ✅ 조회 조건 추가
     });
 
     // ✅ 브라우저 네비게이션 감지
@@ -45,7 +47,7 @@ const RegionSearchPage = () => {
             selectedWard,
             selectedTheme,
             shouldLoadData,
-            dataListState, // ✅ 데이터 상태도 함께 저장
+            dataListState, // ✅ 스크롤 위치와 조회 조건이 포함된 데이터 상태
             timestamp: Date.now()
         };
         
@@ -56,7 +58,8 @@ const RegionSearchPage = () => {
                 dataInfo: { 
                     count: searchData.dataListState.dataList.length, 
                     page: searchData.dataListState.currentPage,
-                    total: searchData.dataListState.totalCount 
+                    total: searchData.dataListState.totalCount,
+                    scroll: searchData.dataListState.scrollPosition || 0 // ✅ 스크롤 위치 로깅
                 }
             });
         } catch (error) {
@@ -85,7 +88,8 @@ const RegionSearchPage = () => {
                         dataInfo: {
                             count: searchData.dataListState?.dataList?.length || 0,
                             page: searchData.dataListState?.currentPage || 0,
-                            total: searchData.dataListState?.totalCount || 0
+                            total: searchData.dataListState?.totalCount || 0,
+                            scroll: searchData.dataListState?.scrollPosition || 0 // ✅ 스크롤 위치 로깅
                         }
                     });
                     
@@ -94,7 +98,7 @@ const RegionSearchPage = () => {
                     setSelectedTheme(searchData.selectedTheme || '');
                     setShouldLoadData(searchData.shouldLoadData || false);
                     
-                    // ✅ 데이터 상태도 복원
+                    // ✅ 데이터 상태도 복원 (스크롤 위치와 조회 조건 포함)
                     if (searchData.dataListState) {
                         setDataListState({
                             dataList: searchData.dataListState.dataList || [],
@@ -104,7 +108,9 @@ const RegionSearchPage = () => {
                             hasNext: searchData.dataListState.hasNext || false,
                             hasPrevious: searchData.dataListState.hasPrevious || false,
                             selectedSort: searchData.dataListState.selectedSort || 'SCORE',
-                            message: searchData.dataListState.message || ''
+                            message: searchData.dataListState.message || '',
+                            scrollPosition: searchData.dataListState.scrollPosition || 0, // ✅ 스크롤 위치 복원
+                            searchConditions: searchData.dataListState.searchConditions || null // ✅ 조회 조건 복원
                         });
                     }
                     
@@ -155,7 +161,9 @@ const RegionSearchPage = () => {
             hasNext: false,
             hasPrevious: false,
             selectedSort: 'SCORE',
-            message: ''
+            message: '',
+            scrollPosition: 0, // ✅ 스크롤 위치 초기화
+            searchConditions: null // ✅ 조회 조건 초기화
         });
     };
 
@@ -172,7 +180,8 @@ const RegionSearchPage = () => {
         console.log('📊 DataList 상태 업데이트:', {
             count: newState.dataList?.length || 0,
             page: newState.currentPage,
-            total: newState.totalCount
+            total: newState.totalCount,
+            scroll: newState.scrollPosition || 0 // ✅ 스크롤 위치 로깅
         });
         setDataListState(newState);
     }, []); // 빈 의존성 배열로 함수 고정
@@ -205,7 +214,7 @@ const RegionSearchPage = () => {
         setShouldLoadData(false); // 조회 상태 초기화
     };
 
-    // 조회 버튼 핸들러
+    // ✅ 조회 버튼 핸들러 - 무조건 새로운 조회 실행
     const handleSearch = () => {
         // 필수 조건 검증
         if (!selectedRegion) {
@@ -217,8 +226,33 @@ const RegionSearchPage = () => {
             return;
         }
         
-        console.log('🔍 조회 시작:', { selectedRegion, selectedWard, selectedTheme });
-        setShouldLoadData(true);
+        console.log('🔍 새로운 조회 시작 (기존 데이터 완전 초기화):', { selectedRegion, selectedWard, selectedTheme });
+        
+        // ✅ 핵심: DataCardList가 "복원할 데이터 없음"으로 인식하도록 빈 상태로 설정
+        const emptyDataState = {
+            dataList: [], // ✅ 빈 배열로 설정 → hasRestoredData = false
+            totalCount: 0,
+            currentPage: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrevious: false,
+            selectedSort: 'SCORE',
+            message: '',
+            scrollPosition: 0,
+            searchConditions: null
+        };
+        
+        // ✅ 1단계: 조회 상태 false로 설정
+        setShouldLoadData(false);
+        
+        // ✅ 2단계: 빈 상태로 설정 (이게 핵심!)
+        setDataListState(emptyDataState);
+        
+        // ✅ 3단계: 새로운 조회 시작
+        setTimeout(() => {
+            console.log('🚀 새로운 조회 실행 - 빈 상태에서 시작');
+            setShouldLoadData(true);
+        }, 50);
     };
 
     // 조회 조건 검증 함수
@@ -236,7 +270,7 @@ const RegionSearchPage = () => {
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [selectedRegion, selectedWard, selectedTheme, shouldLoadData]);
+    }, [selectedRegion, selectedWard, selectedTheme, shouldLoadData, dataListState]);
 
     return (
         <PageWrapper>
@@ -354,7 +388,7 @@ const RegionSearchPage = () => {
                                 selectedTheme={selectedTheme}
                                 shouldLoadData={shouldLoadData}
                                 onNavigateToDetail={handleNavigateToDetail}
-                                // ✅ 상태 복원을 위한 props 추가
+                                // ✅ 상태 복원을 위한 props 추가 (스크롤 위치와 조회 조건 포함)
                                 initialDataListState={dataListState}
                                 onStateChange={handleDataListStateChange}
                             />
@@ -405,6 +439,12 @@ const RegionSearchPage = () => {
                                             {selectedRegion && selectedTheme && ' | '}
                                             {selectedTheme && `테마: ${selectedTheme}`}
                                         </div>
+                                        {/* ✅ 복원된 데이터가 있을 때 추가 정보 표시 */}
+                                        {dataListState.dataList.length > 0 && (
+                                            <div style={{ fontSize: '11px', color: '#95a5a6', marginTop: '5px' }}>
+                                                검색 결과 {dataListState.dataList.length}개가 복원되었습니다
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
