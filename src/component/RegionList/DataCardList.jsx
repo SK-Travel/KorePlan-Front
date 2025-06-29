@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadData, onNavigateToDetail, initialDataListState, onStateChange }) => { 
@@ -19,6 +19,10 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [bookmarkLoading, setBookmarkLoading] = useState(new Set());
     const [selectedSort, setSelectedSort] = useState(initialDataListState?.selectedSort || 'SCORE');
+    
+    // ✅ 스크롤 위치 저장을 위한 ref
+    const containerRef = useRef(null);
+    
     const navigate = useNavigate();
     
     const PAGE_SIZE = 12;
@@ -30,7 +34,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
         loadUserLikes();
     }, []);
 
-    // ✅ 상태가 변경될 때마다 부모에게 알려주기 (onStateChange 의존성 제거)
+    // ✅ 상태가 변경될 때마다 부모에게 알려주기 + 스크롤 위치 저장
     useEffect(() => {
         if (onStateChange) {
             const currentState = {
@@ -41,24 +45,44 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
                 hasNext,
                 hasPrevious,
                 selectedSort,
-                message
+                message,
+                scrollPosition: containerRef.current?.scrollTop || 0,
+                searchConditions: {
+                    selectedRegion,
+                    selectedWard,
+                    selectedTheme,
+                    selectedSort
+                }
             };
             onStateChange(currentState);
         }
-    }, [dataList, totalCount, currentPage, totalPages, hasNext, hasPrevious, selectedSort, message]); // onStateChange 제거
+    }, [dataList, totalCount, currentPage, totalPages, hasNext, hasPrevious, selectedSort, message, selectedRegion, selectedWard, selectedTheme]);
 
-    // ✅ 초기 상태가 있으면 복원, 없으면 새로 조회
+    // ✅ 스크롤 위치 복원 함수
+    const restoreScrollPosition = (scrollPosition) => {
+        if (containerRef.current && scrollPosition > 0) {
+            setTimeout(() => {
+                containerRef.current.scrollTop = scrollPosition;
+                console.log('📜 스크롤 위치 복원:', scrollPosition);
+            }, 100);
+        }
+    };
+
+    // ✅ 메인 로직: 복원할 데이터가 있으면 복원, 없으면 새로 조회
     useEffect(() => {
         if (shouldLoadData && selectedRegion && selectedTheme) {
-            // 복원할 데이터가 있는지 확인
             const hasRestoredData = initialDataListState?.dataList?.length > 0;
             
+            console.log('🔍 DataCardList 조회 판단:', {
+                shouldLoadData,
+                hasRestoredData,
+                dataLength: initialDataListState?.dataList?.length || 0,
+                selectedRegion,
+                selectedTheme
+            });
+            
             if (hasRestoredData) {
-                console.log('🔄 기존 데이터 복원, API 호출 안함:', {
-                    count: initialDataListState.dataList.length,
-                    page: initialDataListState.currentPage + 1,
-                    total: initialDataListState.totalCount
-                });
+                console.log('🔄 기존 데이터 복원 경로 (뒤로가기)');
                 
                 // 찜 상태만 다시 확인
                 if (initialDataListState.dataList.length > 0) {
@@ -67,22 +91,33 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
                         checkLikeStatus(dataIds);
                     }
                 }
+                
+                // ✅ 스크롤 위치 복원
+                if (initialDataListState.scrollPosition) {
+                    restoreScrollPosition(initialDataListState.scrollPosition);
+                }
             } else {
-                console.log('🔄 새로운 조회 시작');
+                console.log('🔄 새로운 API 조회 경로 (조회 버튼 클릭)');
+                // ✅ 기존 상태 완전 초기화 후 새로 조회
+                setDataList([]);
+                setTotalCount(0);
+                setCurrentPage(0);
+                setTotalPages(0);
+                setHasNext(false);
+                setHasPrevious(false);
+                setMessage('');
+                setError(null);
+                
                 resetAndLoadFirstPage();
             }
         }
-    }, [shouldLoadData]); // shouldLoadData만 의존성으로 설정
+    }, [shouldLoadData]);
 
-    // ✅ 정렬 변경 시에만 새로 조회 (복원된 데이터가 있어도 정렬이 다르면 새로 조회)
+    // ✅ 정렬 변경 시 새로 조회
     useEffect(() => {
         if (shouldLoadData && selectedRegion && selectedTheme && dataList.length > 0) {
-            // 현재 정렬과 초기 정렬이 다르면 새로 조회
-            const initialSort = initialDataListState?.selectedSort || 'SCORE';
-            if (selectedSort !== initialSort) {
-                console.log('📊 정렬 변경으로 인한 첫 페이지 재로드:', selectedSort);
-                resetAndLoadFirstPage();
-            }
+            console.log('📊 정렬 변경으로 인한 첫 페이지 재로드:', selectedSort);
+            resetAndLoadFirstPage();
         }
     }, [selectedSort]);
 
@@ -153,13 +188,24 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
 
     // 첫 페이지 로드 (기존 데이터 초기화)
     const resetAndLoadFirstPage = () => {
+        console.log('🧹 모든 상태 초기화 후 첫 페이지 로드');
+        
+        // ✅ 모든 상태를 명시적으로 초기화
         setDataList([]);
+        setTotalCount(0);
         setCurrentPage(0);
         setTotalPages(0);
         setHasNext(false);
         setHasPrevious(false);
+        setMessage('');
         setError(null);
-        loadData(0, true); // 첫 페이지 로드, 기존 데이터 대체
+        setLoading(false);
+        setLoadingMore(false);
+        
+        // 잠시 후 첫 페이지 로드 (상태 초기화가 확실히 적용되도록)
+        setTimeout(() => {
+            loadData(0, true); // 첫 페이지 로드, 기존 데이터 대체
+        }, 50);
     };
 
     // 다음 페이지 로드 ("더보기" 버튼)
@@ -170,7 +216,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
         loadData(currentPage + 1, false); // 다음 페이지 로드, 기존 데이터에 추가
     };
 
-    // ✅ 핵심: 깔끔해진 데이터 로드 함수
+    // ✅ 데이터 로드 함수
     const loadData = async (page = 0, replaceData = true) => {
         try {
             if (replaceData) {
@@ -180,7 +226,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
             }
             setError(null);
 
-            // ✅ 단순한 파라미터 구성
             const params = new URLSearchParams();
             params.append('region', selectedRegion || '전국');
             params.append('theme', selectedTheme || '관광지');
@@ -188,7 +233,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
             params.append('page', page.toString());
             params.append('size', PAGE_SIZE.toString());
 
-            // 구/군 선택이 있는 경우에만 추가
             if (selectedWard && Array.isArray(selectedWard) && selectedWard.length > 0) {
                 selectedWard.forEach(ward => {
                     if (ward && ward !== '전체') {
@@ -211,7 +255,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
             if (data.success !== false) {
                 const newDataList = data.dataList || [];
                 
-                // 페이징 정보 업데이트
                 setCurrentPage(data.currentPage || 0);
                 setTotalPages(data.totalPages || 0);
                 setHasNext(data.hasNext || false);
@@ -221,12 +264,13 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
 
                 // 데이터 업데이트 (첫 페이지면 대체, 추가 페이지면 추가)
                 if (replaceData) {
-                    setDataList(newDataList);
+                    console.log('🔄 기존 데이터 완전 대체:', newDataList.length + '개');
+                    setDataList([...newDataList]); // ✅ 새 배열로 완전 대체
                 } else {
+                    console.log('➕ 기존 데이터에 추가:', newDataList.length + '개');
                     setDataList(prevList => [...prevList, ...newDataList]);
                 }
 
-                // 데이터 로드 후 찜 상태 확인
                 if (newDataList.length > 0) {
                     const dataIds = newDataList.map(item => item.id).filter(id => id);
                     if (dataIds.length > 0) {
@@ -272,7 +316,7 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
             targetUrl: `/spot/${item.contentId}`
         });
         
-        // ✅ 상세 페이지로 이동하기 전에 상태 저장
+        // ✅ 상세 페이지로 이동하기 전에 현재 스크롤 위치 저장
         if (onNavigateToDetail) {
             onNavigateToDetail();
         }
@@ -331,7 +375,6 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
                     return newSet;
                 });
                 
-                // 해당 아이템의 likeCount 실시간 업데이트
                 setDataList(prevList => 
                     prevList.map(dataItem => 
                         dataItem.id === itemId
@@ -537,13 +580,18 @@ const DataCardList = ({ selectedRegion, selectedWard, selectedTheme, shouldLoadD
     }
 
     return (
-        <div style={{
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }}>
+        <div 
+            ref={containerRef} // ✅ 스크롤 위치 추적을 위한 ref 추가
+            style={{
+                backgroundColor: 'white',
+                padding: '30px',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                maxHeight: '80vh',
+                overflowY: 'auto'
+            }}
+        >
             {/* 결과 헤더 + 정렬 셀렉터 */}
             <div style={{
                 marginBottom: '25px',
