@@ -31,6 +31,7 @@ const NaverMap = ({
     const infoWindowRef = useRef(null);
     const [userLocation, setUserLocation] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [originalCenter, setOriginalCenter] = useState(null); // 원래 중심점 저장용
 
     // 화면 크기 감지
     useEffect(() => {
@@ -125,11 +126,13 @@ const NaverMap = ({
                     }
                     
                     if (mapInstanceRef.current && window.naver) {
-                        mapInstanceRef.current.setCenter(new window.naver.maps.LatLng(lat, lng));
+                        const center = new window.naver.maps.LatLng(lat, lng);
+                        mapInstanceRef.current.setCenter(center);
+                        setOriginalCenter({ lat, lng });
                         
                         // 현재 위치 마커 생성
                         new window.naver.maps.Marker({
-                            position: new window.naver.maps.LatLng(lat, lng),
+                            position: center,
                             map: mapInstanceRef.current,
                             icon: {
                                 content: `
@@ -151,10 +154,76 @@ const NaverMap = ({
                 },
                 (error) => {
                     console.error('위치 정보를 가져올 수 없습니다:', error);
+                    // 위치 정보 실패 시 서울 시청을 원래 중심점으로 설정
+                    setOriginalCenter({ lat: 37.5665, lng: 126.9780 });
                 }
             );
+        } else {
+            // Geolocation을 지원하지 않는 경우 서울 시청을 원래 중심점으로 설정
+            setOriginalCenter({ lat: 37.5665, lng: 126.9780 });
         }
     }, [onCurrentLocationUpdate]);
+
+    // 데스크탑에서 패널 상태에 따른 지도 중심점 조정
+    const adjustMapCenterForPanel = useCallback(() => {
+        if (isMobile || !mapInstanceRef.current || !window.naver || !originalCenter) return;
+
+        const map = mapInstanceRef.current;
+        const currentCenter = map.getCenter();
+        
+        if (isPanelOpen) {
+            // 패널이 열렸을 때: 지도의 시각적 중심을 왼쪽으로 이동
+            // 400px 패널 너비의 절반만큼 왼쪽으로 이동 (약 200px = 지도 너비의 약 15-20%)
+            const mapSize = map.getSize();
+            const offsetPixels = 100; // 픽셀 단위로 왼쪽 이동량
+            
+            // 현재 중심점에서 픽셀 오프셋만큼 이동한 좌표 계산
+            const projection = map.getProjection();
+            const centerPoint = projection.fromCoordToOffset(currentCenter);
+            const newCenterPoint = new window.naver.maps.Point(
+                centerPoint.x - offsetPixels,
+                centerPoint.y
+            );
+            const newCenter = projection.fromOffsetToCoord(newCenterPoint);
+            
+            console.log('🗺️ 패널 열림 - 지도 중심을 왼쪽으로 이동:', {
+                original: { lat: currentCenter.lat(), lng: currentCenter.lng() },
+                adjusted: { lat: newCenter.lat(), lng: newCenter.lng() }
+            });
+            
+            map.setCenter(newCenter);
+        } else {
+            // 패널이 닫혔을 때: 원래 중심점으로 복원하거나 현재 중심점 유지
+            console.log('🗺️ 패널 닫힘 - 지도 중심 유지');
+            // 특별한 조정 없이 현재 상태 유지
+        }
+    }, [isMobile, isPanelOpen, originalCenter]);
+
+    // 패널 상태 변경에 따른 지도 중심점 조정
+    useEffect(() => {
+        if (!isMobile && mapInstanceRef.current) {
+            // 지도 리사이즈 후 중심점 조정
+            const adjustCenter = () => {
+                if (window.naver && mapInstanceRef.current) {
+                    try {
+                        // 지도 리사이즈 이벤트 트리거
+                        window.naver.maps.Event.trigger(mapInstanceRef.current, 'resize');
+                        
+                        // 중심점 조정
+                        setTimeout(() => {
+                            adjustMapCenterForPanel();
+                        }, 100);
+                    } catch (error) {
+                        console.error('지도 중심점 조정 실패:', error);
+                    }
+                }
+            };
+            
+            // 패널 애니메이션과 동기화하여 여러 번 조정
+            setTimeout(adjustCenter, 100);
+            setTimeout(adjustCenter, 350);
+        }
+    }, [isPanelOpen, isMobile, adjustMapCenterForPanel]);
 
     // 찜한 장소 마커 업데이트
     const updateLikedMarkersOnMap = useCallback((likedPlaces) => {
@@ -273,10 +342,12 @@ const NaverMap = ({
                 onPlaceSelect(place);
                 
                 // 클릭한 마커로 지도 센터 이동
-                mapInstanceRef.current.setCenter(
-                    new window.naver.maps.LatLng(place.mapy, place.mapx)
-                );
+                const newCenter = new window.naver.maps.LatLng(place.mapy, place.mapx);
+                mapInstanceRef.current.setCenter(newCenter);
                 mapInstanceRef.current.setZoom(13);
+                
+                // 원래 중심점 업데이트
+                setOriginalCenter({ lat: place.mapy, lng: place.mapx });
                 
                 // 정보창 표시
                 const content = `
@@ -369,10 +440,12 @@ const NaverMap = ({
                 console.log('검색 마커 클릭:', place.title);
                 onPlaceSelect(place);
                 
-                mapInstanceRef.current.setCenter(
-                    new window.naver.maps.LatLng(place.mapy, place.mapx)
-                );
+                const newCenter = new window.naver.maps.LatLng(place.mapy, place.mapx);
+                mapInstanceRef.current.setCenter(newCenter);
                 mapInstanceRef.current.setZoom(13);
+                
+                // 원래 중심점 업데이트
+                setOriginalCenter({ lat: place.mapy, lng: place.mapx });
                 
                 // 정보창 표시
                 const content = `
@@ -431,40 +504,16 @@ const NaverMap = ({
                 bounds.extend(new window.naver.maps.LatLng(place.mapy, place.mapx));
             });
             mapInstanceRef.current.fitBounds(bounds);
+            
+            // fitBounds 후 중심점 저장
+            setTimeout(() => {
+                if (mapInstanceRef.current) {
+                    const center = mapInstanceRef.current.getCenter();
+                    setOriginalCenter({ lat: center.lat(), lng: center.lng() });
+                }
+            }, 500);
         }
     }, [selectedPlace, onPlaceSelect, isMobile]);
-
-    // 패널 상태 변경 시 지도 리사이즈
-    useEffect(() => {
-        if (mapInstanceRef.current) {
-            const resizeMap = () => {
-                if (window.naver && mapInstanceRef.current) {
-                    try {
-                        window.naver.maps.Event.trigger(mapInstanceRef.current, 'resize');
-                        window.dispatchEvent(new Event('resize'));
-                        mapInstanceRef.current.getSize();
-                        
-                        const currentCenter = mapInstanceRef.current.getCenter();
-                        mapInstanceRef.current.setCenter(currentCenter);
-                        
-                        if (selectedPlace) {
-                            setTimeout(() => {
-                                mapInstanceRef.current.setCenter(
-                                    new window.naver.maps.LatLng(selectedPlace.mapy, selectedPlace.mapx)
-                                );
-                            }, 100);
-                        }
-                    } catch (error) {
-                        console.error('지도 리사이즈 실패:', error);
-                    }
-                }
-            };
-            
-            setTimeout(resizeMap, 100);
-            setTimeout(resizeMap, 350);
-            setTimeout(resizeMap, 500);
-        }
-    }, [isPanelOpen, selectedPlace]);
 
     // 찜한 장소 마커 업데이트
     useEffect(() => {
@@ -485,83 +534,29 @@ const NaverMap = ({
     // 선택된 장소 변경 시 지도 중심 이동
     useEffect(() => {
         if (selectedPlace && mapInstanceRef.current) {
-            mapInstanceRef.current.setCenter(
-                new window.naver.maps.LatLng(selectedPlace.mapy, selectedPlace.mapx)
-            );
+            const newCenter = new window.naver.maps.LatLng(selectedPlace.mapy, selectedPlace.mapx);
+            mapInstanceRef.current.setCenter(newCenter);
             mapInstanceRef.current.setZoom(13);
+            
+            // 선택된 장소를 원래 중심점으로 저장
+            setOriginalCenter({ lat: selectedPlace.mapy, lng: selectedPlace.mapx });
         }
     }, [selectedPlace]);
-
-    // 데스크탑용 현재 위치 버튼 스타일
-    const desktopLocationButtonStyle = {
-        position: 'absolute',
-        bottom: '20px',
-        right: isPanelOpen ? '420px' : '20px',
-        width: '50px',
-        height: '50px',
-        borderRadius: '50%',
-        border: 'none',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-        cursor: 'pointer',
-        zIndex: 996,
-        fontSize: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.3s ease',
-        color: '#4ECDC4'
-    };
-
-    // 모바일용 현재 위치 버튼 스타일
-    const mobileLocationButtonStyle = {
-        position: 'absolute',
-        bottom: isPanelOpen ? '75vh' : '20px',
-        right: '20px',
-        width: '45px',
-        height: '45px',
-        borderRadius: '50%',
-        border: 'none',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-        cursor: 'pointer',
-        zIndex: 996,
-        fontSize: '18px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.3s ease',
-        color: '#4ECDC4'
-    };
 
     return (
         <div style={{ 
             position: 'relative', 
             width: '100%', 
-            height: '100%',
-            // 모바일에서 패널이 열렸을 때 지도 하단 여백
-            paddingBottom: isMobile && isPanelOpen ? '70vh' : '0'
+            height: '100%'
         }}>
-            {/* 지도 컨테이너 */}
+            {/* 지도 컨테이너 - 항상 100% 크기 유지 */}
             <div 
                 ref={mapRef} 
                 style={{ 
                     width: '100%', 
-                    height: isMobile && isPanelOpen ? 'calc(100% - 70vh)' : '100%',
-                    transition: 'height 0.3s ease'
+                    height: '100%'
                 }}
             />
-            
-            {/* 현재 위치 버튼 */}
-            <button
-                onClick={getCurrentLocation}
-                style={isMobile ? mobileLocationButtonStyle : desktopLocationButtonStyle}
-                title="현재 위치로 이동"
-            >
-                📍
-            </button>
         </div>
     );
 };
