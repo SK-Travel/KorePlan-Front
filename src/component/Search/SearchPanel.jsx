@@ -1,5 +1,5 @@
 // component/Search/SearchPanel.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // 테마 설정
@@ -11,6 +11,13 @@ const THEME_CONFIG = {
     32: { icon: "🏨", label: "숙박", color: "#FF9FF3" },
     38: { icon: "🛍️", label: "쇼핑", color: "#54A0FF" },
     39: { icon: "🍽️", label: "음식점", color: "#5F27CD" }
+};
+
+// 모바일 바텀시트 3단계 높이 설정
+const MOBILE_HEIGHTS = {
+    MINIMIZED: 25,    // 최소화: 테마 버튼들만 보임 (25vh)
+    MEDIUM: 50,       // 중간: 테마 + 재검색 + 결과 일부 (50vh)
+    MAXIMIZED: 85     // 최대화: 전체 결과 리스트 (85vh)
 };
 
 // 테마에 따른 이름 반환 함수
@@ -56,11 +63,6 @@ const PlaceCard = ({ place, isSelected, onHover, onClick, onBookmark }) => {
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
         onBookmark(place.id);
-    };
-
-    const handleAddToTripClick = (e) => {
-        e.stopPropagation();
-        alert(`${place.title}을(를) 여행 계획에 추가했습니다!`);
     };
 
     return (
@@ -277,6 +279,11 @@ const SearchPanel = ({
     onRefreshThemeSearch
 }) => {
     const [isMobile, setIsMobile] = useState(false);
+    const [mobileHeight, setMobileHeight] = useState(MOBILE_HEIGHTS.MINIMIZED);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startY, setStartY] = useState(0);
+    const [startHeight, setStartHeight] = useState(MOBILE_HEIGHTS.MINIMIZED);
+    const panelRef = useRef(null);
 
     // 화면 크기 감지
     useEffect(() => {
@@ -289,6 +296,76 @@ const SearchPanel = ({
 
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // 드래그 시작
+    const handleDragStart = useCallback((e) => {
+        if (!isMobile) return;
+
+        setIsDragging(true);
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        setStartY(clientY);
+        setStartHeight(mobileHeight);
+
+        // 선택 방지
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    }, [isMobile, mobileHeight]);
+
+    // 드래그 중
+    const handleDragMove = useCallback((e) => {
+        if (!isDragging || !isMobile) return;
+
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        const deltaY = startY - clientY; // 위로 드래그하면 +, 아래로 드래그하면 -
+        const newHeight = Math.max(
+            MOBILE_HEIGHTS.MINIMIZED,
+            Math.min(MOBILE_HEIGHTS.MAXIMIZED, startHeight + (deltaY / window.innerHeight) * 100)
+        );
+
+        setMobileHeight(newHeight);
+        e.preventDefault();
+    }, [isDragging, isMobile, startY, startHeight]);
+
+    // 드래그 끝
+    const handleDragEnd = useCallback(() => {
+        if (!isDragging || !isMobile) return;
+
+        setIsDragging(false);
+        document.body.style.userSelect = '';
+
+        // 스냅 포인트로 이동
+        if (mobileHeight < (MOBILE_HEIGHTS.MINIMIZED + MOBILE_HEIGHTS.MEDIUM) / 2) {
+            setMobileHeight(MOBILE_HEIGHTS.MINIMIZED);
+        } else if (mobileHeight < (MOBILE_HEIGHTS.MEDIUM + MOBILE_HEIGHTS.MAXIMIZED) / 2) {
+            setMobileHeight(MOBILE_HEIGHTS.MEDIUM);
+        } else {
+            setMobileHeight(MOBILE_HEIGHTS.MAXIMIZED);
+        }
+    }, [isDragging, isMobile, mobileHeight]);
+
+    // 이벤트 리스너 등록
+    useEffect(() => {
+        if (!isMobile) return;
+
+        const handleMouseMove = (e) => handleDragMove(e);
+        const handleMouseUp = () => handleDragEnd();
+        const handleTouchMove = (e) => handleDragMove(e);
+        const handleTouchEnd = () => handleDragEnd();
+
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+        };
+    }, [isDragging, isMobile, handleDragMove, handleDragEnd]);
 
     // 장소 호버 처리
     const handlePlaceHover = (place) => {
@@ -372,21 +449,22 @@ const SearchPanel = ({
         flexDirection: 'column'
     };
 
-    // 모바일 스타일
+    // 모바일 오버레이 스타일
     const mobilePanelStyle = {
         position: 'fixed',
-        bottom: isPanelOpen ? 0 : '-70vh',
+        bottom: 0,
         left: 0,
         right: 0,
-        height: '70vh',
+        height: `${mobileHeight}vh`,
         backgroundColor: 'white',
-        boxShadow: isPanelOpen ? '0 -5px 20px rgba(0,0,0,0.1)' : 'none',
+        boxShadow: '0 -5px 20px rgba(0,0,0,0.15)',
         zIndex: 999,
-        transition: 'bottom 0.3s ease, box-shadow 0.3s ease',
+        transition: isDragging ? 'none' : 'height 0.3s ease',
         display: 'flex',
         flexDirection: 'column',
         borderTopLeftRadius: '20px',
-        borderTopRightRadius: '20px'
+        borderTopRightRadius: '20px',
+        overflow: 'hidden'
     };
 
     // 데스크탑 토글 버튼
@@ -412,51 +490,39 @@ const SearchPanel = ({
         color: '#333'
     };
 
-    // 모바일 토글 버튼
-    const mobileToggleStyle = {
-        position: 'fixed',
-        bottom: isPanelOpen ? '65vh' : '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '60px',
-        height: '40px',
-        borderRadius: '20px',
-        border: 'none',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-        cursor: 'pointer',
-        zIndex: 1002,
-        fontSize: '18px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.3s ease',
-        color: '#333'
-    };
-
     return (
         <>
-            {/* 패널 토글 버튼 */}
-            <button
-                onClick={onTogglePanel}
-                style={isMobile ? mobileToggleStyle : desktopToggleStyle}
-            >
-                {isMobile ? (isPanelOpen ? '⌄' : '⌃') : (isPanelOpen ? '>' : '<')}
-            </button>
+            {/* 데스크탑 토글 버튼만 표시 (모바일에서는 드래그로 제어) */}
+            {!isMobile && (
+                <button
+                    onClick={onTogglePanel}
+                    style={desktopToggleStyle}
+                >
+                    {isPanelOpen ? '>' : '<'}
+                </button>
+            )}
 
-            {/* 사이드 패널 */}
-            <div style={isMobile ? mobilePanelStyle : desktopPanelStyle}>
+            {/* 패널 */}
+            <div
+                ref={panelRef}
+                style={isMobile ? mobilePanelStyle : desktopPanelStyle}
+            >
                 {/* 모바일용 드래그 핸들 */}
                 {isMobile && (
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        padding: '8px 0',
-                        backgroundColor: 'white',
-                        borderTopLeftRadius: '20px',
-                        borderTopRightRadius: '20px'
-                    }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            padding: '8px 0 4px',
+                            backgroundColor: 'white',
+                            borderTopLeftRadius: '20px',
+                            borderTopRightRadius: '20px',
+                            cursor: 'grab',
+                            touchAction: 'none'
+                        }}
+                        onMouseDown={handleDragStart}
+                        onTouchStart={handleDragStart}
+                    >
                         <div style={{
                             width: '40px',
                             height: '4px',
@@ -466,20 +532,21 @@ const SearchPanel = ({
                     </div>
                 )}
 
-                {/* 패널 헤더 */}
+                {/* 패널 헤더 - 항상 보이는 테마 버튼들 */}
                 <div style={{
-                    padding: isMobile ? '10px 20px 20px' : '20px',
-                    borderBottom: '1px solid #f0f0f0',
+                    padding: isMobile ? '8px 20px 12px' : '20px',
+                    borderBottom: mobileHeight > MOBILE_HEIGHTS.MINIMIZED ? '1px solid #f0f0f0' : 'none',
                     backgroundColor: 'white',
                     borderTopLeftRadius: isMobile ? '20px' : '0',
-                    borderTopRightRadius: isMobile ? '20px' : '0'
+                    borderTopRightRadius: isMobile ? '20px' : '0',
+                    flexShrink: 0
                 }}>
                     {/* 테마 뱃지들 */}
                     <div style={{
                         display: 'flex',
                         flexWrap: 'wrap',
                         gap: isMobile ? '4px' : '8px',
-                        marginBottom: '16px'
+                        marginBottom: mobileHeight > MOBILE_HEIGHTS.MINIMIZED ? '12px' : '0'
                     }}>
                         {Object.keys(THEME_CONFIG).map(theme => (
                             <ThemeButton
@@ -492,9 +559,9 @@ const SearchPanel = ({
                         ))}
                     </div>
 
-                    {/* 현재 위치에서 다시 검색 버튼 - 테마 모드이고 선택된 테마가 있을 때만 표시 */}
-                    {isThemeMode && selectedTheme && (
-                        <div style={{ marginBottom: '16px' }}>
+                    {/* 현재 위치에서 다시 검색 버튼 - 중간 높이 이상에서만 표시 */}
+                    {((!isMobile || mobileHeight > MOBILE_HEIGHTS.MINIMIZED) && isThemeMode && selectedTheme) && (
+                        <div style={{ marginBottom: '12px' }}>
                             <button
                                 onClick={handleRefreshSearch}
                                 disabled={isThemeLoading}
@@ -505,8 +572,8 @@ const SearchPanel = ({
                                         : 'linear-gradient(135deg, #4A90E2 0%, #357ABD 100%)',
                                     border: 'none',
                                     borderRadius: '12px',
-                                    padding: isMobile ? '10px 14px' : '12px 16px',
-                                    fontSize: isMobile ? '13px' : '14px',
+                                    padding: isMobile ? '8px 12px' : '12px 16px',
+                                    fontSize: isMobile ? '12px' : '14px',
                                     fontWeight: '600',
                                     color: isThemeLoading ? '#999' : 'white',
                                     cursor: isThemeLoading ? 'not-allowed' : 'pointer',
@@ -514,27 +581,15 @@ const SearchPanel = ({
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px',
+                                    gap: '6px',
                                     boxShadow: isThemeLoading ? 'none' : '0 4px 12px rgba(74, 144, 226, 0.3)'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!isThemeLoading) {
-                                        e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 6px 16px rgba(74, 144, 226, 0.4)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isThemeLoading) {
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.3)';
-                                    }
                                 }}
                             >
                                 {isThemeLoading ? (
                                     <>
                                         <div style={{
-                                            width: '16px',
-                                            height: '16px',
+                                            width: '14px',
+                                            height: '14px',
                                             border: '2px solid #e0e0e0',
                                             borderTop: '2px solid #999',
                                             borderRadius: '50%',
@@ -544,7 +599,7 @@ const SearchPanel = ({
                                     </>
                                 ) : (
                                     <>
-                                        <span style={{ fontSize: '16px' }}>🔄</span>
+                                        <span style={{ fontSize: '14px' }}>🔄</span>
                                         이 지역에서 {THEME_CONFIG[selectedTheme]?.label} 다시 검색
                                     </>
                                 )}
@@ -552,254 +607,259 @@ const SearchPanel = ({
                         </div>
                     )}
 
-                    {/* 검색 결과 개수 또는 상태 표시 */}
-                    <div style={{
-                        padding: '8px 12px',
-                        backgroundColor: isThemeMode && selectedTheme ? getThemeColor(selectedTheme) + '15' : '#f8f9fa',
-                        borderRadius: '8px',
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#495057',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
-                        <span>{displayContent.title}</span>
-                        {currentLocation && (searchResults.length > 0 || themeSearchResults.length > 0) && (
-                            <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#6c757d' }}>
-                                📍 현재 화면 기준
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* 검색 결과 리스트 */}
-                <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    maxHeight: isMobile ? 'calc(70vh - 200px)' : 'auto'
-                }}>
-                    {/* 첫 검색 시에만 전체 로딩 표시 */}
-                    {((loading && searchResults.length === 0) || (isThemeLoading && themeSearchResults.length === 0)) ? (
+                    {/* 검색 결과 개수 - 중간 높이 이상에서만 표시 */}
+                    {(!isMobile || mobileHeight > MOBILE_HEIGHTS.MINIMIZED) && (
                         <div style={{
+                            padding: '6px 10px',
+                            backgroundColor: isThemeMode && selectedTheme ? getThemeColor(selectedTheme) + '15' : '#f8f9fa',
+                            borderRadius: '8px',
+                            fontSize: isMobile ? '12px' : '14px',
+                            color: '#495057',
                             display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            height: '200px'
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
                         }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}>
-                                <div style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    border: '2px solid #f3f3f3',
-                                    borderTop: '2px solid #4ECDC4',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }}></div>
-                                {isThemeLoading ? '테마 검색 중...' : '검색 중...'}
-                            </div>
-                        </div>
-                    ) : displayContent.emptyMessage ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: isMobile ? '40px 20px' : '60px 20px',
-                            color: '#717171'
-                        }}>
-                            <div style={{ fontSize: isMobile ? '40px' : '48px', marginBottom: '16px' }}>
-                                {displayContent.emptyMessage.icon}
-                            </div>
-                            <p style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: '500', marginBottom: '8px' }}>
-                                {displayContent.emptyMessage.title}
-                            </p>
-                            <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#999' }}>
-                                {displayContent.emptyMessage.subtitle}
-                            </p>
-                        </div>
-                    ) : (
-                        <div>
-                            {/* 검색 결과 아이템들 */}
-                            {displayContent.items.map((place) => (
-                                <PlaceCard
-                                    key={place.id}
-                                    place={place}
-                                    isSelected={selectedPlace?.id === place.id}
-                                    onHover={() => handlePlaceHover(place)}
-                                    onClick={() => onPlaceSelect(place)}
-                                    onBookmark={onBookmark}
-                                />
-                            ))}
-
-                            {/* 더보기 로딩 - 테마 검색 모드 */}
-                            {isThemeMode && isThemeLoading && themeSearchResults.length > 0 && (
-                                <div style={{
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid #f0f0f0'
-                                }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        color: '#666'
-                                    }}>
-                                        <div style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            border: '2px solid #f3f3f3',
-                                            borderTop: '2px solid #4ECDC4',
-                                            borderRadius: '50%',
-                                            animation: 'spin 1s linear infinite'
-                                        }}></div>
-                                        더 많은 장소를 불러오는 중...
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 더보기 로딩 - 키워드 검색 모드 */}
-                            {!isThemeMode && loading && searchResults.length > 0 && (
-                                <div style={{
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid #f0f0f0'
-                                }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        color: '#666'
-                                    }}>
-                                        <div style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            border: '2px solid #f3f3f3',
-                                            borderTop: '2px solid #FF6B6B',
-                                            borderRadius: '50%',
-                                            animation: 'spin 1s linear infinite'
-                                        }}></div>
-                                        더 많은 검색 결과를 불러오는 중...
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 더보기 버튼 - 테마 검색 모드 */}
-                            {isThemeMode && hasMoreData && displayContent.items.length > 0 && !isThemeLoading && (
-                                <div style={{
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid #f0f0f0'
-                                }}>
-                                    <button
-                                        onClick={onThemeLoadMore}
-                                        style={{
-                                            padding: isMobile ? '10px 20px' : '12px 24px',
-                                            backgroundColor: '#4ECDC4',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontSize: isMobile ? '13px' : '14px',
-                                            fontWeight: '500',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            margin: '0 auto'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.target.style.backgroundColor = '#3DBDB3';
-                                            e.target.style.transform = 'translateY(-1px)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.target.style.backgroundColor = '#4ECDC4';
-                                            e.target.style.transform = 'translateY(0)';
-                                        }}
-                                    >
-                                        📄 더보기 ({THEME_CONFIG[selectedTheme]?.label})
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* 더보기 버튼 - 키워드 검색 모드 */}
-                            {!isThemeMode && searchQuery.trim() && hasMoreData && displayContent.items.length > 0 && !loading && (
-                                <div style={{
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid #f0f0f0'
-                                }}>
-                                    <button
-                                        onClick={onKeywordLoadMore}
-                                        style={{
-                                            padding: isMobile ? '10px 20px' : '12px 24px',
-                                            backgroundColor: '#FF6B6B',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontSize: isMobile ? '13px' : '14px',
-                                            fontWeight: '500',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            margin: '0 auto'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.target.style.backgroundColor = '#E55A5A';
-                                            e.target.style.transform = 'translateY(-1px)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.target.style.backgroundColor = '#FF6B6B';
-                                            e.target.style.transform = 'translateY(0)';
-                                        }}
-                                    >
-                                        📄 더보기 ("{searchQuery}")
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* 마지막 페이지 메시지 */}
-                            {displayContent.items.length > 0 && !hasMoreData && (
-                                <div style={{
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid #f0f0f0',
-                                    color: '#999',
-                                    fontSize: isMobile ? '13px' : '14px'
-                                }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px'
-                                    }}>
-                                        ✨ 모든 결과를 확인했습니다
-                                    </div>
-                                </div>
+                            <span>{displayContent.title}</span>
+                            {currentLocation && (searchResults.length > 0 || themeSearchResults.length > 0) && (
+                                <span style={{ fontSize: isMobile ? '10px' : '12px', color: '#6c757d' }}>
+                                    📍 현재 화면 기준
+                                </span>
                             )}
                         </div>
                     )}
                 </div>
+
+                {/* 검색 결과 리스트 - 중간 높이 이상에서만 표시 */}
+                {(!isMobile || mobileHeight > MOBILE_HEIGHTS.MINIMIZED) && (
+                    <div style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        {/* 첫 검색 시에만 전체 로딩 표시 */}
+                        {((loading && searchResults.length === 0) || (isThemeLoading && themeSearchResults.length === 0)) ? (
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: '200px'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    <div style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        border: '2px solid #f3f3f3',
+                                        borderTop: '2px solid #4ECDC4',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite'
+                                    }}></div>
+                                    {isThemeLoading ? '테마 검색 중...' : '검색 중...'}
+                                </div>
+                            </div>
+                        ) : displayContent.emptyMessage ? (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: isMobile ? '30px 20px' : '60px 20px',
+                                color: '#717171'
+                            }}>
+                                <div style={{ fontSize: isMobile ? '36px' : '48px', marginBottom: '12px' }}>
+                                    {displayContent.emptyMessage.icon}
+                                </div>
+                                <p style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', marginBottom: '6px' }}>
+                                    {displayContent.emptyMessage.title}
+                                </p>
+                                <p style={{ fontSize: isMobile ? '12px' : '14px', color: '#999' }}>
+                                    {displayContent.emptyMessage.subtitle}
+                                </p>
+                            </div>
+                        ) : (
+                            <div>
+                                {/* 검색 결과 아이템들 */}
+                                {displayContent.items.map((place) => (
+                                    <PlaceCard
+                                        key={place.id}
+                                        place={place}
+                                        isSelected={selectedPlace?.id === place.id}
+                                        onHover={() => handlePlaceHover(place)}
+                                        onClick={() => onPlaceSelect(place)}
+                                        onBookmark={onBookmark}
+                                    />
+                                ))}
+
+                                {/* 더보기 로딩 - 테마 검색 모드 */}
+                                {isThemeMode && isThemeLoading && themeSearchResults.length > 0 && (
+                                    <div style={{
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        borderTop: '1px solid #f0f0f0'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            color: '#666'
+                                        }}>
+                                            <div style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                border: '2px solid #f3f3f3',
+                                                borderTop: '2px solid #4ECDC4',
+                                                borderRadius: '50%',
+                                                animation: 'spin 1s linear infinite'
+                                            }}></div>
+                                            더 많은 장소를 불러오는 중...
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 더보기 로딩 - 키워드 검색 모드 */}
+                                {!isThemeMode && loading && searchResults.length > 0 && (
+                                    <div style={{
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        borderTop: '1px solid #f0f0f0'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            color: '#666'
+                                        }}>
+                                            <div style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                border: '2px solid #f3f3f3',
+                                                borderTop: '2px solid #FF6B6B',
+                                                borderRadius: '50%',
+                                                animation: 'spin 1s linear infinite'
+                                            }}></div>
+                                            더 많은 검색 결과를 불러오는 중...
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 더보기 버튼 - 테마 검색 모드 */}
+                                {isThemeMode && hasMoreData &&
+                                    displayContent.items.length > 0 && !isThemeLoading && (
+                                        <div style={{
+                                            padding: '20px',
+                                            textAlign: 'center',
+                                            borderTop: '1px solid #f0f0f0'
+                                        }}>
+                                            <button
+                                                onClick={onThemeLoadMore}
+                                                style={{
+                                                    padding: isMobile ? '10px 20px' : '12px 24px',
+                                                    backgroundColor: '#4ECDC4',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    fontSize: isMobile ? '13px' : '14px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    margin: '0 auto'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.backgroundColor = '#3DBDB3';
+                                                    e.target.style.transform = 'translateY(-1px)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.backgroundColor = '#4ECDC4';
+                                                    e.target.style.transform = 'translateY(0)';
+                                                }}
+                                            >
+                                                📄 더보기 ({THEME_CONFIG[selectedTheme]?.label})
+                                            </button>
+                                        </div>
+                                    )}
+
+                                {/* 더보기 버튼 - 키워드 검색 모드 */}
+                                {!isThemeMode && searchQuery.trim() && hasMoreData && displayContent.items.length > 0 && !loading && (
+                                    <div style={{
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        borderTop: '1px solid #f0f0f0'
+                                    }}>
+                                        <button
+                                            onClick={onKeywordLoadMore}
+                                            style={{
+                                                padding: isMobile ? '10px 20px' : '12px 24px',
+                                                backgroundColor: '#FF6B6B',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                fontSize: isMobile ? '13px' : '14px',
+                                                fontWeight: '500',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                margin: '0 auto'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.backgroundColor = '#E55A5A';
+                                                e.target.style.transform = 'translateY(-1px)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.backgroundColor = '#FF6B6B';
+                                                e.target.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            📄 더보기 ("{searchQuery}")
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* 마지막 페이지 메시지 */}
+                                {displayContent.items.length > 0 && !hasMoreData && (
+                                    <div style={{
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        borderTop: '1px solid #f0f0f0',
+                                        color: '#999',
+                                        fontSize: isMobile ? '13px' : '14px'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            ✨ 모든 결과를 확인했습니다
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* CSS 애니메이션 */}
             <style jsx>{`
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                
-                /* 모바일에서 스크롤 최적화 */
-                @media (max-width: 768px) {
-                    .search-panel-content {
-                        -webkit-overflow-scrolling: touch;
-                    }
-                }
-            `}</style>
+               @keyframes spin {
+                   0% { transform: rotate(0deg); }
+                   100% { transform: rotate(360deg); }
+               }
+               
+               /* 모바일에서 스크롤 최적화 */
+               @media (max-width: 768px) {
+                   * {
+                       -webkit-overflow-scrolling: touch;
+                   }
+               }
+           `}</style>
         </>
     );
 };
