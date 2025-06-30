@@ -41,9 +41,12 @@ const TravelMap = ({ locations, days, region, startDate, endDate, onReset }) => 
         .sort((a, b) => a.order - b.order);
 
     const lastDay = Math.max(...dayList);
+
     const totalDays = dayList.length;
+
     const displayedLocations =
-    totalDays>1 && selectedDay === lastDay
+    totalDays > 1 && selectedDay === lastDay
+
         ? [
             {
             title: '숙소 체크아웃',
