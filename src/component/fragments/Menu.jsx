@@ -86,10 +86,7 @@ export default function Menu() {
     window.location.href="/";
   }
 
-  // 내 정보 페이지로 이동
-  const goToMyInfo = () => {
-    window.location.href = '/infomodified';
-  };
+  
 
   // 현재 환경에 맞는 메뉴 아이템 선택
   const currentMenuItems = isMobile ? mobileMenuItems : desktopMenuItems;
@@ -116,7 +113,7 @@ export default function Menu() {
           {/* 사용자 정보 표시 영역 */}
           <ListItem disablePadding>
             <ListItemButton
-              onClick={goToMyInfo}
+              
               sx={{
                 paddingY: {
                   xs: 2,
