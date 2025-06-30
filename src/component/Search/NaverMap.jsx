@@ -31,7 +31,6 @@ const NaverMap = ({
     const infoWindowRef = useRef(null);
     const [userLocation, setUserLocation] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
-    const [originalCenter, setOriginalCenter] = useState(null); // 원래 중심점 저장용
 
     // 화면 크기 감지
     useEffect(() => {
@@ -128,7 +127,6 @@ const NaverMap = ({
                     if (mapInstanceRef.current && window.naver) {
                         const center = new window.naver.maps.LatLng(lat, lng);
                         mapInstanceRef.current.setCenter(center);
-                        setOriginalCenter({ lat, lng });
                         
                         // 현재 위치 마커 생성
                         new window.naver.maps.Marker({
@@ -154,76 +152,10 @@ const NaverMap = ({
                 },
                 (error) => {
                     console.error('위치 정보를 가져올 수 없습니다:', error);
-                    // 위치 정보 실패 시 서울 시청을 원래 중심점으로 설정
-                    setOriginalCenter({ lat: 37.5665, lng: 126.9780 });
                 }
             );
-        } else {
-            // Geolocation을 지원하지 않는 경우 서울 시청을 원래 중심점으로 설정
-            setOriginalCenter({ lat: 37.5665, lng: 126.9780 });
         }
     }, [onCurrentLocationUpdate]);
-
-    // 데스크탑에서 패널 상태에 따른 지도 중심점 조정
-    const adjustMapCenterForPanel = useCallback(() => {
-        if (isMobile || !mapInstanceRef.current || !window.naver || !originalCenter) return;
-
-        const map = mapInstanceRef.current;
-        const currentCenter = map.getCenter();
-        
-        if (isPanelOpen) {
-            // 패널이 열렸을 때: 지도의 시각적 중심을 왼쪽으로 이동
-            // 400px 패널 너비의 절반만큼 왼쪽으로 이동 (약 200px = 지도 너비의 약 15-20%)
-            const mapSize = map.getSize();
-            const offsetPixels = 100; // 픽셀 단위로 왼쪽 이동량
-            
-            // 현재 중심점에서 픽셀 오프셋만큼 이동한 좌표 계산
-            const projection = map.getProjection();
-            const centerPoint = projection.fromCoordToOffset(currentCenter);
-            const newCenterPoint = new window.naver.maps.Point(
-                centerPoint.x - offsetPixels,
-                centerPoint.y
-            );
-            const newCenter = projection.fromOffsetToCoord(newCenterPoint);
-            
-            console.log('🗺️ 패널 열림 - 지도 중심을 왼쪽으로 이동:', {
-                original: { lat: currentCenter.lat(), lng: currentCenter.lng() },
-                adjusted: { lat: newCenter.lat(), lng: newCenter.lng() }
-            });
-            
-            map.setCenter(newCenter);
-        } else {
-            // 패널이 닫혔을 때: 원래 중심점으로 복원하거나 현재 중심점 유지
-            console.log('🗺️ 패널 닫힘 - 지도 중심 유지');
-            // 특별한 조정 없이 현재 상태 유지
-        }
-    }, [isMobile, isPanelOpen, originalCenter]);
-
-    // 패널 상태 변경에 따른 지도 중심점 조정
-    useEffect(() => {
-        if (!isMobile && mapInstanceRef.current) {
-            // 지도 리사이즈 후 중심점 조정
-            const adjustCenter = () => {
-                if (window.naver && mapInstanceRef.current) {
-                    try {
-                        // 지도 리사이즈 이벤트 트리거
-                        window.naver.maps.Event.trigger(mapInstanceRef.current, 'resize');
-                        
-                        // 중심점 조정
-                        setTimeout(() => {
-                            adjustMapCenterForPanel();
-                        }, 100);
-                    } catch (error) {
-                        console.error('지도 중심점 조정 실패:', error);
-                    }
-                }
-            };
-            
-            // 패널 애니메이션과 동기화하여 여러 번 조정
-            setTimeout(adjustCenter, 100);
-            setTimeout(adjustCenter, 350);
-        }
-    }, [isPanelOpen, isMobile, adjustMapCenterForPanel]);
 
     // 찜한 장소 마커 업데이트
     const updateLikedMarkersOnMap = useCallback((likedPlaces) => {
@@ -346,9 +278,6 @@ const NaverMap = ({
                 mapInstanceRef.current.setCenter(newCenter);
                 mapInstanceRef.current.setZoom(13);
                 
-                // 원래 중심점 업데이트
-                setOriginalCenter({ lat: place.mapy, lng: place.mapx });
-                
                 // 정보창 표시
                 const content = `
                     <div style="padding: 12px; min-width: ${isMobile ? '180px' : '220px'};">
@@ -444,9 +373,6 @@ const NaverMap = ({
                 mapInstanceRef.current.setCenter(newCenter);
                 mapInstanceRef.current.setZoom(13);
                 
-                // 원래 중심점 업데이트
-                setOriginalCenter({ lat: place.mapy, lng: place.mapx });
-                
                 // 정보창 표시
                 const content = `
                     <div style="padding: 12px; min-width: ${isMobile ? '180px' : '220px'};">
@@ -504,14 +430,6 @@ const NaverMap = ({
                 bounds.extend(new window.naver.maps.LatLng(place.mapy, place.mapx));
             });
             mapInstanceRef.current.fitBounds(bounds);
-            
-            // fitBounds 후 중심점 저장
-            setTimeout(() => {
-                if (mapInstanceRef.current) {
-                    const center = mapInstanceRef.current.getCenter();
-                    setOriginalCenter({ lat: center.lat(), lng: center.lng() });
-                }
-            }, 500);
         }
     }, [selectedPlace, onPlaceSelect, isMobile]);
 
@@ -537,9 +455,6 @@ const NaverMap = ({
             const newCenter = new window.naver.maps.LatLng(selectedPlace.mapy, selectedPlace.mapx);
             mapInstanceRef.current.setCenter(newCenter);
             mapInstanceRef.current.setZoom(13);
-            
-            // 선택된 장소를 원래 중심점으로 저장
-            setOriginalCenter({ lat: selectedPlace.mapy, lng: selectedPlace.mapx });
         }
     }, [selectedPlace]);
 
@@ -549,7 +464,7 @@ const NaverMap = ({
             width: '100%', 
             height: '100%'
         }}>
-            {/* 지도 컨테이너 - 항상 100% 크기 유지 */}
+            {/* 지도 컨테이너 - 항상 100% 크기 유지, 리사이징 없음 */}
             <div 
                 ref={mapRef} 
                 style={{ 
